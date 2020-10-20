@@ -16,10 +16,12 @@ x_length = U0*tme
 y_height = 2*np.pi
 z_width = 2*np.pi
 
-#Eddy info
-eddy_l_x = 0.5
-eddy_l_y = 0.5
-eddy_l_z = 0.5
+#construct sigma interpolation functions
+eddy_sigmas = np.ones(3,3,eddy_locs.shape[0])
+eddy_sigmas[:,0] = eddy_l_x
+eddy_sigmas[:,1] = eddy_l_y
+eddy_sigmas[:,2] = eddy_l_z
+
 
 #generate box of eddys
 lows  = [         - eddy_l_x,          - eddy_l_y,         - eddy_l_z]
@@ -30,11 +32,6 @@ eddy_density = 1
 neddy = int( eddy_density * VB / (eddy_l_x*eddy_l_y*eddy_l_z) )
 eddy_locs = np.random.uniform(low=lows,high=highs,size=(neddy,3))
 
-#construct sigmas
-eddy_sigmas = np.ones(3,3,eddy_locs.shape[0])
-eddy_sigmas[:,0] = eddy_l_x
-eddy_sigmas[:,1] = eddy_l_y
-eddy_sigmas[:,2] = eddy_l_z
 
 #generate epsilons
 eps_k = np.where(np.random.random(eddy_locs.shape) <= 0.5,1.0,-1.0)
