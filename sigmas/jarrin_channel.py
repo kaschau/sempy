@@ -68,28 +68,27 @@ Lww = np.empty(ys.shape[0])
 Lww[0:npts] = - 0.3968*ys[0:npts]*(ys[0:npts] - 2.0) + 0.0702
 Lww[npts::] = np.flip(Lww[0:npts-1])
 
-def sigma_interps(u_tau,delta):
+def sigma_interps(delta, u_tau):
     #create interpolation functions from dimensionalized values
 
-    sigmas = np.empty((3,3,ys.shape[0]))
+    sigmas = np.empty((ys.shape[0],3,3))
 
-    sigmas[0,0,:] = Tuu*delta/u_tau
-    sigmas[0,1,:] = Luu*delta
-    sigmas[0,2,:] = Luu*delta
+    sigmas[:,0,0] = Tuu*delta/u_tau
+    sigmas[:,0,1] = Luu*delta
+    sigmas[:,0,2] = Luu*delta
 
-    sigmas[1,0,:] = Tvv*delta/u_tau
-    sigmas[1,1,:] = Lvv*delta
-    sigmas[1,2,:] = Lvv*delta
+    sigmas[:,1,0] = Tvv*delta/u_tau
+    sigmas[:,1,1] = Lvv*delta
+    sigmas[:,1,2] = Lvv*delta
 
-    sigmas[2,0,:] = Tww*delta/u_tau
-    sigmas[2,1,:] = Lww*delta
-    sigmas[2,2,:] = Lww*delta
+    sigmas[:,2,0] = Tww*delta/u_tau
+    sigmas[:,2,1] = Lww*delta
+    sigmas[:,2,2] = Lww*delta
 
     y = ys*delta
 
-    sigma = interp1d(y, sigmas, kind='linear',axis=-1,bounds_error=False,
-                     fill_value=(sigmas[:,:,0],sigmas[:,:,-1]), assume_sorted=True)
-
+    sigma = interp1d(y, sigmas, kind='linear',axis=0,bounds_error=False,
+                     fill_value=(sigmas[0,:,:],sigmas[-1,:,:]), assume_sorted=True)
 
     return sigma
 
@@ -104,14 +103,14 @@ if __name__ == '__main__':
 
     Ts_Ls = sigma(yplot)
 
-    Tuu_plot = Ts_Ls[0,0,:]
-    Luu_plot = Ts_Ls[0,1,:]
+    Tuu_plot = Ts_Ls[:,0,0]
+    Luu_plot = Ts_Ls[:,0,1]
 
-    Tvv_plot = Ts_Ls[1,0,:]
-    Lvv_plot = Ts_Ls[1,1,:]
+    Tvv_plot = Ts_Ls[:,1,0]
+    Lvv_plot = Ts_Ls[:,1,1]
 
-    Tww_plot = Ts_Ls[2,0,:]
-    Lww_plot = Ts_Ls[2,1,:]
+    Tww_plot = Ts_Ls[:,2,0]
+    Lww_plot = Ts_Ls[:,2,1]
 
     fig, ax1 = plt.subplots()
     ax1.set_xlabel(r'$y/ \delta$')

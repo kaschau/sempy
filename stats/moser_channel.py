@@ -1,7 +1,11 @@
 import numpy as np
 from scipy.interpolate import interp1d
 
-data = np.genfromtxt('Moser_Channel_ReTau590.csv',delimiter=',',comments='#',skip_header=5)
+try:
+    data = np.genfromtxt('./Moser_Channel_ReTau590.csv',delimiter=',',comments='#',skip_header=5)
+except:
+    data = np.genfromtxt('./stats/Moser_Channel_ReTau590.csv',delimiter=',',comments='#',skip_header=5)
+
 npts = data.shape[0]
 
 ys = np.empty(npts*2-1)
@@ -36,32 +40,31 @@ Rvw = np.empty(npts*2-1)
 Rvw[0:npts] = data[:,7]
 Rvw[npts::] = -np.flip(Rvw[0:npts-1])
 
-def stat_interps(u_tau,delta):
+def stat_interps(delta, u_tau):
     #create interpolation functions from dimensionalized values
 
-    stats = np.empty((3,3,ys.shape[0]))
+    stats = np.empty((ys.shape[0],3,3))
 
-    stats[0,0,:] = Ruu*u_tau**2
-    stats[0,1,:] = Ruv*u_tau**2
-    stats[0,2,:] = Ruw*u_tau**2
+    stats[:,0,0] = Ruu*u_tau**2
+    stats[:,0,1] = Ruv*u_tau**2
+    stats[:,0,2] = Ruw*u_tau**2
 
-    stats[1,0,:] = stats[0,1,:]
-    stats[1,1,:] = Rvv*u_tau**2
-    stats[1,2,:] = Rvw*u_tau**2
+    stats[:,1,0] = stats[:,0,1]
+    stats[:,1,1] = Rvv*u_tau**2
+    stats[:,1,2] = Rvw*u_tau**2
 
-    stats[2,0,:] = stats[0,2,:]
-    stats[2,1,:] = stats[1,2,:]
-    stats[2,2,:] = Rww*u_tau**2
+    stats[:,2,0] = stats[:,0,2]
+    stats[:,2,1] = stats[:,1,2]
+    stats[:,2,2] = Rww*u_tau**2
 
     y = ys*delta
     U = Us*u_tau
 
-    stat = interp1d(y, stats, kind='linear',axis=-1,bounds_error=False,
-                    fill_value=(stats[:,:,0],stats[:,:,-1]), assume_sorted=True)
+    stat = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
+                    fill_value=(stats[0,:,:],stats[-1,:,:]), assume_sorted=True)
 
     Ubar = interp1d(y, U, kind='linear', bounds_error=False,
                     fill_value=(U[0],U[-1]), assume_sorted=True)
-
 
     return stat,Ubar
 
@@ -76,13 +79,13 @@ if __name__ == "__main__":
 
     Rij = stat(yplot)
 
-    Ruu_plot = Rij[0,0,:]
-    Rvv_plot = Rij[1,1,:]
-    Rww_plot = Rij[2,2,:]
+    Ruu_plot = Rij[:,0,0]
+    Rvv_plot = Rij[:,1,1]
+    Rww_plot = Rij[:,2,2]
 
-    Ruv_plot = Rij[0,1,:]
-    Ruw_plot = Rij[0,2,:]
-    Rvw_plot = Rij[1,2,:]
+    Ruv_plot = Rij[:,0,1]
+    Ruw_plot = Rij[:,0,2]
+    Rvw_plot = Rij[:,1,2]
 
     Uplot = Ubar(yplot)
 
