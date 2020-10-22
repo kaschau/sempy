@@ -2,30 +2,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-from sigmas.jarrin_channel import sigma_interps
-from stats.moser_channel import stat_interps
+from sigmas.jarrin_channel import create_sigma_interps
+from stats.moser_channel import create_stat_interps
 
 np.random.seed(1010)
 
 #Flow
-U0 = 10 #m/s
-tme = 16 #s
+U0 = 10 #Bulk flow velocity, used to determine length of box
+tme = 1 #Time of signal, used to determine length of box
 u_tau = 0.1
-delta = np.pi
+delta = np.pi #Defined from flow configuration
 
 #Box geom
-x_length = U0*tme
 y_height = 2*np.pi
 z_width = 2*np.pi
+x_length = U0*tme
 
 #Eddy Density
 C_Eddy = 1.0
 
 #construct sigma interpolation functions
-eddy_sigma_interp = sigma_interps(delta, u_tau)
+eddy_sigma_interp = create_sigma_interps(delta, u_tau)
 
 #construct Rij and Ubar interpolation functins
-Rij_interp,Ubar_interp = stat_interps(delta, u_tau)
+Rij_interp,Ubar_interp = create_stat_interps(delta, u_tau)
 
 #determine min,max sigmas
 sigma_x_min = np.min(eddy_sigma_interp(0)[0])
@@ -44,13 +44,15 @@ VB = np.product(np.array(highs) - np.array(lows))
 
 #Compute number of eddys
 neddy = int( C_Eddy * VB / (sigma_x_min*sigma_y_min*sigma_z_min) )
-neddy = 2_000_000
+neddy = 10000
+
+#Generate random eddy locations
 eddy_locs = np.random.uniform(low=lows,high=highs,size=(neddy,3))
 
-#Compute eddy sigmas as function of y
+#Compute all eddy sigmas as function of y
 eddy_sigmas = eddy_sigma_interp(eddy_locs[:,1])
 
-#Compute Rij as a function of y
+#Compute Rij for all eddys as a function of y
 Rij = Rij_interp(eddy_locs[:,1])
 #Cholesky decomp of all eddys
 aij = np.linalg.cholesky(Rij)
@@ -62,27 +64,23 @@ eps_k = np.where(np.random.random((neddy,3,1)) <= 0.5,1.0,-1.0)
 ######   Compute Fluctuations #######
 #####################################
 
-#Point on inlet face
+#Generate points on inlet face
 z = z_width/2.0
-
 ys = np.linspace(y_height*0.001,y_height*0.999,50)
-Us = []
-uus = []
-vvs = []
-wws = []
 
-uvs = []
-uws = []
-vws = []
+# Some post processing storage
+Us = [];uus = [];vvs = [];wws = []
+uvs = [];uws = [];vws = []
 
+#Loop over each location on face
 for y in ys:
     print('Computing y = ',y)
 
-    #Compute Ubar as a function of y
+    #Compute local Ubar as a function of y
     Ubar = Ubar_interp(y)
 
-    #Define "time" point
-    xs = np.linspace(0,x_length,200)
+    #Define "time" points for frames
+    xs = np.linspace(0,x_length,100)
 
     #Storage for fluctuations
     primes = np.empty((len(xs),3))
@@ -143,13 +141,12 @@ for y in ys:
 
 
 #Compare signal to moser
-
 #Ubar
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
 ax1.set_xlabel(r'$\bar{U}$')
-ax1.plot(Us,ys,label=r'$\bar{U} SEM$')
-ax1.plot(Ubar_interp(ys),ys,label=r'$\bar{U} Moser$')
+ax1.plot(Us,ys,label=r'$\bar{U}$ SEM')
+ax1.plot(Ubar_interp(ys),ys,label=r'$\bar{U}$ Moser')
 ax1.legend()
 plt.savefig('Ubar.png')
 plt.close()
@@ -158,8 +155,8 @@ plt.close()
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
 ax1.set_xlabel(r'$R_{uu}$')
-ax1.plot(uus,ys,label=r'$R_{uu} SEM$')
-ax1.plot(Rij_interp(ys)[:,0,0],ys,label=r'$R_{uu} Moser$')
+ax1.plot(uus,ys,label=r'$R_{uu}$ SEM')
+ax1.plot(Rij_interp(ys)[:,0,0],ys,label=r'$R_{uu}$ Moser')
 ax1.legend()
 plt.savefig('Ruu.png')
 plt.close()
@@ -168,8 +165,8 @@ plt.close()
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
 ax1.set_xlabel(r'$R_{vv}$')
-ax1.plot(vvs,ys,label=r'$R_{vv} SEM$')
-ax1.plot(Rij_interp(ys)[:,1,1],ys,label=r'$R_{vv} Moser$')
+ax1.plot(vvs,ys,label=r'$R_{vv}$ SEM')
+ax1.plot(Rij_interp(ys)[:,1,1],ys,label=r'$R_{vv}$ Moser')
 ax1.legend()
 plt.savefig('Rvv.png')
 plt.close()
@@ -178,8 +175,8 @@ plt.close()
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
 ax1.set_xlabel(r'$R_{ww}$')
-ax1.plot(wws,ys,label=r'$R_{ww} SEM$')
-ax1.plot(Rij_interp(ys)[:,2,2],ys,label=r'$R_{ww} Moser$')
+ax1.plot(wws,ys,label=r'$R_{ww}$ SEM')
+ax1.plot(Rij_interp(ys)[:,2,2],ys,label=r'$R_{ww}$ Moser')
 ax1.legend()
 plt.savefig('Rww.png')
 plt.close()
@@ -188,8 +185,8 @@ plt.close()
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
 ax1.set_xlabel(r'$R_{uv}$')
-ax1.plot(uvs,ys,label=r'$R_{uv} SEM$')
-ax1.plot(Rij_interp(ys)[:,0,1],ys,label=r'$R_{uv} Moser$')
+ax1.plot(uvs,ys,label=r'$R_{uv}$ SEM')
+ax1.plot(Rij_interp(ys)[:,0,1],ys,label=r'$R_{uv}$ Moser')
 ax1.legend()
 plt.savefig('Ruv.png')
 plt.close()
@@ -198,8 +195,8 @@ plt.close()
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
 ax1.set_xlabel(r'$R_{uw}$')
-ax1.plot(uws,ys,label=r'$R_{uw} SEM$')
-ax1.plot(Rij_interp(ys)[:,0,2],ys,label=r'$R_{uw} Moser$')
+ax1.plot(uws,ys,label=r'$R_{uw}$ SEM')
+ax1.plot(Rij_interp(ys)[:,0,2],ys,label=r'$R_{uw}$ Moser')
 ax1.legend()
 plt.savefig('Ruw.png')
 plt.close()
@@ -208,8 +205,8 @@ plt.close()
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
 ax1.set_xlabel(r'$R_{vw}$')
-ax1.plot(vws,ys,label=r'$R_{vw} SEM$')
-ax1.plot(Rij_interp(ys)[:,1,2],ys,label=r'$R_{vw} Moser$')
+ax1.plot(vws,ys,label=r'$R_{vw}$ SEM')
+ax1.plot(Rij_interp(ys)[:,1,2],ys,label=r'$R_{vw}$ Moser')
 ax1.legend()
 plt.savefig('Rvw.png')
 plt.close()

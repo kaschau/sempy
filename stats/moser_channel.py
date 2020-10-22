@@ -1,6 +1,32 @@
 import numpy as np
 from scipy.interpolate import interp1d
 
+'''
+
+CHANNEL FLOW
+
+Reynolds Stress Tensor values and mean turbulenct velocity profiles
+for fully developed turbulent flow as a function of height above bottom wall from
+DNS data of Moser, Kim & Mansour ("DNS of Turbulent Channel Flow up to Re_tau = 590,"
+Physics of Fluids, 11: 943-945, 1999).
+
+Data defined for channel flow from y/delta = {0,2} where
+
+        0 == bottom wall
+        1 == channel half height
+        2 == top wall
+
+The original data is defined from the wall to the channel half height (y/delta=1)
+so we take that data and flip it so it is defined everywhere.
+
+Statistics normalized as Rij/u_tau^2 and \bar{U}/u_tau
+
+We flip the sign of Ruv and Rvw in the top half of the channel as "v" is pointing in the other direction
+from the top wall's perspective, making the data defined contuniously from 0-->2.
+
+'''
+
+
 try:
     data = np.genfromtxt('./Moser_Channel_ReTau590.csv',delimiter=',',comments='#',skip_header=5)
 except:
@@ -40,8 +66,39 @@ Rvw = np.empty(npts*2-1)
 Rvw[0:npts] = data[:,7]
 Rvw[npts::] = -np.flip(Rvw[0:npts-1])
 
-def stat_interps(delta, u_tau):
-    #create interpolation functions from dimensionalized values
+def create_stat_interps(delta, u_tau):
+    ''' Function that returns a 1d interpolation object creted from the data above.
+
+    Parameters:
+    -----------
+        delta : float
+            Channel half height
+
+        u_tau : float
+            Friction velocity.
+
+    Returns:
+    --------
+        stats_interp,Ubar_interp : scipy.interpolate.1dinterp
+            Interpolation functions with input y = *height above the bottom wall*
+            Note that this interpolation function resclaes the data such that it is
+            for your channel, not a non dimensionalized channel. These stats and
+            profiles are ready to use in your channel and have been
+            dimensionalized according to your input values. The shape of the resulting
+            sigma array from a call to this interpolate object is:
+
+                 stat_interp(y) = len(y) x 3 x 3
+
+            Where the last two axes are an array of R_{ij} with the ordering
+
+                    [ [ R_uu   R_uv   R_uw ],
+                      [ R_vu   R_vv   R_vw ],
+                      [ R_wu   R_wv   R_ww ] ]
+
+            Another neat property of the interpolator is that the out of bounds values are
+            set to the bottom and top wall values so calls above or below those y values
+            return the values at the wall.
+    '''
 
     stats = np.empty((ys.shape[0],3,3))
 
@@ -60,13 +117,13 @@ def stat_interps(delta, u_tau):
     y = ys*delta
     U = Us*u_tau
 
-    stat = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
-                    fill_value=(stats[0,:,:],stats[-1,:,:]), assume_sorted=True)
+    stats_interp = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
+                            fill_value=(stats[0,:,:],stats[-1,:,:]), assume_sorted=True)
 
-    Ubar = interp1d(y, U, kind='linear', bounds_error=False,
-                    fill_value=(U[0],U[-1]), assume_sorted=True)
+    Ubar_interp = interp1d(y, U, kind='linear', bounds_error=False,
+                           fill_value=(U[0],U[-1]), assume_sorted=True)
 
-    return stat,Ubar
+    return stats_interp,Ubar_interp
 
 
 if __name__ == "__main__":
@@ -75,7 +132,7 @@ if __name__ == "__main__":
 
     yplot = np.linspace(0,2,100)
 
-    stat,Ubar = stat_interps(1.0,1.0)
+    stat,Ubar = create_stat_interps(1.0,1.0)
 
     Rij = stat(yplot)
 
