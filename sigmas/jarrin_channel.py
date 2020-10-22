@@ -7,13 +7,17 @@ from scipy.interpolate import interp1d
 
 CHANNEL FLOW
 
-Estimates of Time scales used to construct sigmas pulled from
+Estimates of time and length scales used to construct sigmas pulled from
 Jarrin, 2008 ?Figure 8.8(a)?
 
 Data defined for channel flow from y/delta = {0,2} where 0 == bottom wall and
 2 == top wall.
 
+The original data is defined from the wall to the channel half height (y/delta=1)
+so we take that data and flip it so it is defined everywhere.
+
 '''
+
 npts = 23
 
 # y/delta data arrays
@@ -68,8 +72,41 @@ Lww = np.empty(ys.shape[0])
 Lww[0:npts] = - 0.3968*ys[0:npts]*(ys[0:npts] - 2.0) + 0.0702
 Lww[npts::] = np.flip(Lww[0:npts-1])
 
-def sigma_interps(delta, u_tau):
-    #create interpolation functions from dimensionalized values
+def create_sigma_interps(delta, u_tau):
+    ''' Function that returns a 1d interpolation object creted from the data above.
+
+    Parameters:
+    -----------
+        delta : float
+            Channel half height
+
+        u_tau : float
+            Friction velocity.
+
+    Returns:
+    --------
+        sigma_interps : scipy.interpolate.1dinterp
+            Interpolation function with input y = *height above the bottom wall*
+            Note that this interpolation function resclaes the data such that it is
+            for your channel, not a non dimensionalized channel. Same with the sigmas,
+            these length scales are ready to use in your channel and have been
+            dimensionalized according to your input values. The shape of the resulting
+            sigma array from a call to this interpolate object is:
+
+                 sigma_interp(y) = len(y) x 3 x 3
+
+            Where the last two axes are an array of \sigma_{ij} with the ordering
+
+                    [ [ sigma_ux   sigma_uy   sigma_uz ],
+                      [ sigma_vx   sigma_vy   sigma_vz ],
+                      [ sigma_wx   sigma_wy   sigma_wz ] ]
+
+            Another neat property of the interpolator is that the out of bounds values are
+            set to the bottom and top wall values so calls above or below those y values
+            return the values at the wall.
+
+    '''
+
 
     sigmas = np.empty((ys.shape[0],3,3))
 
@@ -87,10 +124,10 @@ def sigma_interps(delta, u_tau):
 
     y = ys*delta
 
-    sigma = interp1d(y, sigmas, kind='linear',axis=0,bounds_error=False,
-                     fill_value=(sigmas[0,:,:],sigmas[-1,:,:]), assume_sorted=True)
+    sigma_interps = interp1d(y, sigmas, kind='linear',axis=0,bounds_error=False,
+                             fill_value=(sigmas[0,:,:],sigmas[-1,:,:]), assume_sorted=True)
 
-    return sigma
+    return sigma_interps
 
 
 if __name__ == '__main__':
@@ -98,19 +135,16 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     yplot = np.linspace(0,2,100)
+    sigmas = create_sigma_interps(1.0,1.0)(yplot)
 
-    sigma = sigma_interps(1.0,1.0)
+    Tuu_plot = sigmas[:,0,0]
+    Luu_plot = sigmas[:,0,1]
 
-    Ts_Ls = sigma(yplot)
+    Tvv_plot = sigmas[:,1,0]
+    Lvv_plot = sigmas[:,1,1]
 
-    Tuu_plot = Ts_Ls[:,0,0]
-    Luu_plot = Ts_Ls[:,0,1]
-
-    Tvv_plot = Ts_Ls[:,1,0]
-    Lvv_plot = Ts_Ls[:,1,1]
-
-    Tww_plot = Ts_Ls[:,2,0]
-    Lww_plot = Ts_Ls[:,2,1]
+    Tww_plot = sigmas[:,2,0]
+    Lww_plot = sigmas[:,2,1]
 
     fig, ax1 = plt.subplots()
     ax1.set_xlabel(r'$y/ \delta$')
