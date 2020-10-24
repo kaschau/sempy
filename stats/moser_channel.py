@@ -66,7 +66,7 @@ Rvw = np.empty(npts*2-1)
 Rvw[0:npts] = data[:,7]
 Rvw[npts::] = -np.flip(Rvw[0:npts-1])
 
-def create_stat_interps(delta, u_tau):
+def create_stat_interps(delta, u_tau, ymin=0.0):
     ''' Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
@@ -76,6 +76,9 @@ def create_stat_interps(delta, u_tau):
 
         u_tau : float
             Friction velocity.
+
+        ymin : float
+            Offset coordinate for bottom of channel wall
 
     Returns:
     --------
@@ -114,7 +117,7 @@ def create_stat_interps(delta, u_tau):
     stats[:,2,1] = stats[:,1,2]
     stats[:,2,2] = Rww*u_tau**2
 
-    y = ys*delta
+    y = ys*delta + ymin
     U = Us*u_tau
 
     stats_interp = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,

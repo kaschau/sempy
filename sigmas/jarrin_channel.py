@@ -72,7 +72,7 @@ Lww = np.empty(ys.shape[0])
 Lww[0:npts] = - 0.3968*ys[0:npts]*(ys[0:npts] - 2.0) + 0.0702
 Lww[npts::] = np.flip(Lww[0:npts-1])
 
-def create_sigma_interps(delta, u_tau):
+def create_sigma_interps(delta, u_tau, ymin=0.0):
     ''' Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
@@ -82,6 +82,9 @@ def create_sigma_interps(delta, u_tau):
 
         u_tau : float
             Friction velocity.
+
+        ymin : float
+            Offset coordinate for bottom of channel wall
 
     Returns:
     --------
@@ -122,7 +125,7 @@ def create_sigma_interps(delta, u_tau):
     sigmas[:,2,1] = Lww*delta
     sigmas[:,2,2] = Lww*delta
 
-    y = ys*delta
+    y = ys*delta + ymin
 
     sigma_interps = interp1d(y, sigmas, kind='linear',axis=0,bounds_error=False,
                              fill_value=(sigmas[0,:,:],sigmas[-1,:,:]), assume_sorted=True)
