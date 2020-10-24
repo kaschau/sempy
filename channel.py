@@ -32,22 +32,29 @@ class channel:
             raise ValueError('Please set your flow data before trying to populate your domain')
 
         #determine min,max sigmas
-        #test_sigmas = self.sigma_interp(np.linspace(self.ymin,self.ymax,200))
-        # sigma_x_min = np.min(test_sigmas[:,:,0])
-        # sigma_x_max = np.max(test_sigmas[:,:,0])
-        # sigma_y_min = np.min(test_sigmas[:,:,1])
-        # sigma_y_max = np.max(test_sigmas[:,:,1])
-        # sigma_z_min = np.min(test_sigmas[:,:,2])
-        # sigma_z_max = np.max(test_sigmas[:,:,2])
+        test_sigmas = self.sigma_interp(np.linspace(self.ymin,self.ymax,200))
 
-        sigma_x_min = np.min(self.sigma_interp(0)[0])
-        sigma_x_max = np.max(self.sigma_interp(1.0)[0])
+        sigma_x_min = np.min(test_sigmas[:,:,0])
+        sigma_x_max = np.max(test_sigmas[:,:,0])
+        sigma_y_min = np.min(test_sigmas[:,:,1])
+        sigma_y_max = np.max(test_sigmas[:,:,1])
+        sigma_z_min = np.min(test_sigmas[:,:,2])
+        sigma_z_max = np.max(test_sigmas[:,:,2])
 
-        sigma_y_min = np.min(self.sigma_interp(0)[1])
-        sigma_y_max = np.max(self.sigma_interp(1.0)[1])
+        V_sigma_x_min = np.min(np.product(test_sigmas[:,0,:], axis=1))
+        V_sigma_y_min = np.min(np.product(test_sigmas[:,1,:], axis=1))
+        V_sigma_z_min = np.min(np.product(test_sigmas[:,2,:], axis=1))
 
-        sigma_z_min = np.min(self.sigma_interp(0)[2])
-        sigma_z_max = np.max(self.sigma_interp(1.0)[2])
+        V_sigma_min = np.min([V_sigma_x_min,V_sigma_y_min,V_sigma_z_min])
+
+        # sigma_x_min = np.min(self.sigma_interp(0)[0])
+        # sigma_x_max = np.max(self.sigma_interp(1.0)[0])
+
+        # sigma_y_min = np.min(self.sigma_interp(0)[1])
+        # sigma_y_max = np.max(self.sigma_interp(1.0)[1])
+
+        # sigma_z_min = np.min(self.sigma_interp(0)[2])
+        # sigma_z_max = np.max(self.sigma_interp(1.0)[2])
 
         #generate eddy volume
         lows  = [self.xmin - sigma_x_max, self.ymin - sigma_y_max, self.zmin - sigma_z_max]
@@ -56,8 +63,8 @@ class channel:
         self.VB = np.product(np.array(highs) - np.array(lows))
 
         #Compute number of eddys
-        neddy = int( C_Eddy * self.VB / (sigma_x_min*sigma_y_min*sigma_z_min) )
-
+        neddy = int( C_Eddy * self.VB / V_sigma_min )
+        print(neddy)
         #Generate random eddy locations
         temp_eddy_locs = np.random.uniform(low=lows,high=highs,size=(neddy,3))
 
@@ -108,3 +115,4 @@ class channel:
         print(f'      sigma_y_max = {sigma_y_max}')
         print(f'      sigma_z_min = {sigma_z_min}')
         print(f'      sigma_z_max = {sigma_z_max}')
+        print(f'      V_sigma_min = {V_sigma_min}')
