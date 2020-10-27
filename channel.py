@@ -89,22 +89,18 @@ class channel:
         self.neddy = self.eddy_locs.shape[0]
         #Compute all eddy sigmas as function of y
         self.sigmas = self.sigma_interp(self.eddy_locs[:,1])
-        #Compute Rij for all eddys as a function of y
-        self.Rij = self.Rij_interp(self.eddy_locs[:,1])
-        #Cholesky decomp of all eddys
-        self.aij = np.linalg.cholesky(self.Rij)
 
         #generate epsilons
-        temp_eps_k = np.where(np.random.random((self.neddy,3,1)) <= 0.5,1.0,-1.0)
+        temp_eps = np.where(np.random.random((self.neddy,3)) <= 0.5,1.0,-1.0)
         #Make periodic
         if periodic_x:
-            temp_eps_k[np.where(temp_eddy_locs[:,0] > self.xmax-sigma_x_max)] = temp_eps_k[np.where(self.eddy_locs[:,0] < self.xmin+sigma_x_max)]
+            temp_eps[np.where(temp_eddy_locs[:,0] > self.xmax-sigma_x_max)] = temp_eps[np.where(self.eddy_locs[:,0] < self.xmin+sigma_x_max)]
         if periodic_y:
-            temp_eps_k[np.where(temp_eddy_locs[:,1] > self.ymax-sigma_y_max)] = temp_eps_k[np.where(self.eddy_locs[:,1] < self.ymin+sigma_y_max)]
+            temp_eps[np.where(temp_eddy_locs[:,1] > self.ymax-sigma_y_max)] = temp_eps[np.where(self.eddy_locs[:,1] < self.ymin+sigma_y_max)]
         if periodic_z:
-            temp_eps_k[np.where(temp_eddy_locs[:,2] > self.zmax-sigma_z_max)] = temp_eps_k[np.where(self.eddy_locs[:,2] < self.zmin+sigma_z_max)]
+            temp_eps[np.where(temp_eddy_locs[:,2] > self.zmax-sigma_z_max)] = temp_eps[np.where(self.eddy_locs[:,2] < self.zmin+sigma_z_max)]
 
-        self.eps_k = temp_eps_k
+        self.eps = temp_eps
 
         print(f'Eddy box volume of {self.VB}')
         print(f'Generating {self.neddy} eddys')
