@@ -7,7 +7,7 @@ from generate_primes import generate_primes
 
 #Flow
 U0 = 10 #Bulk flow velocity, used to determine length of box
-tme = 1 #Time of signal, used to determine length of box
+tme = 10 #Time of signal, used to determine length of box
 u_tau = 0.1
 delta = np.pi #Defined from flow configuration
 nframes = 100

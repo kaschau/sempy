@@ -26,6 +26,12 @@ def generate_primes(ys,zs,domain,nframes,u='u'):
         #Find eddies that contribute on line for y,z
         eddy_on_line = np.where( (np.abs( domain.eddy_locs[:,1] - y ) < domain.sigmas[:,k,1] )
                                & (np.abs( domain.eddy_locs[:,2] - z ) < domain.sigmas[:,k,2] ) )
+
+        #Compute Rij at local y
+        Rij = domain.Rij_interp(y)
+        #Cholesky decomp
+        aij = np.linalg.cholesky(Rij)
+
         for j,x in enumerate(xs):
 
             #Find all non zero eddies for u_k'
@@ -47,13 +53,13 @@ def generate_primes(ys,zs,domain,nframes,u='u'):
 
             #Total f(x)
             fx  = np.sqrt(domain.VB)/np.sqrt(np.product((x_sigma,y_sigma,z_sigma),axis=0)) * fxx*fxy*fxz
-
-            A = domain.aij[eddy_on_line][eddy_on_point]
-            e = domain.eps_k[eddy_on_line][eddy_on_point]
-            ck = np.matmul(A, e).reshape(e.shape[0:2])
-
+            #Contributing eddy intensities
+            e = domain.eps[eddy_on_line][eddy_on_point]
+            ck = np.matmul(aij, e.T).T
+            #All individual contributions to signal at current point
             Xk = ck*fx.reshape(fx.shape[0],1)
 
+            #Fluctuation values at point
             prime = 1.0/np.sqrt(domain.neddy) * np.sum( Xk ,axis=0)
 
             primes[i,j] = prime[k]
