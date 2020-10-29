@@ -72,7 +72,7 @@ Lww = np.empty(ys.shape[0])
 Lww[0:npts] = - 0.3968*ys[0:npts]*(ys[0:npts] - 2.0) + 0.0702
 Lww[npts::] = np.flip(Lww[0:npts-1])
 
-def create_sigma_interps(delta, u_tau, ymin=0.0):
+def create_sigma_interps(delta, u_tau, ymin=0.0, r=1.0):
     ''' Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
@@ -85,6 +85,9 @@ def create_sigma_interps(delta, u_tau, ymin=0.0):
 
         ymin : float
             Offset coordinate for bottom of channel wall
+
+           r : float
+            Scaling factor for sigmas
 
     Returns:
     --------
@@ -124,6 +127,8 @@ def create_sigma_interps(delta, u_tau, ymin=0.0):
     sigmas[:,2,0] = Tww*delta/u_tau
     sigmas[:,2,1] = Lww*delta
     sigmas[:,2,2] = Lww*delta
+
+    sigmas = sigmas*r
 
     y = ys*delta + ymin
 
