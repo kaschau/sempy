@@ -15,18 +15,21 @@ class channel:
         self.delta = delta
         self.utau = utau
 
-    def set_flow_data(self,sigmas_from='jarrin',stats_from='moser'):
+    def set_flow_data(self,sigmas_from='jarrin',stats_from='moser',rsigma=1.0):
 
         if sigmas_from == 'jarrin':
             from sigmas.jarrin_channel import create_sigma_interps
+        elif sigmas_from == 'uniform':
+            from sigmas.uniform import create_sigma_interps
+
         if stats_from == 'moser':
             from stats.moser_channel import create_stat_interps
 
-        self.sigma_interp = create_sigma_interps(self.delta,self.utau,self.ymin)
+        self.sigma_interp = create_sigma_interps(self.delta,self.utau,self.ymin,rsigma)
         self.Rij_interp,self.Ubar_interp = create_stat_interps(self.delta,self.utau,self.ymin)
 
 
-    def populate(self, C_Eddy=1.0, periodic_x=False, periodic_y=False, periodic_z=False):
+    def populate(self, C_Eddy=1.0, periodic_x=True,periodic_y=False,periodic_z=False):
 
         if not hasattr(self,'sigma_interp'):
             raise ValueError('Please set your flow data before trying to populate your domain')
@@ -41,20 +44,7 @@ class channel:
         sigma_z_min = np.min(test_sigmas[:,:,2])
         sigma_z_max = np.max(test_sigmas[:,:,2])
 
-        V_sigma_x_min = np.min(np.product(test_sigmas[:,0,:], axis=1))
-        V_sigma_y_min = np.min(np.product(test_sigmas[:,1,:], axis=1))
-        V_sigma_z_min = np.min(np.product(test_sigmas[:,2,:], axis=1))
-
-        V_sigma_min = np.min([V_sigma_x_min,V_sigma_y_min,V_sigma_z_min])
-
-        # sigma_x_min = np.min(self.sigma_interp(0)[0])
-        # sigma_x_max = np.max(self.sigma_interp(1.0)[0])
-
-        # sigma_y_min = np.min(self.sigma_interp(0)[1])
-        # sigma_y_max = np.max(self.sigma_interp(1.0)[1])
-
-        # sigma_z_min = np.min(self.sigma_interp(0)[2])
-        # sigma_z_max = np.max(self.sigma_interp(1.0)[2])
+        V_sigma_min = np.min(np.product(test_sigmas,axis=1))
 
         #generate eddy volume
         lows  = [self.xmin - sigma_x_max, self.ymin - sigma_y_max, self.zmin - sigma_z_max]
@@ -64,7 +54,7 @@ class channel:
 
         #Compute number of eddys
         neddy = int( C_Eddy * self.VB / V_sigma_min )
-        print(neddy)
+
         #Generate random eddy locations
         temp_eddy_locs = np.random.uniform(low=lows,high=highs,size=(neddy,3))
 
@@ -87,12 +77,13 @@ class channel:
 
         self.eddy_locs = temp_eddy_locs
         self.neddy = self.eddy_locs.shape[0]
+
         #Compute all eddy sigmas as function of y
         self.sigmas = self.sigma_interp(self.eddy_locs[:,1])
 
         #generate epsilons
-        temp_eps = np.where(np.random.random((self.neddy,3)) <= 0.5,1.0,-1.0)
-        #Make periodic
+        temp_eps = np.where(np.random.uniform(low=-1,high=1,size=(self.neddy,3))<= 0.0, -1.0,1.0)
+        #Transfer periodic epsilons
         if periodic_x:
             temp_eps[np.where(temp_eddy_locs[:,0] > self.xmax-sigma_x_max)] = temp_eps[np.where(self.eddy_locs[:,0] < self.xmin+sigma_x_max)]
         if periodic_y:
@@ -110,5 +101,5 @@ class channel:
         print(f'      sigma_y_min = {sigma_y_min}')
         print(f'      sigma_y_max = {sigma_y_max}')
         print(f'      sigma_z_min = {sigma_z_min}')
-        print(f'      sigma_z_max = {sigma_z_max}')
+        print(f'      sigma_z_max = {sigma_z_max}'
         print(f'      V_sigma_min = {V_sigma_min}')
