@@ -101,5 +101,5 @@ class channel:
         print(f'      sigma_y_min = {sigma_y_min}')
         print(f'      sigma_y_max = {sigma_y_max}')
         print(f'      sigma_z_min = {sigma_z_min}')
-        print(f'      sigma_z_max = {sigma_z_max}'
+        print(f'      sigma_z_max = {sigma_z_max}')
         print(f'      V_sigma_min = {V_sigma_min}')
