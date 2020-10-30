@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 
 from channel import channel
-from generate_primes import generate_primes
+from generate_primes_NORM import generate_primes
 
 #Flow
 U0 = 10 #Bulk flow velocity, used to determine length of box
@@ -17,7 +17,7 @@ z_width = 2*np.pi
 x_length = U0*tme
 
 #Eddy Density
-C_Eddy = 0.5
+C_Eddy = 4.0
 
 #Initialize domain
 domain = channel(tme,U0,0,y_height,0,z_width,delta=delta,utau=u_tau)
@@ -26,11 +26,11 @@ domain = channel(tme,U0,0,y_height,0,z_width,delta=delta,utau=u_tau)
 domain.set_flow_data(sigmas_from='jarrin',stats_from='moser')
 
 #Populate the domain
-domain.populate(C_Eddy)
+domain.populate_PDF(C_Eddy,periodic_z=True)
 
 #Create y,z coordinate pairs for calculation
 ys = np.array([np.pi/3.0])
-ys = np.linspace(0.001*y_height,y_height*0.999,10)
+ys = np.linspace(0.001*y_height,y_height*0.999,50)
 zs = np.ones(ys.shape[0])*np.pi
 
 #Compute u'
