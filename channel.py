@@ -147,7 +147,7 @@ class channel:
         Y_eddy_norm = integrate.trapz(Y_eddy_prime,test_ys)
         #Create a PDF of eddy placement in y
         pdf = Y_eddy_prime/Y_eddy_norm
-        expected_Veddy = integrate.trapz(pdf*Y_eddy,test_ys)
+        expected_Veddy = integrate.trapz(pdf*Y_eddy,test_ys)**3
 
         # import matplotlib.pyplot as plt
         # plt.plot(test_ys,Y_eddy)
