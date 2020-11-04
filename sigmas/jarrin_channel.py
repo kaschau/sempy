@@ -106,12 +106,6 @@ scale_factor : float
             return the values at the wall.
 
     '''
-    # For visualizing field only
-    if domain is None:
-        domain = object()
-        domain.delta = 1.0
-        domain.utau = 1.0
-        domain.viscocity = 1.0
 
     sigmas = np.empty((ys.shape[0],3,3))
 

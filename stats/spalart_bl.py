@@ -32,8 +32,6 @@ try:
 except:
     data = np.genfromtxt('./stats/Spalart_BL_ReTau547.csv',delimiter=',',comments='#',skip_header=1)
 
-npts = data.shape[0]
-
 ys = data[:,0]
 
 Us = data[:,1]
@@ -50,22 +48,20 @@ Ruw = data[:,6]
 
 Rvw = data[:,7]
 
-def create_stat_interps(delta, u_tau, ymin=0.0):
+def add_stat_info(domain):
     ''' Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
     -----------
-        delta : float
-            Channel half height
-
-        u_tau : float
-            Friction velocity.
-
-        ymin : float
-            Offset coordinate for bottom of channel wall
+      domain : sempy.channel
+            Channel object to populate with the sigma interpolator, and sigma mins and maxs
 
     Returns:
     --------
+     None :
+
+        Adds attributes to domain object sich as
+
         stats_interp,Ubar_interp : scipy.interpolate.1dinterp
             Interpolation functions with input y = *height above the bottom wall*
             Note that this interpolation function resclaes the data such that it is
@@ -89,39 +85,43 @@ def create_stat_interps(delta, u_tau, ymin=0.0):
 
     stats = np.empty((ys.shape[0],3,3))
 
-    stats[:,0,0] = Ruu*u_tau**2
-    stats[:,0,1] = Ruv*u_tau**2
-    stats[:,0,2] = Ruw*u_tau**2
+    stats[:,0,0] = Ruu*domain.utau**2
+    stats[:,0,1] = Ruv*domain.utau**2
+    stats[:,0,2] = Ruw*domain.utau**2
 
     stats[:,1,0] = stats[:,0,1]
-    stats[:,1,1] = Rvv*u_tau**2
-    stats[:,1,2] = Rvw*u_tau**2
+    stats[:,1,1] = Rvv*domain.utau**2
+    stats[:,1,2] = Rvw*domain.utau**2
 
     stats[:,2,0] = stats[:,0,2]
     stats[:,2,1] = stats[:,1,2]
-    stats[:,2,2] = Rww*u_tau**2
+    stats[:,2,2] = Rww*domain.utau**2
 
-    y = ys*delta + ymin
-    U = Us*u_tau
+    y = ys*domain.delta
+    U = Us*domain.utau
 
-    stats_interp = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
-                            fill_value=(stats[0,:,:],stats[-1,:,:]), assume_sorted=True)
+    domain.Rij_interp = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
+                                   fill_value=(stats[0,:,:],stats[-1,:,:]), assume_sorted=True)
 
-    Ubar_interp = interp1d(y, U, kind='linear', bounds_error=False,
-                           fill_value=(U[0],U[-1]), assume_sorted=True)
-
-    return stats_interp,Ubar_interp
+    domain.Ubar_interp = interp1d(y, U, kind='linear', bounds_error=False,
+                                  fill_value=(U[0],U[-1]), assume_sorted=True)
 
 
 if __name__ == "__main__":
 
     import matplotlib.pyplot as plt
 
-    yplot = np.linspace(0,1.5,100)
+    yplot = np.linspace(0,2,100)
 
-    stat,Ubar = create_stat_interps(1.0,1.0)
+    #Create dummy bl
+    domain = type('bl',(),{})
+    domain.y_height = 1.2
+    domain.viscocity = 1.0
+    domain.utau = 1.0
+    domain.delta = 1.0
+    add_stat_info(domain)
 
-    Rij = stat(yplot)
+    Rij = domain.Rij_interp(yplot)
 
     Ruu_plot = Rij[:,0,0]
     Rvv_plot = Rij[:,1,1]
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     Ruw_plot = Rij[:,0,2]
     Rvw_plot = Rij[:,1,2]
 
-    Uplot = Ubar(yplot)
+    Uplot = domain.Ubar_interp(yplot)
 
     fig, ax = plt.subplots(1,2,figsize=(12,5))
     ax1 = ax[0]
