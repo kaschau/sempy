@@ -72,26 +72,20 @@ Lww = np.empty(ys.shape[0])
 Lww[0:npts] = - 0.3968*ys[0:npts]*(ys[0:npts] - 2.0) + 0.0702
 Lww[npts::] = np.flip(Lww[0:npts-1])
 
-def create_sigma_interps(delta, u_tau, ymin=0.0, r=1.0):
+def add_sigma_info(domain, scale_factor=1.0):
     ''' Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
     -----------
-        delta : float
-            Channel half height
+      domain : sempy.channel
+            Channel object to populate with the sigma interpolator, and sigma mins and maxs
 
-        u_tau : float
-            Friction velocity.
-
-        ymin : float
-            Offset coordinate for bottom of channel wall
-
-           r : float
-            Scaling factor for sigmas
+scale_factor : float
+            Scaling factor for default sigmas, keep 1 unless your doing some sensitivity study
 
     Returns:
     --------
-        sigma_interps : scipy.interpolate.1dinterp
+        sigma_interp : scipy.interpolate.1dinterp
             Interpolation function with input y = *height above the bottom wall*
             Note that this interpolation function resclaes the data such that it is
             for your channel, not a non dimensionalized channel. Same with the sigmas,
@@ -112,38 +106,64 @@ def create_sigma_interps(delta, u_tau, ymin=0.0, r=1.0):
             return the values at the wall.
 
     '''
-
+    # For visualizing field only
+    if domain is None:
+        domain = object()
+        domain.delta = 1.0
+        domain.utau = 1.0
+        domain.viscocity = 1.0
 
     sigmas = np.empty((ys.shape[0],3,3))
 
-    sigmas[:,0,0] = Tuu*delta/u_tau
-    sigmas[:,0,1] = Luu*delta
-    sigmas[:,0,2] = Luu*delta
+    sigmas[:,0,0] = Tuu*domain.delta/domain.utau
+    sigmas[:,0,1] = Luu*domain.delta
+    sigmas[:,0,2] = Luu*domain.delta
 
-    sigmas[:,1,0] = Tvv*delta/u_tau
-    sigmas[:,1,1] = Lvv*delta
-    sigmas[:,1,2] = Lvv*delta
+    sigmas[:,1,0] = Tvv*domain.delta/domain.utau
+    sigmas[:,1,1] = Lvv*domain.delta
+    sigmas[:,1,2] = Lvv*domain.delta
 
-    sigmas[:,2,0] = Tww*delta/u_tau
-    sigmas[:,2,1] = Lww*delta
-    sigmas[:,2,2] = Lww*delta
+    sigmas[:,2,0] = Tww*domain.delta/domain.utau
+    sigmas[:,2,1] = Lww*domain.delta
+    sigmas[:,2,2] = Lww*domain.delta
 
-    sigmas = sigmas*r
+    sigmas = sigmas*scale_factor
 
-    y = ys*delta + ymin
+    y = ys*domain.delta
 
-    sigma_interps = interp1d(y, sigmas, kind='linear',axis=0,bounds_error=False,
-                             fill_value=(sigmas[0,:,:],sigmas[-1,:,:]), assume_sorted=True)
+    domain.sigma_interp = interp1d(y, sigmas, kind='linear',axis=0,bounds_error=False,
+                                    fill_value=(sigmas[0,:,:],sigmas[-1,:,:]), assume_sorted=True)
 
-    return sigma_interps
+    #determine min,max sigmas
+    # Here we assume that signal generation at smallest y value is at yplus=1
+    test_ys = np.linspace(domain.yp1,domain.y_height-domain.yp1,200)
+    test_sigmas = domain.sigma_interp(test_ys)
 
+    domain.sigma_x_min = np.min(test_sigmas[:,:,0])
+    domain.sigma_x_max = np.max(test_sigmas[:,:,0])
+    domain.sigma_y_min = np.min(test_sigmas[:,:,1])
+    domain.sigma_y_max = np.max(test_sigmas[:,:,1])
+    domain.sigma_z_min = np.min(test_sigmas[:,:,2])
+    domain.sigma_z_max = np.max(test_sigmas[:,:,2])
+
+    domain.V_sigma_min = np.min(np.product(test_sigmas,axis=1))
+    domain.V_sigma_max = np.max(np.product(test_sigmas,axis=1))
 
 if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
 
+    #Create dummy channel
+    domain = type('channel',(),{})
+    domain.ymax = 2
+    domain.viscocity = 1.0
+    domain.utau = 1.0
+    domain.delta = 1.0
+    domain.yp1 = 1e-5
+    add_sigma_info(domain)
+
     yplot = np.linspace(0,2,100)
-    sigmas = create_sigma_interps(1.0,1.0)(yplot)
+    sigmas = domain.sigma_interp(yplot)
 
     Tuu_plot = sigmas[:,0,0]
     Luu_plot = sigmas[:,0,1]

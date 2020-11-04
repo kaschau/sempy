@@ -28,58 +28,44 @@ from the top wall's perspective, making the data defined contuniously from 0-->2
 
 
 try:
-    data = np.genfromtxt('./Moser_Channel_ReTau590.csv',delimiter=',',comments='#',skip_header=5)
+    data = np.genfromtxt('./Spalart_BL_ReTau547.csv',delimiter=',',comments='#',skip_header=1)
 except:
-    data = np.genfromtxt('./stats/Moser_Channel_ReTau590.csv',delimiter=',',comments='#',skip_header=5)
+    data = np.genfromtxt('./stats/Spalart_BL_ReTau547.csv',delimiter=',',comments='#',skip_header=1)
 
 npts = data.shape[0]
 
-ys = np.empty(npts*2-1)
-ys[0:npts] = data[:,0]
-ys[npts::] = 2.0 - np.flip(ys[0:npts-1])
+ys = data[:,0]
 
-Us = np.empty(npts*2-1)
-Us[0:npts] = data[:,1]
-Us[npts::] = np.flip(Us[0:npts-1])
+Us = data[:,1]
 
-Ruu = np.empty(npts*2-1)
-Ruu[0:npts] = data[:,2]
-Ruu[npts::] = np.flip(Ruu[0:npts-1])
+Ruu = data[:,2]
 
-Rvv = np.empty(npts*2-1)
-Rvv[0:npts] = data[:,3]
-Rvv[npts::] = np.flip(Rvv[0:npts-1])
+Rvv = data[:,3]
 
-Rww = np.empty(npts*2-1)
-Rww[0:npts] = data[:,4]
-Rww[npts::] = np.flip(Rww[0:npts-1])
+Rww = data[:,4]
 
-Ruv = np.empty(npts*2-1)
-Ruv[0:npts] = data[:,5]
-Ruv[npts::] = -np.flip(Ruv[0:npts-1])
+Ruv = data[:,5]
 
-Ruw = np.empty(npts*2-1)
-Ruw[0:npts] = data[:,6]
-Ruw[npts::] = np.flip(Ruw[0:npts-1])
+Ruw = data[:,6]
 
-Rvw = np.empty(npts*2-1)
-Rvw[0:npts] = data[:,7]
-Rvw[npts::] = -np.flip(Rvw[0:npts-1])
+Rvw = data[:,7]
 
-def add_stat_info(domain):
+def create_stat_interps(delta, u_tau, ymin=0.0):
     ''' Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
     -----------
-      domain : sempy.channel
-            Channel object to populate with the sigma interpolator, and sigma mins and maxs
+        delta : float
+            Channel half height
+
+        u_tau : float
+            Friction velocity.
+
+        ymin : float
+            Offset coordinate for bottom of channel wall
 
     Returns:
     --------
-     None :
-
-        Adds attributes to domain object sich as
-
         stats_interp,Ubar_interp : scipy.interpolate.1dinterp
             Interpolation functions with input y = *height above the bottom wall*
             Note that this interpolation function resclaes the data such that it is
@@ -103,43 +89,39 @@ def add_stat_info(domain):
 
     stats = np.empty((ys.shape[0],3,3))
 
-    stats[:,0,0] = Ruu*domain.utau**2
-    stats[:,0,1] = Ruv*domain.utau**2
-    stats[:,0,2] = Ruw*domain.utau**2
+    stats[:,0,0] = Ruu*u_tau**2
+    stats[:,0,1] = Ruv*u_tau**2
+    stats[:,0,2] = Ruw*u_tau**2
 
     stats[:,1,0] = stats[:,0,1]
-    stats[:,1,1] = Rvv*domain.utau**2
-    stats[:,1,2] = Rvw*domain.utau**2
+    stats[:,1,1] = Rvv*u_tau**2
+    stats[:,1,2] = Rvw*u_tau**2
 
     stats[:,2,0] = stats[:,0,2]
     stats[:,2,1] = stats[:,1,2]
-    stats[:,2,2] = Rww*domain.utau**2
+    stats[:,2,2] = Rww*u_tau**2
 
-    y = ys*domain.delta
-    U = Us*domain.utau
+    y = ys*delta + ymin
+    U = Us*u_tau
 
-    domain.Rij_interp = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
-                                   fill_value=(stats[0,:,:],stats[-1,:,:]), assume_sorted=True)
+    stats_interp = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
+                            fill_value=(stats[0,:,:],stats[-1,:,:]), assume_sorted=True)
 
-    domain.Ubar_interp = interp1d(y, U, kind='linear', bounds_error=False,
-                                  fill_value=(U[0],U[-1]), assume_sorted=True)
+    Ubar_interp = interp1d(y, U, kind='linear', bounds_error=False,
+                           fill_value=(U[0],U[-1]), assume_sorted=True)
+
+    return stats_interp,Ubar_interp
 
 
 if __name__ == "__main__":
 
     import matplotlib.pyplot as plt
 
-    yplot = np.linspace(0,2,100)
+    yplot = np.linspace(0,1.5,100)
 
-    #Create dummy channel
-    domain = type('channel',(),{})
-    domain.ymax = 2
-    domain.viscocity = 1.0
-    domain.utau = 1.0
-    domain.delta = 1.0
-    add_stat_info(domain)
+    stat,Ubar = create_stat_interps(1.0,1.0)
 
-    Rij = domain.Rij_interp(yplot)
+    Rij = stat(yplot)
 
     Ruu_plot = Rij[:,0,0]
     Rvv_plot = Rij[:,1,1]
@@ -149,7 +131,7 @@ if __name__ == "__main__":
     Ruw_plot = Rij[:,0,2]
     Rvw_plot = Rij[:,1,2]
 
-    Uplot = domain.Ubar_interp(yplot)
+    Uplot = Ubar(yplot)
 
     fig, ax = plt.subplots(1,2,figsize=(12,5))
     ax1 = ax[0]
@@ -159,7 +141,7 @@ if __name__ == "__main__":
     ax1.plot(Rvv_plot,yplot,label=r'$R_{vv}$')
     ax1.plot(Rww_plot,yplot,label=r'$R_{ww}$')
     ax1.legend()
-    ax1.set_title('Moser Channel Reynolds Stress')
+    ax1.set_title('Spalart BL Reynolds Stress')
 
     ax2 = ax1.twiny()
     ax2.set_xlabel(r'$R_{ij}/u_{\tau}^{2}$')
@@ -169,7 +151,7 @@ if __name__ == "__main__":
     ax2.legend()
 
     ax3 = ax[1]
-    ax3.set_title(r'Moser $\bar{U}$')
+    ax3.set_title(r'Spalart $\bar{U}$')
     ax3.set_xlabel(r'$U^{+}$')
     ax3.set_ylabel(r'$y/ \delta$')
     ax3.plot(Uplot,yplot,label='$U^{+}$')

@@ -2,38 +2,44 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-from channel import channel
-from generate_primes_NORM import generate_primes
+from geometries.box import box
+from generate_primes import generate_primes
 
 #Flow
-U0 = 10 #Bulk flow velocity, used to determine length of box
+Ublk = 10 #Bulk flow velocity, used to determine length of box
 tme = 10 #Time of signal, used to determine length of box
-u_tau = 0.1
+utau = 0.1
 delta = np.pi #Defined from flow configuration
+viscocity = 1e-5
 nframes = 200
 #Box geobm
 y_height = delta*2.0
 z_width = 2*np.pi
-x_length = U0*tme
 
 #Eddy Density
 C_Eddy = 1.0
 
 #Initialize domain
-domain = channel(tme,U0,0,y_height,0,z_width,delta=delta,utau=u_tau)
+domain = box(Ublk,tme,y_height,z_width,delta,utau,viscocity)
 
 #Set flow properties from existing data
-domain.set_flow_data(sigmas_from='jarrin',stats_from='moser')
+domain.set_sem_data(sigmas_from='jarrin',stats_from='moser')
 
 #Populate the domain
-domain.populate_PDF(C_Eddy,periodic_z=True)
+domain.populate(C_Eddy,'PDF')
+#Create the eps
+domain.generate_eps()
+#Make it periodic
+domain.make_periodic(periodic_x=True,periodic_y=True,periodic_z=True)
+#Compute sigmas
+domain.compute_sigmas()
 
 #Create y,z coordinate pairs for calculation
-ys = np.linspace(0.001*y_height,y_height*0.999,50)
+ys = np.linspace(0.001*y_height,y_height*0.999,10)
 zs = np.ones(ys.shape[0])*np.pi
 
 #Compute u'
-primes = generate_primes(ys,zs,domain,nframes)
+primes = generate_primes(ys,zs,domain,nframes,normalization='exact')
 
 #Compute stats along line
 uus = np.mean(primes[:,:,0]**2,axis=1)
@@ -122,6 +128,6 @@ plt.close()
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$u \prime$')
 ax1.set_xlabel(r't')
-ax1.plot(np.linspace(0,domain.xmax,nframes),primes[int((primes.shape[0])/2),:,0],color='orange')
+ax1.plot(np.linspace(0,domain.x_length,nframes),primes[int((primes.shape[0])/2),:,0],color='orange')
 plt.savefig('uprime.png')
 plt.close()
