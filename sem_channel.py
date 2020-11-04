@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-from geometries.box import box
+from flows.channel import channel
 from generate_primes import generate_primes
 
 #Flow

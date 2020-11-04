@@ -17,9 +17,13 @@ class domain():
             from sigmas.jarrin_channel import add_sigma_info
         elif sigmas_from == 'uniform':
             from sigmas.uniform import add_sigma_info
+        elif sigmas_from == 'linear_bl':
+            from sigmas.linear_bl import add_sigma_info
 
         if stats_from == 'moser':
             from stats.moser_channel import add_stat_info
+        if stats_from == 'spalart':
+            from stats.spalart_bl import add_stat_info
 
         add_sigma_info(self, scale_factor)
         add_stat_info(self)

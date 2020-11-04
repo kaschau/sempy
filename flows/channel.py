@@ -5,7 +5,7 @@ import sys
 np.random.seed(1010)
 
 
-class box(domain):
+class channel(domain):
 
     def __init__(self,Ublk,tme,y_height,z_width,delta,utau,viscosity):
 
