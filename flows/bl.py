@@ -12,16 +12,17 @@ class bl(domain):
         super().__init__(Ublk,tme,delta,utau,viscosity)
         self.y_height = y_height
         self.z_width  = z_width
+        self.flow_type = 'bl'
 
     def populate(self, C_Eddy=1.0, method='random'):
 
         if not hasattr(self,'sigma_interp'):
             raise ValueError('Please set your flow data before trying to populate your domain')
 
-
+        self.eddy_pop_method = method
         #generate eddy volume
-        lows  = [          0.0 - self.sigma_x_max,           0.0 - self.sigma_y_max,          0.0 - self.sigma_z_max]
-        highs = [self.x_length + self.sigma_x_max, self.y_height + self.delta      , self.z_width + self.sigma_z_max]
+        lows  = [          0.0 - self.sigma_x_max, 0.0 - self.sigma_y_max,          0.0 - self.sigma_z_max]
+        highs = [self.x_length + self.sigma_x_max, 0.0 + self.delta      , self.z_width + self.sigma_z_max]
 
         # Set the eddy box volume
         self.VB = np.product(np.array(highs) - np.array(lows))
@@ -36,7 +37,7 @@ class bl(domain):
 
         elif method == 'PDF':
             #Eddy heights as a function of y
-            test_ys = np.linspace(0.0 - self.sigma_y_max, self.delta, 200)
+            test_ys = np.linspace(lows[1], highs[1], 200)
             test_sigmas = self.sigma_interp(test_ys)
             #Smallest eddy y height
             Y_eddy = np.min(test_sigmas[:,:,1], axis=1)
