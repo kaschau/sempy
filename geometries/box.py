@@ -5,14 +5,14 @@ import sys
 np.random.seed(1010)
 
 
-class channel(domain):
+class box(domain):
 
-    def __init__(self,Ublk,tme,y_height,z_width,delta,utau,viscosity):
+    def __init__(self,flow_type,Ublk,tme,y_height,z_width,delta,utau,viscosity):
 
         super().__init__(Ublk,tme,delta,utau,viscosity)
         self.y_height = y_height
         self.z_width  = z_width
-        self.flow_type = 'channel'
+        self.flow_type = flow_type
 
     def populate(self, C_Eddy=1.0, method='random'):
 
@@ -21,8 +21,12 @@ class channel(domain):
 
         self.eddy_pop_method = method
         #generate eddy volume
-        lows  = [          0.0 - self.sigma_x_max,           0.0 - self.sigma_y_max,          0.0 - self.sigma_z_max]
-        highs = [self.x_length + self.sigma_x_max, self.y_height + self.sigma_y_max, self.z_width + self.sigma_z_max]
+        if self.flow_type == 'channel':
+            lows  = [          0.0 - self.sigma_x_max,           0.0 - self.sigma_y_max,          0.0 - self.sigma_z_max]
+            highs = [self.x_length + self.sigma_x_max, self.y_height + self.sigma_y_max, self.z_width + self.sigma_z_max]
+        elif self.flow_type == 'bl':
+            lows  = [          0.0 - self.sigma_x_max,           0.0 - self.sigma_y_max,          0.0 - self.sigma_z_max]
+            highs = [self.x_length + self.sigma_x_max,           0.0 + self.delta      , self.z_width + self.sigma_z_max]
 
         # Set the eddy box volume
         self.VB = np.product(np.array(highs) - np.array(lows))
@@ -33,7 +37,6 @@ class channel(domain):
             #Generate random eddy locations
             self.eddy_locs = np.random.uniform(low=lows,high=highs,size=(neddy,3))
             self.neddy = self.eddy_locs.shape[0]
-
 
         elif method == 'PDF':
             #Eddy heights as a function of y
