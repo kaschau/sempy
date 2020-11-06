@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-from flows.bl import bl
+from geometries.box import box
 from generate_primes import generate_primes
 
 #Flow
@@ -19,8 +19,8 @@ z_width = 2*delta
 #Eddy Density
 C_Eddy = 1.0
 
-#Initialize domain
-domain = bl(Ublk,tme,y_height,z_width,delta,utau,viscocity)
+#Initialize domain as 'bl'
+domain = box('bl',Ublk,tme,y_height,z_width,delta,utau,viscocity)
 
 #Set flow properties from existing data
 domain.set_sem_data(sigmas_from='linear_bl',stats_from='spalart')
@@ -34,8 +34,10 @@ domain.make_periodic(periodic_x=True,periodic_z=True)
 #Compute sigmas
 domain.compute_sigmas()
 
+domain.print_info()
+
 #Create y,z coordinate pairs for calculation
-ys = np.linspace(0.001*y_height,y_height*0.999,25)
+ys = np.linspace(0.001*y_height,y_height*0.999,10)
 zs = np.ones(ys.shape[0])*z_width/2.0
 
 #Compute u'
@@ -128,6 +130,6 @@ plt.close()
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$u \prime$')
 ax1.set_xlabel(r't')
-ax1.plot(np.linspace(0,domain.x_length,nframes),primes[int((primes.shape[0])/2),:,0],color='orange')
+ax1.plot(np.linspace(0,domain.x_length,nframes),primes[-1,:,0],color='orange')
 plt.savefig('uprime.png')
 plt.close()

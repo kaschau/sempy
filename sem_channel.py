@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-from flows.channel import channel
+from geometries.box import box
 from generate_primes import generate_primes
 
 #Flow
@@ -20,7 +20,7 @@ z_width = 2*np.pi
 C_Eddy = 1.0
 
 #Initialize domain
-domain = box(Ublk,tme,y_height,z_width,delta,utau,viscocity)
+domain = box('channel',Ublk,tme,y_height,z_width,delta,utau,viscocity)
 
 #Set flow properties from existing data
 domain.set_sem_data(sigmas_from='jarrin',stats_from='moser')
@@ -33,6 +33,8 @@ domain.generate_eps()
 domain.make_periodic(periodic_x=True,periodic_y=True,periodic_z=True)
 #Compute sigmas
 domain.compute_sigmas()
+
+domain.print_info()
 
 #Create y,z coordinate pairs for calculation
 ys = np.linspace(0.001*y_height,y_height*0.999,10)

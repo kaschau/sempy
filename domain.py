@@ -51,14 +51,14 @@ class domain():
         elif sigmas_from == 'linear_bl':
             from sigmas.linear_bl import add_sigma_info
         else:
-            raise NameError('Unknows sigmas keyword')
+            raise NameError('Unknows sigmas keyword : {sigmas_from}')
 
         if stats_from == 'moser':
             from stats.moser_channel import add_stat_info
-        if stats_from == 'spalart':
+        elif stats_from == 'spalart':
             from stats.spalart_bl import add_stat_info
         else:
-            raise NameError('Unknows stats keyword')
+            raise NameError(f'Unknows stats keyword : {stats_from}')
 
         add_sigma_info(self, scale_factor)
         add_stat_info(self)
