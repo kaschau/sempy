@@ -10,7 +10,7 @@ Ublk = 10 #Bulk flow velocity, used to determine length of box
 tme = 10 #Time of signal, used to determine length of box
 utau = 0.1
 delta = 1.0 #Defined from flow configuration
-viscocity = 1e-5
+viscosity = 1e-5
 nframes = 200
 #Box geobm
 y_height = 1.2*delta
@@ -20,10 +20,10 @@ z_width = 2*delta
 C_Eddy = 1.0
 
 #Initialize domain as 'bl'
-domain = box('bl',Ublk,tme,y_height,z_width,delta,utau,viscocity)
+domain = box('bl',Ublk,tme,y_height,z_width,delta,utau,viscosity)
 
 #Set flow properties from existing data
-domain.set_sem_data(sigmas_from='linear_bl',stats_from='spalart')
+domain.set_sem_data(sigmas_from='linear_bl',stats_from='spalart',profile_from='spalart')
 
 #Populate the domain
 domain.populate(C_Eddy,'PDF')
@@ -130,6 +130,7 @@ plt.close()
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$u \prime$')
 ax1.set_xlabel(r't')
+ax1.set_title('Free Stream Fluctuations')
 ax1.plot(np.linspace(0,domain.x_length,nframes),primes[-1,:,0],color='orange')
 plt.savefig('uprime.png')
 plt.close()

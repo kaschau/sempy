@@ -37,13 +37,16 @@ class domain():
 
         self.sigmas_from = None
         self.stats_from = None
+        self.profile_from = None
         self.eddy_pop_method = None
 
-    def set_sem_data(self,sigmas_from='jarrin',stats_from='moser',scale_factor=1.0):
+    def set_sem_data(self,sigmas_from='jarrin',stats_from='moser',profile_from='channel',scale_factor=1.0):
 
         self.sigmas_from = sigmas_from
         self.stats_from = stats_from
+        self.profile_from = profile_from
 
+        #SIGMAS
         if sigmas_from == 'jarrin':
             from sigmas.jarrin_channel import add_sigma_info
         elif sigmas_from == 'uniform':
@@ -53,6 +56,7 @@ class domain():
         else:
             raise NameError('Unknows sigmas keyword : {sigmas_from}')
 
+        #STATS
         if stats_from == 'moser':
             from stats.moser_channel import add_stat_info
         elif stats_from == 'spalart':
@@ -60,9 +64,21 @@ class domain():
         else:
             raise NameError(f'Unknows stats keyword : {stats_from}')
 
+        #PROFILE
+        if profile_from == 'channel':
+            from profiles.channel import add_profile_info
+        elif profile_from == 'bl':
+            from profiles.bl import add_profile_info
+        elif profile_from == 'moser':
+            from profiles.moser_channel import add_profile_info
+        elif profile_from == 'spalart':
+            from profiles.spalart_bl import add_profile_info
+        else:
+            raise NameError(f'Unknows profile keyword : {profile_from}')
+
         add_sigma_info(self, scale_factor)
         add_stat_info(self)
-
+        add_profile_info(self)
 
     def compute_sigmas(self):
         #Compute all eddy sigmas as function of y
@@ -121,11 +137,12 @@ class domain():
         print(r'    U_bulk = ',self.Ublk)
         print(r'    delta = ',self.delta)
         print(r'    u_tau = ',self.utau)
-        print(r'    viscocity = ',self.viscosity)
+        print(r'    viscosity = ',self.viscosity)
         print(r'    Y+ one = ',self.yp1)
 
         print(f'Sigmas from {self.sigmas_from}')
         print(f'Stats from {self.stats_from}')
+        print(f'Profile from {self.profile_from}')
 
         print('Sigmas (min,max):')
         print(f'    x : {self.sigma_x_min},{self.sigma_x_max}')

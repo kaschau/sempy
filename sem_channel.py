@@ -6,11 +6,13 @@ from geometries.box import box
 from generate_primes import generate_primes
 
 #Flow
-Ublk = 10 #Bulk flow velocity, used to determine length of box
+Re = 10e5
 tme = 10 #Time of signal, used to determine length of box
 utau = 0.1
 delta = np.pi #Defined from flow configuration
-viscocity = 1e-5
+viscosity = 1e-5
+Ublk = Re*viscosity/delta #Bulk flow velocity, used to determine length of box
+utau = Ublk/(5*np.log10(Re))
 nframes = 200
 #Box geobm
 y_height = delta*2.0
@@ -20,10 +22,10 @@ z_width = 2*np.pi
 C_Eddy = 1.0
 
 #Initialize domain
-domain = box('channel',Ublk,tme,y_height,z_width,delta,utau,viscocity)
+domain = box('channel',Ublk,tme,y_height,z_width,delta,utau,viscosity)
 
 #Set flow properties from existing data
-domain.set_sem_data(sigmas_from='jarrin',stats_from='moser')
+domain.set_sem_data(sigmas_from='jarrin',stats_from='moser',profile_from='channel')
 
 #Populate the domain
 domain.populate(C_Eddy,'PDF')
@@ -37,7 +39,7 @@ domain.compute_sigmas()
 domain.print_info()
 
 #Create y,z coordinate pairs for calculation
-ys = np.linspace(0.001*y_height,y_height*0.999,10)
+ys = np.linspace(0.001*y_height,y_height*0.999,20)
 zs = np.ones(ys.shape[0])*np.pi
 
 #Compute u'
@@ -61,7 +63,7 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
 ax1.set_xlabel(r'$\bar{U}$')
 ax1.plot(Us,ys,label=r'$\bar{U}$ SEM', color='orange')
-ax1.scatter(domain.Ubar_interp(ys),ys,label=r'$\bar{U}$ Moser',color='k')
+ax1.scatter(domain.Ubar_interp(ys),ys,label=r'$\bar{U}$ Profile',color='k')
 ax1.legend()
 plt.savefig('Ubar.png')
 plt.close()
@@ -130,6 +132,7 @@ plt.close()
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$u \prime$')
 ax1.set_xlabel(r't')
+ax1.set_title('Centerline Fluctiations')
 ax1.plot(np.linspace(0,domain.x_length,nframes),primes[int((primes.shape[0])/2),:,0],color='orange')
 plt.savefig('uprime.png')
 plt.close()
