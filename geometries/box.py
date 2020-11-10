@@ -76,3 +76,6 @@ class box(domain):
             self.eddy_locs = np.random.uniform(low=lows,high=highs,size=(self.neddy,3))
             #Replace ys with PDF ys
             self.eddy_locs[:,1] = eddy_ys
+
+        else:
+            raise NameError(f'Unknown population method : {method}')
