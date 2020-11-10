@@ -54,7 +54,7 @@ class domain():
         elif sigmas_from == 'linear_bl':
             from sigmas.linear_bl import add_sigma_info
         else:
-            raise NameError('Unknows sigmas keyword : {sigmas_from}')
+            raise NameError(f'Unknown sigmas keyword : {sigmas_from}')
 
         #STATS
         if stats_from == 'moser':
@@ -62,7 +62,7 @@ class domain():
         elif stats_from == 'spalart':
             from stats.spalart_bl import add_stat_info
         else:
-            raise NameError(f'Unknows stats keyword : {stats_from}')
+            raise NameError(f'Unknown stats keyword : {stats_from}')
 
         #PROFILE
         if profile_from == 'channel':
@@ -74,7 +74,7 @@ class domain():
         elif profile_from == 'spalart':
             from profiles.spalart_bl import add_profile_info
         else:
-            raise NameError(f'Unknows profile keyword : {profile_from}')
+            raise NameError(f'Unknown profile keyword : {profile_from}')
 
         add_sigma_info(self, scale_factor)
         add_stat_info(self)
