@@ -74,7 +74,7 @@ if __name__ == '__main__':
     #Create dummy channel
     domain = type('channel',(),{})
     domain.ymax = 2
-    domain.viscocity = 1.0
+    domain.viscosity = 1.0
     domain.utau = 1.0
     domain.delta = 1.0
 

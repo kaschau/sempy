@@ -34,19 +34,17 @@ except:
 
 ys = data[:,0]
 
-Us = data[:,1]
+Ruu = data[:,1]
 
-Ruu = data[:,2]
+Rvv = data[:,2]
 
-Rvv = data[:,3]
+Rww = data[:,3]
 
-Rww = data[:,4]
+Ruv = data[:,4]
 
-Ruv = data[:,5]
+Ruw = data[:,5]
 
-Ruw = data[:,6]
-
-Rvw = data[:,7]
+Rvw = data[:,6]
 
 def add_stat_info(domain):
     ''' Function that returns a 1d interpolation object creted from the data above.
@@ -98,14 +96,9 @@ def add_stat_info(domain):
     stats[:,2,2] = Rww*domain.utau**2
 
     y = ys*domain.delta
-    U = Us*domain.utau
 
     domain.Rij_interp = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
                                    fill_value=(stats[0,:,:],stats[-1,:,:]), assume_sorted=True)
-
-    domain.Ubar_interp = interp1d(y, U, kind='linear', bounds_error=False,
-                                  fill_value=(U[0],U[-1]), assume_sorted=True)
-
 
 if __name__ == "__main__":
 
@@ -116,7 +109,7 @@ if __name__ == "__main__":
     #Create dummy bl
     domain = type('bl',(),{})
     domain.y_height = 1.2
-    domain.viscocity = 1.0
+    domain.viscosity = 1.0
     domain.utau = 1.0
     domain.delta = 1.0
     add_stat_info(domain)
@@ -131,8 +124,6 @@ if __name__ == "__main__":
     Ruw_plot = Rij[:,0,2]
     Rvw_plot = Rij[:,1,2]
 
-    Uplot = domain.Ubar_interp(yplot)
-
     fig, ax = plt.subplots(1,2,figsize=(12,5))
     ax1 = ax[0]
     ax1.set_ylabel(r'$y/ \delta$')
@@ -143,18 +134,12 @@ if __name__ == "__main__":
     ax1.legend()
     ax1.set_title('Spalart BL Reynolds Stress')
 
-    ax2 = ax1.twiny()
+    ax2 = ax[1]
     ax2.set_xlabel(r'$R_{ij}/u_{\tau}^{2}$')
     ax2.plot(Ruv_plot,yplot,label='$R_{uv}$',linestyle='--')
     ax2.plot(Ruw_plot,yplot,label='$R_{vw}$',linestyle='--')
     ax2.plot(Rvw_plot,yplot,label='$R_{vw}$',linestyle='--')
     ax2.legend()
-
-    ax3 = ax[1]
-    ax3.set_title(r'Spalart $\bar{U}$')
-    ax3.set_xlabel(r'$U^{+}$')
-    ax3.set_ylabel(r'$y/ \delta$')
-    ax3.plot(Uplot,yplot,label='$U^{+}$')
 
     fig.tight_layout()
     plt.show()

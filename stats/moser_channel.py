@@ -38,32 +38,28 @@ ys = np.empty(npts*2-1)
 ys[0:npts] = data[:,0]
 ys[npts::] = 2.0 - np.flip(ys[0:npts-1])
 
-Us = np.empty(npts*2-1)
-Us[0:npts] = data[:,1]
-Us[npts::] = np.flip(Us[0:npts-1])
-
 Ruu = np.empty(npts*2-1)
-Ruu[0:npts] = data[:,2]
+Ruu[0:npts] = data[:,1]
 Ruu[npts::] = np.flip(Ruu[0:npts-1])
 
 Rvv = np.empty(npts*2-1)
-Rvv[0:npts] = data[:,3]
+Rvv[0:npts] = data[:,2]
 Rvv[npts::] = np.flip(Rvv[0:npts-1])
 
 Rww = np.empty(npts*2-1)
-Rww[0:npts] = data[:,4]
+Rww[0:npts] = data[:,3]
 Rww[npts::] = np.flip(Rww[0:npts-1])
 
 Ruv = np.empty(npts*2-1)
-Ruv[0:npts] = data[:,5]
+Ruv[0:npts] = data[:,4]
 Ruv[npts::] = -np.flip(Ruv[0:npts-1])
 
 Ruw = np.empty(npts*2-1)
-Ruw[0:npts] = data[:,6]
+Ruw[0:npts] = data[:,5]
 Ruw[npts::] = np.flip(Ruw[0:npts-1])
 
 Rvw = np.empty(npts*2-1)
-Rvw[0:npts] = data[:,7]
+Rvw[0:npts] = data[:,6]
 Rvw[npts::] = -np.flip(Rvw[0:npts-1])
 
 def add_stat_info(domain):
@@ -80,7 +76,7 @@ def add_stat_info(domain):
 
         Adds attributes to domain object sich as
 
-        stats_interp,Ubar_interp : scipy.interpolate.1dinterp
+        stats_interp : scipy.interpolate.1dinterp
             Interpolation functions with input y = *height above the bottom wall*
             Note that this interpolation function resclaes the data such that it is
             for your channel, not a non dimensionalized channel. These stats and
@@ -116,14 +112,9 @@ def add_stat_info(domain):
     stats[:,2,2] = Rww*domain.utau**2
 
     y = ys*domain.delta
-    U = Us*domain.utau
 
     domain.Rij_interp = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
                                    fill_value=(stats[0,:,:],stats[-1,:,:]), assume_sorted=True)
-
-    domain.Ubar_interp = interp1d(y, U, kind='linear', bounds_error=False,
-                                  fill_value=(U[0],U[-1]), assume_sorted=True)
-
 
 if __name__ == "__main__":
 
@@ -134,7 +125,7 @@ if __name__ == "__main__":
     #Create dummy channel
     domain = type('channel',(),{})
     domain.ymax = 2
-    domain.viscocity = 1.0
+    domain.viscosity = 1.0
     domain.utau = 1.0
     domain.delta = 1.0
     add_stat_info(domain)
@@ -149,8 +140,6 @@ if __name__ == "__main__":
     Ruw_plot = Rij[:,0,2]
     Rvw_plot = Rij[:,1,2]
 
-    Uplot = domain.Ubar_interp(yplot)
-
     fig, ax = plt.subplots(1,2,figsize=(12,5))
     ax1 = ax[0]
     ax1.set_ylabel(r'$y/ \delta$')
@@ -161,18 +150,12 @@ if __name__ == "__main__":
     ax1.legend()
     ax1.set_title('Moser Channel Reynolds Stress')
 
-    ax2 = ax1.twiny()
+    ax2 = ax[1]
     ax2.set_xlabel(r'$R_{ij}/u_{\tau}^{2}$')
     ax2.plot(Ruv_plot,yplot,label='$R_{uv}$',linestyle='--')
     ax2.plot(Ruw_plot,yplot,label='$R_{vw}$',linestyle='--')
     ax2.plot(Rvw_plot,yplot,label='$R_{vw}$',linestyle='--')
     ax2.legend()
-
-    ax3 = ax[1]
-    ax3.set_title(r'Moser $\bar{U}$')
-    ax3.set_xlabel(r'$U^{+}$')
-    ax3.set_ylabel(r'$y/ \delta$')
-    ax3.plot(Uplot,yplot,label='$U^{+}$')
 
     fig.tight_layout()
     plt.show()
