@@ -147,6 +147,9 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
         elif normalization == 'jarrin':
             primes_normed = np.sqrt(domain.VB)/np.sqrt(domain.neddy) * primes_no_norm
 
+        else:
+            raise NameError(f'Error: Unknown normalization : {normalization}')
+
         #Force statistics of three signals t match Rij
         prime = np.matmul(L, primes_normed.T).T
         #Return fluctionats
