@@ -27,15 +27,9 @@ try:
 except:
     data = np.genfromtxt('./profiles/Moser_Channel_ReTau590.csv',delimiter=',',comments='#',skip_header=5)
 
-npts = data.shape[0]
-
-ys = np.empty(npts*2-1)
-ys[0:npts] = data[:,0]
-ys[npts::] = 2.0 - np.flip(ys[0:npts-1])
-
-Us = np.empty(npts*2-1)
-Us[0:npts] = data[:,1]
-Us[npts::] = np.flip(Us[0:npts-1])
+yp = data[:,0]
+yd = yp/yp[-1]
+Us = data[:,1]
 
 def add_profile_info(domain):
     ''' Function that returns a 1d interpolation object creted from the data above.
@@ -55,8 +49,21 @@ def add_profile_info(domain):
             Interpolation functions with input y = *height above the bottom wall*
     '''
 
-    y = ys*domain.delta
+
+    yp_trans = 100
+    overlap = np.where(yp > 100)
+
+    #No idea if this is general enough
+    transition = np.exp(-np.exp(-7.5*np.linspace(0,1,overlap[0].shape[0])+2.0))
+
+    y = yp*domain.viscosity/domain.utau
+    y[overlap] = yp[overlap]*domain.viscosity/domain.utau*np.flip(transition) + yd[overlap]*domain.delta*transition
+
     U = Us*domain.utau
+    U[overlap] = U[overlap] + (domain.Ublk - U[overlap])*transition
+
+    y = np.concatenate((y,2.0*domain.delta-np.flip(y)))
+    U = np.concatenate((U,np.flip(U)))
 
     domain.Ubar_interp = interp1d(y, U, kind='linear',axis=0,bounds_error=False,
                                  fill_value=(U[0],U[-1]), assume_sorted=True)
@@ -65,8 +72,6 @@ if __name__ == "__main__":
 
     import matplotlib.pyplot as plt
 
-    yplot = np.concatenate((np.linspace(0,0.05,1000),np.linspace(0.05,1.95,100),np.linspace(1.95,2.0,1000)))
-
     #Create dummy channel
     domain = type('channel',(),{})
     Re = 10e5
@@ -74,6 +79,10 @@ if __name__ == "__main__":
     domain.delta = 1.0
     domain.Ublk = Re*domain.viscosity/domain.delta
     domain.utau = domain.Ublk/(5*np.log10(Re))
+
+    yplot = np.concatenate((np.linspace(0,0.05*domain.delta,1000),
+                            np.linspace(0.05*domain.delta,1.95*domain.delta,100),
+                            np.linspace(1.95*domain.delta,2.0*domain.delta,1000)))
 
     add_profile_info(domain)
 
@@ -92,10 +101,9 @@ if __name__ == "__main__":
     ax2.set_xlabel(r'$y^{+}$')
     ax2.set_ylabel(r'$u^{+}$')
     yplus = yplot*domain.utau/domain.viscosity
-    print(yplus[np.where(yplus<80)])
-    print(Uplot[np.where(yplus<80)]/domain.utau)
-    ax2.plot(yplus[np.where(yplus<800)],Uplot[np.where(yplus<800)])
-    #ax2.set_aspect('equal')
+    uplus = Uplot/domain.utau
+    ax2.plot(yplus[np.where(yplus<80)],uplus[np.where(yplus<80)])
+#    ax2.set_aspect('equal')
 
     fig.tight_layout()
     plt.show()
