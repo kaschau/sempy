@@ -32,11 +32,10 @@ try:
 except:
     data = np.genfromtxt('./stats/Moser_Channel_ReTau590.csv',delimiter=',',comments='#',skip_header=5)
 
-npts = data.shape[0]
+yp = data[:,0]
+yd = yp/yp.max()
 
-ys = np.empty(npts*2-1)
-ys[0:npts] = data[:,0]
-ys[npts::] = 2.0 - np.flip(ys[0:npts-1])
+npts = yp.shape[0]
 
 Ruu = np.empty(npts*2-1)
 Ruu[0:npts] = data[:,1]
@@ -97,7 +96,17 @@ def add_stat_info(domain):
             return the values at the wall.
     '''
 
-    stats = np.empty((ys.shape[0],3,3))
+    yp_trans = 100
+    overlap = np.where(yp > 100)
+
+    #No idea if this is general enough
+    transition = np.exp(-np.exp(-7.5*np.linspace(0,1,overlap[0].shape[0])+2.0))
+
+    y = yp*domain.viscosity/domain.utau
+    y[overlap] = yp[overlap]*domain.viscosity/domain.utau*np.flip(transition) + yd[overlap]*domain.delta*transition
+    y = np.concatenate((y,2.0*domain.delta-np.flip(y[1::])))
+
+    stats = np.empty((y.shape[0],3,3))
 
     stats[:,0,0] = Ruu*domain.utau**2
     stats[:,0,1] = Ruv*domain.utau**2
@@ -111,8 +120,6 @@ def add_stat_info(domain):
     stats[:,2,1] = stats[:,1,2]
     stats[:,2,2] = Rww*domain.utau**2
 
-    y = ys*domain.delta
-
     domain.Rij_interp = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
                                    fill_value=(stats[0,:,:],stats[-1,:,:]), assume_sorted=True)
 
@@ -120,42 +127,57 @@ if __name__ == "__main__":
 
     import matplotlib.pyplot as plt
 
-    yplot = np.linspace(0,2,100)
-
     #Create dummy channel
     domain = type('channel',(),{})
-    domain.ymax = 2
-    domain.viscosity = 1.0
-    domain.utau = 1.0
+    Re = 10e5
+    domain.viscosity = 1e-5
     domain.delta = 1.0
+    domain.Ublk = Re*domain.viscosity/domain.delta
+    domain.utau = domain.Ublk/(5*np.log10(Re))
+
+    yplot = np.concatenate((np.linspace(0,0.05*domain.delta,1000),
+                            np.linspace(0.05*domain.delta,1.95*domain.delta,100),
+                            np.linspace(1.95*domain.delta,2.0*domain.delta,1000)))
+
     add_stat_info(domain)
 
     Rij = domain.Rij_interp(yplot)
 
-    Ruu_plot = Rij[:,0,0]
-    Rvv_plot = Rij[:,1,1]
-    Rww_plot = Rij[:,2,2]
+    Ruu_plot = Rij[:,0,0]/domain.utau**2
+    Rvv_plot = Rij[:,1,1]/domain.utau**2
+    Rww_plot = Rij[:,2,2]/domain.utau**2
 
-    Ruv_plot = Rij[:,0,1]
-    Ruw_plot = Rij[:,0,2]
-    Rvw_plot = Rij[:,1,2]
+    Ruv_plot = Rij[:,0,1]/domain.utau**2
+    Ruw_plot = Rij[:,0,2]/domain.utau**2
+    Rvw_plot = Rij[:,1,2]/domain.utau**2
 
     fig, ax = plt.subplots(1,2,figsize=(12,5))
     ax1 = ax[0]
     ax1.set_ylabel(r'$y/ \delta$')
     ax1.set_xlabel(r'$R_{ii}/u_{\tau}^{2}$')
-    ax1.plot(Ruu_plot,yplot,label=r'$R_{uu}$')
-    ax1.plot(Rvv_plot,yplot,label=r'$R_{vv}$')
-    ax1.plot(Rww_plot,yplot,label=r'$R_{ww}$')
+    ax1.plot(Ruu_plot,yplot,label=r'$uu$')
+    ax1.plot(Rvv_plot,yplot,label=r'$vv$')
+    ax1.plot(Rww_plot,yplot,label=r'$ww$')
     ax1.legend()
     ax1.set_title('Moser Channel Reynolds Stress')
 
-    ax2 = ax[1]
+    ax2 = ax1.twiny()
     ax2.set_xlabel(r'$R_{ij}/u_{\tau}^{2}$')
-    ax2.plot(Ruv_plot,yplot,label='$R_{uv}$',linestyle='--')
-    ax2.plot(Ruw_plot,yplot,label='$R_{vw}$',linestyle='--')
-    ax2.plot(Rvw_plot,yplot,label='$R_{vw}$',linestyle='--')
+    ax2.plot(Ruv_plot,yplot,label='$uv$',linestyle='--')
+    ax2.plot(Ruw_plot,yplot,label='$vw$',linestyle='--')
+    ax2.plot(Rvw_plot,yplot,label='$vw$',linestyle='--')
     ax2.legend()
+
+    ax3 = ax[1]
+    yplus = yplot*domain.utau/domain.viscosity
+    string = 'Moser Profile Re=10e5, '+r'$u_{\tau}=$'+'{:.2f} '.format(domain.utau)+r'$U_{0}=$'+f'{domain.Ublk}'
+    ax3.set_title(f'{string}')
+    ax3.set_xlabel(r'$y^{+}$')
+    ax3.set_ylabel(r'$R_{ii}/u_{\tau}^{2}$')
+    ax3.plot(yplus[np.where((yplus<100))],Ruu_plot[np.where((yplus<100))],label=r'$uu$')
+    ax3.plot(yplus[np.where((yplus<100))],Rvv_plot[np.where((yplus<100))],label=r'$vv$')
+    ax3.plot(yplus[np.where((yplus<100))],Rww_plot[np.where((yplus<100))],label=r'$ww$')
+    ax3.legend()
 
     fig.tight_layout()
     plt.show()
