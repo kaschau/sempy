@@ -19,7 +19,7 @@ y_height = delta*2.0
 z_width = 2*np.pi
 
 #Eddy Density
-C_Eddy = 1.0
+C_Eddy = 2.0
 
 #Initialize domain
 domain = box('channel',Ublk,tme,y_height,z_width,delta,utau,viscosity)
@@ -39,7 +39,10 @@ domain.compute_sigmas()
 domain.print_info()
 
 #Create y,z coordinate pairs for calculation
-ys = np.linspace(0.001*y_height,y_height*0.999,20)
+ys = np.concatenate((np.linspace(0,0.01*domain.delta,5),
+                     np.linspace(0.01*domain.delta,1.99*domain.delta,20),
+                     np.linspace(1.99*domain.delta,2.0*domain.delta,5)))
+
 zs = np.ones(ys.shape[0])*np.pi
 
 #Compute u'
@@ -76,6 +79,17 @@ ax1.plot(uus,ys,label=r'$R_{uu}$ SEM', color='orange')
 ax1.scatter(domain.Rij_interp(ys)[:,0,0],ys,label=r'$R_{uu}$ Moser', color='k')
 ax1.legend()
 plt.savefig('Ruu.png')
+plt.close()
+
+#<uu>/utau**2 vs yplus
+fig, ax1 = plt.subplots()
+ax1.set_xlabel(r'$y^{+}$')
+ax1.set_ylabel(r'$R_{uu}/u_{\tau}^{2}$')
+yplus = ys*domain.utau/domain.viscosity
+ax1.plot(yplus[np.where(yplus<100)], uus[np.where(yplus<100)]/domain.utau**2, label=r'$R_{uu}/u_{\tau}^{2}$ SEM', color='orange')
+ax1.scatter(yplus[np.where(yplus<100)], domain.Rij_interp(ys)[:,0,0][np.where(yplus<100)]/domain.utau**2, label=r'$R_{uu}/u_{\tau}^{2}$ Moser', color='k')
+ax1.legend()
+plt.savefig('Ruu_v_yplus.png')
 plt.close()
 
 #Rvv
