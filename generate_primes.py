@@ -26,9 +26,9 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
     # to these eddy locations.
     for k,u in zip(range(3),['u','v','w']):
         eddys_in_dom = np.where( ( domain.eddy_locs[:,1] < dom_ymax + domain.sigmas[:,k,1].max() )
-                              & ( domain.eddy_locs[:,1] > dom_ymin - domain.sigmas[:,k,1].max() )
-                              & ( domain.eddy_locs[:,2] < dom_zmax + domain.sigmas[:,k,2].max() )
-                              & ( domain.eddy_locs[:,2] > dom_zmin - domain.sigmas[:,k,2].max() ) )
+                               & ( domain.eddy_locs[:,1] > dom_ymin - domain.sigmas[:,k,1].max() )
+                               & ( domain.eddy_locs[:,2] < dom_zmax + domain.sigmas[:,k,2].max() )
+                               & ( domain.eddy_locs[:,2] > dom_zmin - domain.sigmas[:,k,2].max() ) )
         eddy_locs_in_dom[u] = domain.eddy_locs[eddys_in_dom]
         sigmas_in_dom[u] = domain.sigmas[eddys_in_dom]
         eps_in_dom[u] = domain.eps[eddys_in_dom]
