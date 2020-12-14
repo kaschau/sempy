@@ -23,7 +23,7 @@ C_Eddy = 1.0
 domain = box('bl',Ublk,tme,y_height,z_width,delta,utau,viscosity)
 
 #Set flow properties from existing data
-domain.set_sem_data(sigmas_from='linear_bl',stats_from='spalart',profile_from='spalart')
+domain.set_sem_data(sigmas_from='linear_bl',stats_from='spalart',profile_from='bl')
 
 #Populate the domain
 domain.populate(C_Eddy,'PDF')
