@@ -4,24 +4,15 @@ from scipy.special import erf
 
 '''
 
-CHANNEL MEAN FLOW PROFILE
+BOUNDARY LAYER MEAN FLOW PROFILE
 
 Straight forward mean profile construction from theory, see Pope chapter 7.
-
-For outer region modeling and wake-law treatment we use
+For outer region blending and wake-law treatment we use
 
         Revisiting the law of the wake in wall turbulence
         J. Fluid Mech.(2017),vol. 811,pp.421–435
         Cambridge University Press 2016
         doi:10.1017/jfm.2016.788421
-
-There seems to be a pretty strong effect on the log->outer region when different values of
-\kappa and A (log-law constants) are used. When the kappa and A values reported for a
-channel in the paper above (see Sec 3.1) are used the outer region matches Moser ReTau=590
-data very well, but the log layer is off. When the classical values of \kappa=0.41 and A=5.2
-are used, both the log layer and outer region match Moser well. Need to test against other
-profiles. Above paper reports that outer modeling is fairly insensitive to these log-law
-constants.
 
 '''
 
@@ -31,7 +22,7 @@ def add_profile(domain):
     Parameters:
     -----------
       domain : sempy.channel
-            Channel object to populate with the sigma interpolator
+            Channel object to populate with the sigma interpolator, and sigma mins and maxs
 
     Returns:
     --------
@@ -40,7 +31,7 @@ def add_profile(domain):
         Adds attributes to domain
 
         Ubar_interp : scipy.interpolate.1dinterp
-            Interpolation functions with input y = *dimensionsal height above the bottom wall*
+            Interpolation functions with input y = *dimensional height above the bottom wall*
     '''
 
     #Viscous sublayer y+=[0,5]
@@ -56,7 +47,7 @@ def add_profile(domain):
     us_llr = (1.0/kappa * np.log(yplus_llr) + A) * domain.utau
     ys_llr = yplus_llr*domain.viscosity/domain.utau
 
-    #Buffer layer y+=[5,30], we use a simplt quadratic to bridge the visc sublayer and log-law region
+    #Buffer layer y+=[5,30], we use a CubicSpline to bridge the visc sublayer and log-law region
     yplus_bufl = np.linspace(5,30,10)
     ys_bufl = yplus_bufl*domain.viscosity/domain.utau
 
@@ -64,12 +55,12 @@ def add_profile(domain):
                        [us_vsl[-2],us_vsl[-1],us_llr[0],us_llr[1]],kind='quadratic')(ys_bufl)
 
     #Outer region, this is where the wake-law comes into play. See Table 1 from the paper for these values.
-    mu = 0.75*domain.delta
-    sigma = 0.25*domain.delta
+    mu = 0.54*domain.delta
+    sigma = 0.19*domain.delta
     ys_or = np.linspace(ys_llr[-1], domain.delta , 100)
     yplus_or = ys_or*domain.utau/domain.viscosity
 
-    E = 0.5*(1 + erf((ys_or - mu)/np.sqrt(2*sigma**2)) )
+    E = 0.5*(1 + erf((ys_or-mu)/np.sqrt(2*sigma**2)))
     #Make the blending a bit smoother
     s=4; E[0:s] = E[0:s]*np.array([i/s for i in range(s)])
     Up_inf = domain.Ublk/domain.utau
@@ -81,10 +72,6 @@ def add_profile(domain):
     ys = np.concatenate((ys_vsl,ys_bufl,ys_llr,ys_or))
     Us = np.concatenate((us_vsl,us_bufl,us_llr,us_or))
 
-    #Flip to define for entire channel
-    ys = np.concatenate((ys, 2.0*domain.delta-np.flip(ys)))
-    Us = np.concatenate((Us, np.flip(Us)))
-
     domain.Ubar_interp = interp1d(ys, Us, kind='linear', bounds_error=False,
                                   fill_value=(Us[0],Us[-1]), assume_sorted=True)
 
@@ -94,15 +81,14 @@ if __name__ == "__main__":
 
     #Create dummy channel
     domain = type('channel',(),{})
-    Re_tau = 587.19
-    domain.viscosity = 1.81e-5
-    domain.delta = 0.1
-    domain.utau = Re_tau*domain.viscosity/domain.delta
-    domain.Ublk = 2.12630000E+01*domain.utau
+    Re = 10e5
+    domain.viscosity = 1e-5
+    domain.delta = 1.0
+    domain.Ublk = Re*domain.viscosity/domain.delta
+    domain.utau = domain.Ublk/(5*np.log10(Re))
 
     yplot = np.concatenate((np.linspace(0,0.05*domain.delta,1000),
-                            np.linspace(0.05*domain.delta,1.95*domain.delta,100),
-                            np.linspace(1.95*domain.delta,2.0*domain.delta,1000)))
+                            np.linspace(0.05*domain.delta,1.15*domain.delta,100)))
 
     add_profile_info(domain)
 
@@ -111,7 +97,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(2,1,figsize=(5,10))
 
     ax1 = ax[0]
-    string = '$Re_{\tau}=590$, '+r'$u_{\tau}=$'+'{:.2f} '.format(domain.utau)+r'$U_{0}=$'+'{:.6f}'.format(domain.Ublk)
+    string = 'Re=10e5, '+r'$u_{\tau}=$'+'{:.2f} '.format(domain.utau)+r'$U_{0}=$'+f'{domain.Ublk}'
     ax1.set_title(f'{string}')
     ax1.set_ylabel(r'$y/ \delta$')
     ax1.set_xlabel(r'$\bar{U}$')
@@ -121,7 +107,7 @@ if __name__ == "__main__":
     ax2.set_xlabel(r'$y^{+}$')
     ax2.set_ylabel(r'$u^{+}$')
     yplus = yplot*domain.utau/domain.viscosity
-    ax2.plot(yplus[np.where(yplus<100)],Uplot[np.where(yplus<100)]/domain.utau)
+    ax2.plot(yplus[np.where(yplus<80)],Uplot[np.where(yplus<80)]/domain.utau)
     ax2.set_aspect('equal')
 
     fig.tight_layout()
