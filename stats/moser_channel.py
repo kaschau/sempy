@@ -96,8 +96,9 @@ def add_stats(domain):
             return the values at the wall.
     '''
 
-    yp_trans = 100
-    overlap = np.where(yp > 100)
+    Re_tau = domain.utau*domain.delta/domain.viscosity
+    yp_trans = 3*np.sqrt(Re_tau)
+    overlap = np.where(yp > yp_trans)
 
     #No idea if this is general enough
     transition = np.exp(-np.exp(-7.5*np.linspace(0,1,overlap[0].shape[0])+2.0))
