@@ -11,7 +11,7 @@ function below
 
 '''
 
-def add_sigma_info(domain, scale_factor=1.0):
+def add_sigmas(domain, scale_factor=1.0):
     ''' Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     domain.utau = 1.0
     domain.delta = 1.0
 
-    add_sigma_info(domain)
+    add_sigmas(domain)
 
     yplot = np.linspace(0,2,100)
     sigmas = domain.sigma_interp(yplot)

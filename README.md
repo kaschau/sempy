@@ -1,2 +1,4 @@
-# sempy
+**sempy**
+
 Python implementation of SEM
+

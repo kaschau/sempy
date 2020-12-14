@@ -61,7 +61,7 @@ Rvw = np.empty(npts*2-1)
 Rvw[0:npts] = data[:,6]
 Rvw[npts::] = -np.flip(Rvw[0:npts-1])
 
-def add_stat_info(domain):
+def add_stats(domain):
     ''' Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
@@ -139,7 +139,7 @@ if __name__ == "__main__":
                             np.linspace(0.05*domain.delta,1.95*domain.delta,100),
                             np.linspace(1.95*domain.delta,2.0*domain.delta,1000)))
 
-    add_stat_info(domain)
+    add_stats(domain)
 
     Rij = domain.Rij_interp(yplot)
 

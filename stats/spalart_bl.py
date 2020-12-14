@@ -46,7 +46,7 @@ Ruw = data[:,5]
 
 Rvw = data[:,6]
 
-def add_stat_info(domain):
+def add_stats(domain):
     ''' Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     domain.viscosity = 1.0
     domain.utau = 1.0
     domain.delta = 1.0
-    add_stat_info(domain)
+    add_stats(domain)
 
     Rij = domain.Rij_interp(yplot)
 

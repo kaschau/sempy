@@ -104,7 +104,7 @@ if __name__ == "__main__":
                             np.linspace(0.05*domain.delta,1.95*domain.delta,100),
                             np.linspace(1.95*domain.delta,2.0*domain.delta,1000)))
 
-    add_profile_info(domain)
+    add_profile(domain)
 
     Uplot = domain.Ubar_interp(yplot)
 

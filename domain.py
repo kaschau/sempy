@@ -48,37 +48,35 @@ class domain():
 
         #SIGMAS
         if sigmas_from == 'jarrin':
-            from sigmas.jarrin_channel import add_sigma_info
+            from sigmas.jarrin_channel import add_sigmas
         elif sigmas_from == 'uniform':
-            from sigmas.uniform import add_sigma_info
+            from sigmas.uniform import add_sigmas
         elif sigmas_from == 'linear_bl':
-            from sigmas.linear_bl import add_sigma_info
+            from sigmas.linear_bl import add_sigmas
         else:
             raise NameError(f'Unknown sigmas keyword : {sigmas_from}')
 
         #STATS
         if stats_from == 'moser':
-            from stats.moser_channel import add_stat_info
+            from stats.moser_channel import add_stats
         elif stats_from == 'spalart':
-            from stats.spalart_bl import add_stat_info
+            from stats.spalart_bl import add_stats
         else:
             raise NameError(f'Unknown stats keyword : {stats_from}')
 
-        #PROFILE
+        #MEAN VELOCITY PROFILE
         if profile_from == 'channel':
-            from profiles.channel import add_profile_info
+            from profiles.channel import add_profile
         elif profile_from == 'bl':
-            from profiles.bl import add_profile_info
-        elif profile_from == 'moser':
-            from profiles.moser_channel import add_profile_info
+            from profiles.bl import add_profile
         elif profile_from == 'spalart':
-            from profiles.spalart_bl import add_profile_info
+            from profiles.spalart_bl import add_profile
         else:
             raise NameError(f'Unknown profile keyword : {profile_from}')
 
-        add_sigma_info(self, scale_factor)
-        add_stat_info(self)
-        add_profile_info(self)
+        add_sigmas(self, scale_factor)
+        add_stats(self)
+        add_profile(self)
 
     def compute_sigmas(self):
         #Compute all eddy sigmas as function of y
