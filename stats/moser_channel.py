@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.interpolate import interp1d
+from pathlib import Path
 
 '''
 
@@ -26,11 +27,8 @@ from the top wall's perspective, making the data defined contuniously from 0-->2
 
 '''
 
-
-try:
-    data = np.genfromtxt('./Moser_Channel_ReTau590.csv',delimiter=',',comments='#',skip_header=5)
-except:
-    data = np.genfromtxt('./stats/Moser_Channel_ReTau590.csv',delimiter=',',comments='#',skip_header=5)
+relpath = Path(__file__).parent / "Moser_Channel_ReTau590.csv"
+data = np.genfromtxt(relpath,delimiter=',',comments='#',skip_header=5)
 
 yp = data[:,0]
 yd = yp/yp.max()

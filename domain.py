@@ -48,29 +48,29 @@ class domain():
 
         #SIGMAS
         if sigmas_from == 'jarrin':
-            from sigmas.jarrin_channel import add_sigmas
+            from .sigmas.jarrin_channel import add_sigmas
         elif sigmas_from == 'uniform':
-            from sigmas.uniform import add_sigmas
+            from .sigmas.uniform import add_sigmas
         elif sigmas_from == 'linear_bl':
-            from sigmas.linear_bl import add_sigmas
+            from .sigmas.linear_bl import add_sigmas
         else:
             raise NameError(f'Unknown sigmas keyword : {sigmas_from}')
 
         #STATS
         if stats_from == 'moser':
-            from stats.moser_channel import add_stats
+            from .stats.moser_channel import add_stats
         elif stats_from == 'spalart':
-            from stats.spalart_bl import add_stats
+            from .stats.spalart_bl import add_stats
         else:
             raise NameError(f'Unknown stats keyword : {stats_from}')
 
         #MEAN VELOCITY PROFILE
         if profile_from == 'channel':
-            from profiles.channel import add_profile
+            from .profiles.channel import add_profile
         elif profile_from == 'bl':
-            from profiles.bl import add_profile
+            from .profiles.bl import add_profile
         elif profile_from == 'spalart':
-            from profiles.spalart_bl import add_profile
+            from .profiles.spalart_bl import add_profile
         else:
             raise NameError(f'Unknown profile keyword : {profile_from}')
 

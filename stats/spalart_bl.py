@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.interpolate import interp1d
-
+from pathlib import Path
 '''
 
 CHANNEL FLOW
@@ -27,10 +27,8 @@ from the top wall's perspective, making the data defined contuniously from 0-->2
 '''
 
 
-try:
-    data = np.genfromtxt('./Spalart_BL_ReTau547.csv',delimiter=',',comments='#',skip_header=1)
-except:
-    data = np.genfromtxt('./stats/Spalart_BL_ReTau547.csv',delimiter=',',comments='#',skip_header=1)
+relpath = Path(__file__).parent / "Spalart_BL_ReTau547.csv"
+data = np.genfromtxt(relpath,delimiter=',',comments='#',skip_header=1)
 
 ys = data[:,0]
 
