@@ -21,7 +21,7 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
     sigmas_in_dom = dict()
     eps_in_dom = dict()
 
-    # Because u,v,w fluctuations each have differenc values of sigma_x,y,z we need to keep seperate lists of the
+    # Because u,v,w fluctuations each have different values of sigma_x,y,z we need to keep seperate lists of the
     # eddys that can possible contribute to the domain. We also need to track the sigmas and epsilons that correspond
     # to these eddy locations.
     for k,u in zip(range(3),['u','v','w']):
