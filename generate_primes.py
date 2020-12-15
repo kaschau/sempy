@@ -1,5 +1,7 @@
 import numpy as np
-import sys
+from .misc import progress_bar
+
+#Make this process repeatable
 np.random.seed(1010)
 
 def generate_primes(ys,zs,domain,nframes,normalization='exact'):
@@ -40,8 +42,10 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
     #Define "time" points for frames
     xs = np.linspace(0,domain.x_length,nframes)
     #Storage for fluctuations
-    primes = np.empty((len(ys),nframes,3))
+    primes = np.empty((nframes,len(ys),3))
 
+    #just counter for progress display
+    total = len(ys)
     #Loop over each location
     for i,(y,z) in enumerate(zip(ys,zs)):
         zero_online = {'u':False,'v':False,'w':False}
@@ -50,8 +54,7 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
         #Cholesky decomp of stats
         L = np.linalg.cholesky(Rij)
 
-        print('   y=',y)
-
+        progress_bar(i+1,total,'Generating Primes')
         #Find eddies that contribute on the current y,z line. This search is done on the reduced set of
         # eddys filtered out into the "domain"
         eddy_locs_on_line = dict()
@@ -150,9 +153,9 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
         else:
             raise NameError(f'Error: Unknown normalization : {normalization}')
 
-        #Force statistics of three signals t match Rij
+        #Multiply normalized signal by stats
         prime = np.matmul(L, primes_normed.T).T
         #Return fluctionats
-        primes[i] = prime
+        primes[:,i] = prime
 
     return primes
