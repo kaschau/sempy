@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 CHANNEL FLOW
 
 Estimates of time and length scales used to construct sigmas pulled from
-Jarrin, 2008 ?Figure 8.8(a)?
+Figure 6.11 and 7.4 of References/Synthetic-Inflow-Boundary-Conditions-for-the-Numerical-Simulation-of-Turbulence_2008.pdf
 
 Data defined for channel flow from y/delta = {0,2} where 0 == bottom wall and
 2 == top wall.
