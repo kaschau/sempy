@@ -82,6 +82,7 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
         #Storage for un-normalized fluctuations
         primes_no_norm = np.zeros((xs.shape[0],3))
 
+        empty_pts = 0 #counter for empty points
         #Loop over each u,v,w
         for k,u in zip(range(3),['u','v','w']):
             #If this line has no eddys on it, move on
@@ -97,7 +98,7 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
                 x_dist = np.abs( eddy_locs_on_line[u][:,0] - x )
                 eddys_on_point = np.where( x_dist < sigmas_on_line[u][:,k,0] )
                 if len(eddys_on_point[0]) == 0:
-                    print(f'Warning, no eddys detected on time point at x={x},y={y},z={z}')
+                    empty_pts += 1
                     primes_no_norm[j,k] = 0.0
                 else:
 
@@ -128,6 +129,9 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
                     ej = eps_on_line[u][eddys_on_point]
                     #multiply each eddys function/component by its sign
                     primes_no_norm[j,k] = np.sum( ej*fx ,axis=0)[k] #Only take kth component
+
+        if empty_pts > 10:
+            print(f'Warning, more than time 10 points with zero fluctuations detected at y={y},z={z}')
 
         ########################################
         #We now have data over the whole line
