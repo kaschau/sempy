@@ -132,11 +132,11 @@ class domain():
     def print_info(self):
         print(f'Flow Type: {self.flow_type}')
         print('Flow Parameters:')
-        print(r'    U_bulk = ',self.Ublk)
-        print(r'    delta = ',self.delta)
-        print(r'    u_tau = ',self.utau)
-        print(r'    viscosity = ',self.viscosity)
-        print(r'    Y+ one = ',self.yp1)
+        print(f'    U_bulk = {self.Ublk} [m/s]')
+        print(f'    delta = {self.delta} [m]')
+        print(f'    u_tau = {self.utau} [m/s]')
+        print(f'    viscosity(nu) = {self.viscosity} [m^2/s]')
+        print(f'    Y+ one = {self.yp1} [m]')
 
         print(f'Sigmas from {self.sigmas_from}')
         print(f'Stats from {self.stats_from}')
