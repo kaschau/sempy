@@ -131,6 +131,9 @@ class domain():
 
     def print_info(self):
         print(f'Flow Type: {self.flow_type}')
+        print(f'Channel Height = {self.y_height} [m]')
+        print(f'Channel Width = {self.z_width} [m]')
+
         print('Flow Parameters:')
         print(f'    U_bulk = {self.Ublk} [m/s]')
         print(f'    delta = {self.delta} [m]')
@@ -142,7 +145,7 @@ class domain():
         print(f'Stats from {self.stats_from}')
         print(f'Profile from {self.profile_from}')
 
-        print('Sigmas (min,max):')
+        print('Sigmas (min,max) [m]:')
         print(f'    x : {self.sigma_x_min},{self.sigma_x_max}')
         print(f'    y : {self.sigma_y_min},{self.sigma_y_max}')
         print(f'    z : {self.sigma_z_min},{self.sigma_z_max}')
