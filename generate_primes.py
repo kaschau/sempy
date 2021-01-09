@@ -38,7 +38,7 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
     ######################################################################
     # We now have a reduced set of eddys that overlap the current domain
     ######################################################################
-
+    print(f'Searching a reduced set of {eddy_locs_in_dom["u"].shape[0]} u eddies, {eddy_locs_in_dom["v"].shape[0]} v eddies, and {eddy_locs_in_dom["w"].shape[0]} w eddies')
     #Define "time" points for frames
     xs = np.linspace(0,domain.x_length,nframes)
     #Storage for fluctuations
