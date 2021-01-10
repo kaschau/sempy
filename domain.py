@@ -48,29 +48,29 @@ class domain():
 
         #SIGMAS
         if sigmas_from == 'jarrin':
-            from sigmas.jarrin_channel import add_sigmas
+            from .sigmas.jarrin_channel import add_sigmas
         elif sigmas_from == 'uniform':
-            from sigmas.uniform import add_sigmas
+            from .sigmas.uniform import add_sigmas
         elif sigmas_from == 'linear_bl':
-            from sigmas.linear_bl import add_sigmas
+            from .sigmas.linear_bl import add_sigmas
         else:
             raise NameError(f'Unknown sigmas keyword : {sigmas_from}')
 
         #STATS
         if stats_from == 'moser':
-            from stats.moser_channel import add_stats
+            from .stats.moser_channel import add_stats
         elif stats_from == 'spalart':
-            from stats.spalart_bl import add_stats
+            from .stats.spalart_bl import add_stats
         else:
             raise NameError(f'Unknown stats keyword : {stats_from}')
 
         #MEAN VELOCITY PROFILE
         if profile_from == 'channel':
-            from profiles.channel import add_profile
+            from .profiles.channel import add_profile
         elif profile_from == 'bl':
-            from profiles.bl import add_profile
+            from .profiles.bl import add_profile
         elif profile_from == 'spalart':
-            from profiles.spalart_bl import add_profile
+            from .profiles.spalart_bl import add_profile
         else:
             raise NameError(f'Unknown profile keyword : {profile_from}')
 
@@ -131,18 +131,21 @@ class domain():
 
     def print_info(self):
         print(f'Flow Type: {self.flow_type}')
+        print(f'Domain Height = {self.y_height} [m]')
+        print(f'Domain Width = {self.z_width} [m]')
+
         print('Flow Parameters:')
-        print(r'    U_bulk = ',self.Ublk)
-        print(r'    delta = ',self.delta)
-        print(r'    u_tau = ',self.utau)
-        print(r'    viscosity = ',self.viscosity)
-        print(r'    Y+ one = ',self.yp1)
+        print(f'    U_bulk = {self.Ublk} [m/s]')
+        print(f'    delta = {self.delta} [m]')
+        print(f'    u_tau = {self.utau} [m/s]')
+        print(f'    viscosity(nu) = {self.viscosity} [m^2/s]')
+        print(f'    Y+ one = {self.yp1} [m]')
 
         print(f'Sigmas from {self.sigmas_from}')
         print(f'Stats from {self.stats_from}')
         print(f'Profile from {self.profile_from}')
 
-        print('Sigmas (min,max):')
+        print('Sigmas (min,max) [m]:')
         print(f'    x : {self.sigma_x_min},{self.sigma_x_max}')
         print(f'    y : {self.sigma_y_min},{self.sigma_y_max}')
         print(f'    z : {self.sigma_z_min},{self.sigma_z_max}')

@@ -14,6 +14,8 @@ For outer region blending and wake-law treatment we use
         Cambridge University Press 2016
         doi:10.1017/jfm.2016.788421
 
+See References/Revisiting-the-law-of-the-wake-in-wall-turbulence_2016.pdf
+
 '''
 
 def add_profile(domain):
