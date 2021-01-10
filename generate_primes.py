@@ -1,5 +1,7 @@
 import numpy as np
-import sys
+from .misc import progress_bar
+
+#Make this process repeatable
 np.random.seed(1010)
 
 def generate_primes(ys,zs,domain,nframes,normalization='exact'):
@@ -25,10 +27,10 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
     # eddys that can possible contribute to the domain. We also need to track the sigmas and epsilons that correspond
     # to these eddy locations.
     for k,u in zip(range(3),['u','v','w']):
-        eddys_in_dom = np.where( ( domain.eddy_locs[:,1] < dom_ymax + domain.sigmas[:,k,1].max() )
-                               & ( domain.eddy_locs[:,1] > dom_ymin - domain.sigmas[:,k,1].max() )
-                               & ( domain.eddy_locs[:,2] < dom_zmax + domain.sigmas[:,k,2].max() )
-                               & ( domain.eddy_locs[:,2] > dom_zmin - domain.sigmas[:,k,2].max() ) )
+        eddys_in_dom = np.where( ( domain.eddy_locs[:,1] - domain.sigmas[:,k,1] < dom_ymax )
+                               & ( domain.eddy_locs[:,1] + domain.sigmas[:,k,1] > dom_ymin )
+                               & ( domain.eddy_locs[:,2] - domain.sigmas[:,k,2] < dom_zmax )
+                               & ( domain.eddy_locs[:,2] + domain.sigmas[:,k,2] > dom_zmin ) )
         eddy_locs_in_dom[u] = domain.eddy_locs[eddys_in_dom]
         sigmas_in_dom[u] = domain.sigmas[eddys_in_dom]
         eps_in_dom[u] = domain.eps[eddys_in_dom]
@@ -36,12 +38,14 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
     ######################################################################
     # We now have a reduced set of eddys that overlap the current domain
     ######################################################################
-
+    print(f'Searching a reduced set of {eddy_locs_in_dom["u"].shape[0]} u eddies, {eddy_locs_in_dom["v"].shape[0]} v eddies, and {eddy_locs_in_dom["w"].shape[0]} w eddies')
     #Define "time" points for frames
     xs = np.linspace(0,domain.x_length,nframes)
     #Storage for fluctuations
-    primes = np.empty((len(ys),nframes,3))
+    primes = np.empty((nframes,len(ys),3))
 
+    #just counter for progress display
+    total = len(ys)
     #Loop over each location
     for i,(y,z) in enumerate(zip(ys,zs)):
         zero_online = {'u':False,'v':False,'w':False}
@@ -50,8 +54,7 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
         #Cholesky decomp of stats
         L = np.linalg.cholesky(Rij)
 
-        print('   y=',y)
-
+        progress_bar(i+1,total,'Generating Primes')
         #Find eddies that contribute on the current y,z line. This search is done on the reduced set of
         # eddys filtered out into the "domain"
         eddy_locs_on_line = dict()
@@ -59,7 +62,7 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
         eps_on_line = dict()
         for k,u in zip(range(3),['u','v','w']):
             eddys_on_line = np.where( (np.abs( eddy_locs_in_dom[u][:,1] - y ) < sigmas_in_dom[u][:,k,1] )
-                                   & (np.abs( eddy_locs_in_dom[u][:,2] - z ) < sigmas_in_dom[u][:,k,2] ) )
+                                    & (np.abs( eddy_locs_in_dom[u][:,2] - z ) < sigmas_in_dom[u][:,k,2] ) )
             eddy_locs_on_line[u] = eddy_locs_in_dom[u][eddys_on_line]
             sigmas_on_line[u] = sigmas_in_dom[u][eddys_on_line]
             eps_on_line[u] = eps_in_dom[u][eddys_on_line]
@@ -79,6 +82,7 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
         #Storage for un-normalized fluctuations
         primes_no_norm = np.zeros((xs.shape[0],3))
 
+        empty_pts = 0 #counter for empty points
         #Loop over each u,v,w
         for k,u in zip(range(3),['u','v','w']):
             #If this line has no eddys on it, move on
@@ -90,11 +94,11 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
                 #########################
                 #Compute u'
                 #########################
-                #Find all non zero eddies for u,v,w as current time "x"
+                #Find all non zero eddies for u,v,w at current time "x"
                 x_dist = np.abs( eddy_locs_on_line[u][:,0] - x )
                 eddys_on_point = np.where( x_dist < sigmas_on_line[u][:,k,0] )
                 if len(eddys_on_point[0]) == 0:
-                    print(f'Warning, no eddys detected on time point at x={x},y={y},z={z}')
+                    empty_pts += 1
                     primes_no_norm[j,k] = 0.0
                 else:
 
@@ -126,6 +130,9 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
                     #multiply each eddys function/component by its sign
                     primes_no_norm[j,k] = np.sum( ej*fx ,axis=0)[k] #Only take kth component
 
+        if empty_pts > 10:
+            print(f'Warning, {empty_pts} points with zero fluctuations detected at y={y},z={z}\n')
+
         ########################################
         #We now have data over the whole line
         ########################################
@@ -150,9 +157,9 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
         else:
             raise NameError(f'Error: Unknown normalization : {normalization}')
 
-        #Force statistics of three signals t match Rij
+        #Multiply normalized signal by stats
         prime = np.matmul(L, primes_normed.T).T
         #Return fluctionats
-        primes[i] = prime
+        primes[:,i] = prime
 
     return primes
