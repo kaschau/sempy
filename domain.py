@@ -131,8 +131,8 @@ class domain():
 
     def print_info(self):
         print(f'Flow Type: {self.flow_type}')
-        print(f'Channel Height = {self.y_height} [m]')
-        print(f'Channel Width = {self.z_width} [m]')
+        print(f'Domain Height = {self.y_height} [m]')
+        print(f'Domain Width = {self.z_width} [m]')
 
         print('Flow Parameters:')
         print(f'    U_bulk = {self.Ublk} [m/s]')
