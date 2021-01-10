@@ -109,15 +109,15 @@ scale_factor : float
 
     sigmas = np.empty((ys.shape[0],3,3))
 
-    sigmas[:,0,0] = Tuu*domain.delta/domain.utau*domain.Ublk
+    sigmas[:,0,0] = Tuu*domain.delta/domain.utau
     sigmas[:,0,1] = Luu*domain.delta
     sigmas[:,0,2] = Luu*domain.delta
 
-    sigmas[:,1,0] = Tvv*domain.delta/domain.utau*domain.Ublk
+    sigmas[:,1,0] = Tvv*domain.delta/domain.utau
     sigmas[:,1,1] = Lvv*domain.delta
     sigmas[:,1,2] = Lvv*domain.delta
 
-    sigmas[:,2,0] = Tww*domain.delta/domain.utau*domain.Ublk
+    sigmas[:,2,0] = Tww*domain.delta/domain.utau
     sigmas[:,2,1] = Lww*domain.delta
     sigmas[:,2,2] = Lww*domain.delta
 
