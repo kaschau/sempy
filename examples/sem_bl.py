@@ -1,9 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-
-from geometries.box import box
-from generate_primes import generate_primes
+import sempy
 
 #Flow
 Ublk = 10 #Bulk flow velocity, used to determine length of box
@@ -20,7 +17,7 @@ z_width = 2*delta
 C_Eddy = 1.0
 
 #Initialize domain as 'bl'
-domain = box('bl',Ublk,tme,y_height,z_width,delta,utau,viscosity)
+domain = sempy.geometries.box('bl',Ublk,tme,y_height,z_width,delta,utau,viscosity)
 
 #Set flow properties from existing data
 domain.set_sem_data(sigmas_from='linear_bl',stats_from='spalart',profile_from='bl')
@@ -41,19 +38,19 @@ ys = np.linspace(0.001*y_height,y_height*0.999,10)
 zs = np.ones(ys.shape[0])*z_width/2.0
 
 #Compute u'
-primes = generate_primes(ys,zs,domain,nframes,normalization='exact')
+primes = sempy.generate_primes(ys,zs,domain,nframes,normalization='exact')
 
 #Compute stats along line
-uus = np.mean(primes[:,:,0]**2,axis=1)
-vvs = np.mean(primes[:,:,1]**2,axis=1)
-wws = np.mean(primes[:,:,2]**2,axis=1)
+uus = np.mean(primes[:,:,0]**2,axis=0)
+vvs = np.mean(primes[:,:,1]**2,axis=0)
+wws = np.mean(primes[:,:,2]**2,axis=0)
 
-uvs = np.mean(primes[:,:,0]*primes[:,:,1],axis=1)
-uws = np.mean(primes[:,:,0]*primes[:,:,2],axis=1)
-vws = np.mean(primes[:,:,1]*primes[:,:,2],axis=1)
+uvs = np.mean(primes[:,:,0]*primes[:,:,1],axis=0)
+uws = np.mean(primes[:,:,0]*primes[:,:,2],axis=0)
+vws = np.mean(primes[:,:,1]*primes[:,:,2],axis=0)
 
 #Compute Ubars
-Us = domain.Ubar_interp(ys) + np.mean(primes[:,:,0],axis=1)
+Us = domain.Ubar_interp(ys) + np.mean(primes[:,:,0],axis=0)
 
 #Compare signal to moser
 #Ubar
@@ -61,7 +58,7 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
 ax1.set_xlabel(r'$\bar{U}$')
 ax1.plot(Us,ys,label=r'$\bar{U}$ SEM', color='orange')
-ax1.scatter(domain.Ubar_interp(ys),ys,label=r'$\bar{U}$ Spalart',color='k')
+ax1.scatter(domain.Ubar_interp(ys),ys,label=r'$\bar{U}$ Theory',color='k')
 ax1.legend()
 plt.savefig('Ubar.png')
 plt.close()
@@ -131,6 +128,6 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$u \prime$')
 ax1.set_xlabel(r't')
 ax1.set_title('Free Stream Fluctuations')
-ax1.plot(np.linspace(0,domain.x_length,nframes),primes[-1,:,0],color='orange')
+ax1.plot(np.linspace(0,domain.x_length,nframes),primes[:,-1,0],color='orange')
 plt.savefig('uprime.png')
 plt.close()

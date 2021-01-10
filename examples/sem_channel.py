@@ -1,9 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-
-from geometries.box import box
-from generate_primes import generate_primes
+import sempy
 
 #Flow
 Re = 10e5
@@ -22,7 +19,7 @@ z_width = 2*np.pi
 C_Eddy = 2.0
 
 #Initialize domain
-domain = box('channel',Ublk,tme,y_height,z_width,delta,utau,viscosity)
+domain = sempy.geometries.box('channel',Ublk,tme,y_height,z_width,delta,utau,viscosity)
 
 #Set flow properties from existing data
 domain.set_sem_data(sigmas_from='jarrin',stats_from='moser',profile_from='channel')
@@ -46,19 +43,19 @@ ys = np.concatenate((np.linspace(0,0.01*domain.delta,5),
 zs = np.ones(ys.shape[0])*np.pi
 
 #Compute u'
-primes = generate_primes(ys,zs,domain,nframes,normalization='exact')
+primes = sempy.generate_primes(ys,zs,domain,nframes,normalization='exact')
 
 #Compute stats along line
-uus = np.mean(primes[:,:,0]**2,axis=1)
-vvs = np.mean(primes[:,:,1]**2,axis=1)
-wws = np.mean(primes[:,:,2]**2,axis=1)
+uus = np.mean(primes[:,:,0]**2,axis=0)
+vvs = np.mean(primes[:,:,1]**2,axis=0)
+wws = np.mean(primes[:,:,2]**2,axis=0)
 
-uvs = np.mean(primes[:,:,0]*primes[:,:,1],axis=1)
-uws = np.mean(primes[:,:,0]*primes[:,:,2],axis=1)
-vws = np.mean(primes[:,:,1]*primes[:,:,2],axis=1)
+uvs = np.mean(primes[:,:,0]*primes[:,:,1],axis=0)
+uws = np.mean(primes[:,:,0]*primes[:,:,2],axis=0)
+vws = np.mean(primes[:,:,1]*primes[:,:,2],axis=0)
 
 #Compute Ubars
-Us = domain.Ubar_interp(ys) + np.mean(primes[:,:,0],axis=1)
+Us = domain.Ubar_interp(ys) + np.mean(primes[:,:,0],axis=0)
 
 #Compare signal to moser
 #Ubar
@@ -76,20 +73,9 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
 ax1.set_xlabel(r'$R_{uu}$')
 ax1.plot(uus,ys,label=r'$R_{uu}$ SEM', color='orange')
-ax1.scatter(domain.Rij_interp(ys)[:,0,0],ys,label=r'$R_{uu}$ Moser', color='k')
+ax1.scatter(domain.Rij_interp(ys)[:,0,0],ys,label=r'$R_{uu}$ Theory', color='k')
 ax1.legend()
 plt.savefig('Ruu.png')
-plt.close()
-
-#<uu>/utau**2 vs yplus
-fig, ax1 = plt.subplots()
-ax1.set_xlabel(r'$y^{+}$')
-ax1.set_ylabel(r'$R_{uu}/u_{\tau}^{2}$')
-yplus = ys*domain.utau/domain.viscosity
-ax1.plot(yplus[np.where(yplus<100)], uus[np.where(yplus<100)]/domain.utau**2, label=r'$R_{uu}/u_{\tau}^{2}$ SEM', color='orange')
-ax1.scatter(yplus[np.where(yplus<100)], domain.Rij_interp(ys)[:,0,0][np.where(yplus<100)]/domain.utau**2, label=r'$R_{uu}/u_{\tau}^{2}$ Moser', color='k')
-ax1.legend()
-plt.savefig('Ruu_v_yplus.png')
 plt.close()
 
 #Rvv
@@ -147,6 +133,6 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$u \prime$')
 ax1.set_xlabel(r't')
 ax1.set_title('Centerline Fluctiations')
-ax1.plot(np.linspace(0,domain.x_length,nframes),primes[int((primes.shape[0])/2),:,0],color='orange')
+ax1.plot(np.linspace(0,domain.x_length,nframes),primes[:,int((primes.shape[1])/2),0],color='orange')
 plt.savefig('uprime.png')
 plt.close()
