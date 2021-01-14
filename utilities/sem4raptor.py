@@ -23,11 +23,11 @@ viscosity = 3.33e-5
 delta = y_height/2.0
 utau = 34.663
 Ublk = 895
-tme = 0.025   #time of signal, used to determine length of box
+tme = 0.002   #time of signal, used to determine length of box
 
 # SEM opitions
 nframes = 200
-C_Eddy = 2.0 #Eddy Density
+C_Eddy = 3.0 #Eddy Density
 sigmas_from = 'jarrin'
 stats_from = 'moser'
 profile_from = 'channel'
@@ -77,7 +77,7 @@ print(f'Generating signal that is {tme} [s] long, with {nframes} frames.\n')
 # RAPTOR
 ############################
 mb = rp.multiblock.grid(nblk)
-rp.readers.read_raptor_grid(grid_path,mb)
+rp.readers.read_raptor_grid(mb,grid_path)
 inp = rp.readers.read_raptor_input_file(inp_path)
 
 patch_num = []
