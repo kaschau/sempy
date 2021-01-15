@@ -71,7 +71,7 @@ domain.compute_sigmas()
 #Print out a summarry
 domain.print_info()
 
-print('Generating signal that is {tme} [s] long, with {nframes} frames.\n')
+print(f'Generating signal that is {tme} [s] long, with {nframes} frames.\n')
 
 ############################
 # RAPTOR
@@ -98,10 +98,10 @@ mb.compute_metrics(xc=False,xu=True,xv=True,xw=True)
 for bn,pn in zip(block_num,patch_num):
     blk = mb[bn-1]
     print('\n*******************************************************************************')
-    print('**************************** Working on Patch #{pn} ******************************')
+    print(f'**************************** Working on Patch #{pn} ******************************')
     print('*******************************************************************************\n')
 
-    print('########## Computing Fluctuations ############')
+    p-2rint('########## Computing Fluctuations ############')
     face_y = blk.yu[:,:,0].ravel()
     face_z = blk.zu[:,:,0].ravel()
 
