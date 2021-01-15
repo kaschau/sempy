@@ -101,7 +101,7 @@ for bn,pn in zip(block_num,patch_num):
     print(f'**************************** Working on Patch #{pn} ******************************')
     print('*******************************************************************************\n')
 
-    p-2rint('########## Computing Fluctuations ############')
+    print('########## Computing Fluctuations ############')
     face_y = blk.yu[:,:,0].ravel()
     face_z = blk.zu[:,:,0].ravel()
 
