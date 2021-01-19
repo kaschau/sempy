@@ -2,9 +2,9 @@ import numpy as np
 
 class domain():
 
-    def __init__(self,Ublk,tme,delta,utau,viscosity):
+    def __init__(self,Ublk,total_time,delta,utau,viscosity):
 
-        self.x_length = Ublk*tme
+        self.x_length = Ublk*total_time
         self.Ublk = Ublk
         self.delta = delta
         self.utau = utau
