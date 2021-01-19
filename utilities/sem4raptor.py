@@ -137,7 +137,7 @@ for bn,pn in zip(block_num,patch_num):
         vsinterp = itrp.LinearNDInterpolator(np.stack((face_y,face_z),axis=-1), primes[i,:,1])
         wsinterp = itrp.LinearNDInterpolator(np.stack((face_y,face_z),axis=-1), primes[i,:,2])
         vp[i,:,:] = vsinterp(np.stack((blk.yv[:,:,0].ravel(),blk.zv[:,:,0].ravel()),axis=-1)).reshape(vshape[1:])
-        wp[i,:,:] = vsinterp(np.stack((blk.yw[:,:,0].ravel(),blk.zw[:,:,0].ravel()),axis=-1)).reshape(wshape[1:])
+        wp[i,:,:] = wsinterp(np.stack((blk.yw[:,:,0].ravel(),blk.zw[:,:,0].ravel()),axis=-1)).reshape(wshape[1:])
 
     #For a periodic spline boundary conditions, the end values must be within machine precision, these
     # end values should already be close, but just in case we set them to identical.
