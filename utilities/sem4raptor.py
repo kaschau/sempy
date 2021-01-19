@@ -23,7 +23,7 @@ viscosity = 3.33e-5
 delta = y_height/2.0
 utau = 34.663
 Ublk = 895
-tme = 0.002   #time of signal, used to determine length of box
+total_time = 0.002   #time of signal, used to determine length of box
 
 # SEM opitions
 nframes = 200
@@ -45,7 +45,7 @@ inp_path = './dtms.inp'
 #Initialize domain
 domain = sempy.geometries.box(domain_type,
                               Ublk,
-                              tme,
+                              total_time,
                               y_height,
                               z_width,
                               delta,
@@ -71,7 +71,7 @@ domain.compute_sigmas()
 #Print out a summarry
 domain.print_info()
 
-print(f'Generating signal that is {tme} [s] long, with {nframes} frames.\n')
+print(f'Generating signal that is {total_time} [s] long, with {nframes} frames.\n')
 
 ############################
 # RAPTOR
@@ -150,6 +150,7 @@ for bn,pn in zip(block_num,patch_num):
     vp = vp/inp['refvl']['U_ref']
     wp = wp/inp['refvl']['U_ref']
 
+    tme = total_time*inp['refvl']['U_ref']/inp['refvl']['L_ref']
     t = np.linspace(0,tme,nframes)
     bc = 'periodic'
     #Add the mean profile here
