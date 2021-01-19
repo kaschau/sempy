@@ -121,8 +121,7 @@ for bn,pn in zip(block_num,patch_num):
     face_z = np.concatenate((face_z, blk.zw[ 0,:,0]))
     face_z = np.concatenate((face_z, blk.zw[-1,:,0]))
 
-    u,v,w = sempy.generate_primes(face_y, face_z, domain, frame_num, normalization=normalization)
-    # u.shape = y.shape
+    primes = sempy.generate_primes(face_y, face_z, domain, nframes, normalization=normalization)
     # primes[ nframe , (y,z) pair, (u,v,w)]
 
     #We already have the u fluctuations for ALL the U momentum faces, so we just pull those directly.
@@ -154,8 +153,8 @@ for bn,pn in zip(block_num,patch_num):
     t = np.linspace(0,tme,nframes)
     bc = 'periodic'
     #Add the mean profile here
-    Upu = domain.Ubar_interp(blk.yu[:,:,0]/inp['refvl']['U_ref'] + up
-    fu = itrp.CubicSpline(t,Upu),bc_type=bc,axis=0)
+    Upu = domain.Ubar_interp(blk.yu[:,:,0])/inp['refvl']['U_ref'] + up
+    fu = itrp.CubicSpline(t,Upu,bc_type=bc,axis=0)
     fv = itrp.CubicSpline(t,vp,bc_type=bc,axis=0)
     fw = itrp.CubicSpline(t,wp,bc_type=bc,axis=0)
 
