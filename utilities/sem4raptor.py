@@ -26,7 +26,7 @@ Ublk = 895
 total_time = 0.002   #time of signal, used to determine length of box
 
 # SEM opitions
-nframes = 200
+nframes = 50
 C_Eddy = 3.0 #Eddy Density
 sigmas_from = 'jarrin'
 stats_from = 'moser'
@@ -121,11 +121,11 @@ for bn,pn in zip(block_num,patch_num):
     face_z = np.concatenate((face_z, blk.zw[ 0,:,0]))
     face_z = np.concatenate((face_z, blk.zw[-1,:,0]))
 
-    primes = sempy.generate_primes(face_y, face_z, domain, nframes, normalization=normalization)
-    # primes[ nframe , (y,z) pair, (u,v,w)]
+    upp,vpp,wpp = sempy.generate_primes(face_y, face_z, domain, nframes, normalization=normalization)
+    # up[ nframe , (y,z) pair]
 
     #We already have the u fluctuations for ALL the U momentum faces, so we just pull those directly.
-    up = primes[:, 0:length, 0].reshape(ushape)
+    up = upp[:, 0:length].reshape(ushape)
 
     #We now create interpolators for the v and w fluctuations.
     vshape = tuple([nframes]+list(blk.yv[:,:,0].shape))
@@ -134,8 +134,8 @@ for bn,pn in zip(block_num,patch_num):
     wp = np.empty(wshape)
     print('########## Interpolating to v,w ############')
     for i in range(nframes):
-        vsinterp = itrp.LinearNDInterpolator(np.stack((face_y,face_z),axis=-1), primes[i,:,1])
-        wsinterp = itrp.LinearNDInterpolator(np.stack((face_y,face_z),axis=-1), primes[i,:,2])
+        vsinterp = itrp.LinearNDInterpolator(np.stack((face_y,face_z),axis=-1), vpp[i,:])
+        wsinterp = itrp.LinearNDInterpolator(np.stack((face_y,face_z),axis=-1), wpp[i,:])
         vp[i,:,:] = vsinterp(np.stack((blk.yv[:,:,0].ravel(),blk.zv[:,:,0].ravel()),axis=-1)).reshape(vshape[1:])
         wp[i,:,:] = wsinterp(np.stack((blk.yw[:,:,0].ravel(),blk.zw[:,:,0].ravel()),axis=-1)).reshape(wshape[1:])
 
