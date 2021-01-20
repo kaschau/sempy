@@ -9,9 +9,26 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
     #check if we have eddys or not
     if not hasattr(domain,'eddy_locs'):
         raise ValueError('Please populate your domain before trying to generate fluctiations')
+
+    #Check that nframes is large enough with exact normalization
+    if 3 < nframes < 10 and normalization == 'exact':
+        print('WARNING: You are using exact normalization with very few framses. Weird things may happen. Consider using jarrin normalization or increasing number of framses.')
+    elif nframes <= 3 and normalization == 'exact':
+        raise ValueError('Need more frames to use exact normaliation, consider using jarrin or creating more frames.')
+
+    #Check ys and zs are the same shape
+    if ys.shape != zs.shape:
+        raise TypeError('ys and zs need to be the same shape.')
+
     #make sure ys and zs are numpy arrays
     ys = np.array(ys)
     zs = np.array(zs)
+
+    #store the input array shape and then flatten the yz pairs
+    yshape = ys.shape
+    ys = ys.ravel()
+    zs = zs.ravel()
+
     #We want to filter out all eddys that are not possibly going to contribute to this set of ys and zs
     #we are going to refer to the boundinf box that encapsulates ALL y,z pairs ad the 'domain' or 'dom'
     dom_ymin = ys.min()
@@ -42,7 +59,9 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
     #Define "time" points for frames
     xs = np.linspace(0,domain.x_length,nframes)
     #Storage for fluctuations
-    primes = np.empty((nframes,len(ys),3))
+    up = np.empty((nframes,len(ys)))
+    vp = np.empty((nframes,len(ys)))
+    wp = np.empty((nframes,len(ys)))
 
     #just counter for progress display
     total = len(ys)
@@ -159,7 +178,14 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
 
         #Multiply normalized signal by stats
         prime = np.matmul(L, primes_normed.T).T
-        #Return fluctionats
-        primes[:,i] = prime
 
-    return primes
+        #Return fluctionats
+        up[:,i] = prime[:,0]
+        vp[:,i] = prime[:,1]
+        wp[:,i] = prime[:,2]
+
+
+    up.reshape(tuple([nframes]+list(yshape)))
+    vp.reshape(tuple([nframes]+list(yshape)))
+    wp.reshape(tuple([nframes]+list(yshape)))
+    return up,vp,wp

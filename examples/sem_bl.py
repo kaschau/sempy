@@ -38,19 +38,19 @@ ys = np.linspace(0.001*y_height,y_height*0.999,10)
 zs = np.ones(ys.shape[0])*z_width/2.0
 
 #Compute u'
-primes = sempy.generate_primes(ys,zs,domain,nframes,normalization='exact')
+up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization='exact')
 
 #Compute stats along line
-uus = np.mean(primes[:,:,0]**2,axis=0)
-vvs = np.mean(primes[:,:,1]**2,axis=0)
-wws = np.mean(primes[:,:,2]**2,axis=0)
+uus = np.mean(up[:,:]**2,axis=0)
+vvs = np.mean(vp[:,:]**2,axis=0)
+wws = np.mean(wp[:,:]**2,axis=0)
 
-uvs = np.mean(primes[:,:,0]*primes[:,:,1],axis=0)
-uws = np.mean(primes[:,:,0]*primes[:,:,2],axis=0)
-vws = np.mean(primes[:,:,1]*primes[:,:,2],axis=0)
+uvs = np.mean(up[:,:]*vp[:,:],axis=0)
+uws = np.mean(up[:,:]*wp[:,:],axis=0)
+vws = np.mean(vp[:,:]*wp[:,:],axis=0)
 
 #Compute Ubars
-Us = domain.Ubar_interp(ys) + np.mean(primes[:,:,0],axis=0)
+Us = domain.Ubar_interp(ys) + np.mean(up[:,:],axis=0)
 
 #Compare signal to moser
 #Ubar
@@ -128,6 +128,6 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$u \prime$')
 ax1.set_xlabel(r't')
 ax1.set_title('Free Stream Fluctuations')
-ax1.plot(np.linspace(0,domain.x_length,nframes),primes[:,-1,0],color='orange')
+ax1.plot(np.linspace(0,domain.x_length,nframes),up[:,-1],color='orange')
 plt.savefig('uprime.png')
 plt.close()
