@@ -39,9 +39,9 @@ domain.compute_sigmas()
 domain.print_info()
 
 #Create y,z coordinate pairs for calculation
-ys = np.concatenate((np.linspace(0,0.01*domain.delta,5),
+ys = np.concatenate((np.linspace(0.0001,0.01*domain.delta,5),
                      np.linspace(0.01*domain.delta,1.99*domain.delta,20),
-                     np.linspace(1.99*domain.delta,2.0*domain.delta,5)))
+                     np.linspace(1.99*domain.delta,1.9999*domain.delta,5)))
 
 zs = np.ones(ys.shape[0])*np.pi
 
