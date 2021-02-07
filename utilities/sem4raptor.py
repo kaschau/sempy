@@ -33,6 +33,7 @@ stats_from = 'moser'
 profile_from = 'channel'
 population_method = 'PDF'
 normalization = 'exact'
+convect = 'local'
 
 #RAPTOR INFO
 nblk = 10
@@ -59,13 +60,16 @@ domain.set_sem_data(sigmas_from=sigmas_from,
                     scale_factor=1.0)
 
 #Populate the domain
-domain.populate(C_Eddy, population_method)
+domain.populate(C_Eddy,
+                population_method,
+                convect=convect)
 #Create the eps
 domain.generate_eps()
 #Make it periodic
 domain.make_periodic(periodic_x=periodic_x,
                      periodic_y=periodic_y,
-                     periodic_z=periodic_z)
+                     periodic_z=periodic_z,
+                     convect=convect)
 #Compute sigmas
 domain.compute_sigmas()
 #Print out a summarry
@@ -121,7 +125,7 @@ for bn,pn in zip(block_num,patch_num):
     face_z = np.concatenate((face_z, blk.zw[ 0,:,0]))
     face_z = np.concatenate((face_z, blk.zw[-1,:,0]))
 
-    upp,vpp,wpp = sempy.generate_primes(face_y, face_z, domain, nframes, normalization=normalization)
+    upp,vpp,wpp = sempy.generate_primes(face_y, face_z, domain, nframes, normalization=normalization, convect=convect)
     # up[ nframe , (y,z) pair]
 
     #We already have the u fluctuations for ALL the U momentum faces, so we just pull those directly.

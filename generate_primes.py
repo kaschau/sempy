@@ -4,7 +4,8 @@ from .misc import progress_bar
 #Make this process repeatable
 np.random.seed(1010)
 
-def generate_primes(ys,zs,domain,nframes,normalization='exact'):
+def generate_primes(ys,zs,domain,nframes,normalization='exact',
+                                               convect='uniform'):
 
     #check if we have eddys or not
     if not hasattr(domain,'eddy_locs'):
@@ -55,9 +56,7 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
     ######################################################################
     # We now have a reduced set of eddys that overlap the current domain
     ######################################################################
-    print(f'Searching a reduced set of {eddy_locs_in_dom["u"].shape[0]} u eddies, {eddy_locs_in_dom["v"].shape[0]} v eddies, and {eddy_locs_in_dom["w"].shape[0]} w eddies')
-    #Define "time" points for frames
-    xs = np.linspace(0,domain.x_length,nframes)
+    print(f'Searching a reduced set of {eddy_locs_in_dom["u"].shape[0]} u eddies, {eddy_locs_in_dom["v"].shape[0]} v eddies, and {eddy_locs_in_dom["w"].shape[0]} w eddies using {convect} convection speed')
     #Storage for fluctuations
     up = np.empty((nframes,len(ys)))
     vp = np.empty((nframes,len(ys)))
@@ -65,8 +64,16 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
 
     #just counter for progress display
     total = len(ys)
+    #Define "time" points for frames, if its uniform, we only need to do this once.
+    if convect == 'uniform':
+        xs = np.linspace(0,domain.x_length,nframes)
     #Loop over each location
     for i,(y,z) in enumerate(zip(ys,zs)):
+        #Define "time" points for frames, if its local, we need to recalculate for each y location.
+        if convect == 'local':
+            length = domain.x_length*domain.Ubar_interp(y)/domain.Ublk
+            xs = np.linspace(0,length,nframes)
+
         zero_online = {'u':False,'v':False,'w':False}
         #Compute Rij for current y location
         Rij = domain.Rij_interp(y)
