@@ -18,6 +18,9 @@ z_width = 2*np.pi
 #Eddy Density
 C_Eddy = 2.0
 
+#eddy convection speed
+convect='local'
+
 #Initialize domain
 domain = sempy.geometries.box('channel',Ublk,tme,y_height,z_width,delta,utau,viscosity)
 
@@ -25,11 +28,11 @@ domain = sempy.geometries.box('channel',Ublk,tme,y_height,z_width,delta,utau,vis
 domain.set_sem_data(sigmas_from='jarrin',stats_from='moser',profile_from='channel')
 
 #Populate the domain
-domain.populate(C_Eddy,'PDF')
+domain.populate(C_Eddy,'PDF',convect=convect)
 #Create the eps
 domain.generate_eps()
 #Make it periodic
-domain.make_periodic(periodic_x=True,periodic_y=True,periodic_z=True)
+domain.make_periodic(periodic_x=False,periodic_y=False,periodic_z=True,convect=convect)
 #Compute sigmas
 domain.compute_sigmas()
 
@@ -43,7 +46,7 @@ ys = np.concatenate((np.linspace(0,0.01*domain.delta,5),
 zs = np.ones(ys.shape[0])*np.pi
 
 #Compute u'
-up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization='exact')
+up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization='exact',convect=convect)
 
 #Compute stats along line
 uus = np.mean(up[:,:]**2,axis=0)

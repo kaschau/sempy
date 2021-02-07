@@ -30,7 +30,6 @@ class domain():
         self.Ubar_interp = None
 
         self.VB = None
-        self.neddy = None
         self.eddy_locs = None
         self.eps = None
         self.sigmas = None
@@ -40,11 +39,25 @@ class domain():
         self.profile_from = None
         self.eddy_pop_method = None
 
+    @property
+    def neddy(self):
+        return self.eddy_locs.shape[0]
+
     def set_sem_data(self,sigmas_from='jarrin',stats_from='moser',profile_from='channel',scale_factor=1.0):
 
+        self.profile_from = profile_from
         self.sigmas_from = sigmas_from
         self.stats_from = stats_from
-        self.profile_from = profile_from
+
+        #MEAN VELOCITY PROFILE
+        if profile_from == 'channel':
+            from .profiles.channel import add_profile
+        elif profile_from == 'bl':
+            from .profiles.bl import add_profile
+        elif profile_from == 'spalart':
+            from .profiles.spalart_bl import add_profile
+        else:
+            raise NameError(f'Unknown profile keyword : {profile_from}')
 
         #SIGMAS
         if sigmas_from == 'jarrin':
@@ -64,19 +77,9 @@ class domain():
         else:
             raise NameError(f'Unknown stats keyword : {stats_from}')
 
-        #MEAN VELOCITY PROFILE
-        if profile_from == 'channel':
-            from .profiles.channel import add_profile
-        elif profile_from == 'bl':
-            from .profiles.bl import add_profile
-        elif profile_from == 'spalart':
-            from .profiles.spalart_bl import add_profile
-        else:
-            raise NameError(f'Unknown profile keyword : {profile_from}')
-
+        add_profile(self)
         add_sigmas(self, scale_factor)
         add_stats(self)
-        add_profile(self)
 
     def compute_sigmas(self):
         #Compute all eddy sigmas as function of y
@@ -86,11 +89,19 @@ class domain():
         #generate epsilons
         self.eps = np.where(np.random.uniform(low=-1,high=1,size=(self.neddy,3))<= 0.0, -1.0,1.0)
 
-    def make_periodic(self, periodic_x=False, periodic_y=False, periodic_z=False):
+    def make_periodic(self, periodic_x=False, periodic_y=False, periodic_z=False,convect='uniform'):
+        print('Making domain periodic in {}'.format('x' if periodic_x else '') +
+                                        ' {}'.format('y' if periodic_y else '') +
+                                        ' {}'.format('z' if periodic_z else '') +
+                                        f' using {convect} convection speed')
 
         #check if we have epsilons or not
         if not hasattr(self,'eps'):
             raise AttributeError('Please generate your domains epsilons before making it periodic')
+        if not hasattr(self,'sigma_interp'):
+            raise AttributeError('Please set your domain\'s sigma_interp before making it periodic')
+        if not hasattr(self,'Ubar_interp'):
+            raise AttributeError('Please set your domain\'s Ubar_inter before making it periodic')
         #Make periodic
         if periodic_x:
             keep_eddys = np.where(self.eddy_locs[:,0] < self.x_length - self.sigma_x_max)
@@ -123,8 +134,6 @@ class domain():
             self.eddy_locs = np.concatenate( (keep_eddy_locs, periodic_eddy_locs) )
             self.eps = np.concatenate( (keep_eps, periodic_eps) )
 
-        #Update the number of eddys
-        self.neddy = self.eddy_locs.shape[0]
         #Update the sigma array if it has been created already
         if hasattr(self,'sigmas'):
             self.sigmas = self.sigma_interp(self.eddy_locs[:,1])
