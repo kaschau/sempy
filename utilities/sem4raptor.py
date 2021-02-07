@@ -1,98 +1,95 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+'''This utility generates files full of cubic spline coefficients representing a turbulent signal
+that can be applied at the inlet of a RAPTOR simulation. Just call this utility with
+an input file. There must also be a file where this utility is run called : patches.txt
+This patches.txt maps the patch number to a RAPTOR block number. The format of the file is
+   Patch #, Block #
+Where each line represents a patch<=>block pair.
+
+Example
+-------
+/path/to/sempy/utilities/sem4raptor.py <sem.inp>
+
+'''
 import raptorpy as rp
 import numpy as np
 from scipy.io import FortranFile
 from scipy import interpolate as itrp
 import os
-
-##############################
-# SEM parameters - Modify Here
-##############################
 import sempy
+import sys
 
-#Box geom
-domain_type = 'channel' #'bl'
-y_height = 0.0508
-z_width = 0.00544
-# Periodicity
-periodic_x = True  #periodic in time?
-periodic_y = False
-periodic_z = True
+input_file = sys.argv[1]
+##############################
+# Read in SEM parameters
+##############################
+seminp = dict()
+with open(input_file,'r') as f:
+    for line in [i for i in f.readlines() if not i.replace(' ','').startswith('#') and i.strip() != '']:
+        nocomment = line.strip().split('#')[0]
+        key,val = tuple(nocomment.replace(' ','').split('='))
+        try: #convert numbers to floats or ints
+            if '.' in val:
+                seminp[key] = float(val)
+            else:
+                seminp[key] = int(val)
+        except(ValueError):
+            seminp[key] = val
 
-#Flow - Julia Example
-viscosity = 3.33e-5
-delta = y_height/2.0
-utau = 34.663
-Ublk = 895
-total_time = 0.002   #time of signal, used to determine length of box
-
-# SEM opitions
-nframes = 50
-C_Eddy = 3.0 #Eddy Density
-sigmas_from = 'jarrin'
-stats_from = 'moser'
-profile_from = 'channel'
-population_method = 'PDF'
-normalization = 'exact'
-convect = 'local'
-
-#RAPTOR INFO
-nblk = 10
-grid_path = './'
-inp_path = './dtms.inp'
 ##############################
 # End Modify Sections
 ##############################
 
 #Initialize domain
-domain = sempy.geometries.box(domain_type,
-                              Ublk,
-                              total_time,
-                              y_height,
-                              z_width,
-                              delta,
-                              utau,
-                              viscosity)
+domain = sempy.geometries.box(seminp['domain_type'],
+                              seminp['Ublk'],
+                              seminp['total_time'],
+                              seminp['y_height'],
+                              seminp['z_width'],
+                              seminp['delta'],
+                              seminp['utau'],
+                              seminp['viscosity'])
 
 #Set flow properties from existing data
-domain.set_sem_data(sigmas_from=sigmas_from,
-                    stats_from=stats_from,
-                    profile_from=profile_from,
+domain.set_sem_data(sigmas_from=seminp['sigmas_from'],
+                    stats_from=seminp['stats_from'],
+                    profile_from=seminp['profile_from'],
                     scale_factor=1.0)
 
 #Populate the domain
-domain.populate(C_Eddy,
-                population_method,
-                convect=convect)
+domain.populate(seminp['C_Eddy'],
+                seminp['population_method'],
+                convect=seminp['convect'])
 #Create the eps
 domain.generate_eps()
 #Make it periodic
-domain.make_periodic(periodic_x=periodic_x,
-                     periodic_y=periodic_y,
-                     periodic_z=periodic_z,
-                     convect=convect)
+domain.make_periodic(periodic_x=seminp['periodic_x'],
+                     periodic_y=seminp['periodic_y'],
+                     periodic_z=seminp['periodic_z'],
+                     convect=seminp['convect'])
 #Compute sigmas
 domain.compute_sigmas()
 #Print out a summarry
 domain.print_info()
 
-print(f'Generating signal that is {total_time} [s] long, with {nframes} frames.\n')
+print(f'Generating signal that is {seminp["total_time"]} [s] long, with {seminp["nframes"]} frames.\n')
 
 ############################
 # RAPTOR
 ############################
-mb = rp.multiblock.grid(nblk)
-rp.readers.read_raptor_grid(mb,grid_path)
-inp = rp.readers.read_raptor_input_file(inp_path)
+nblks = len([f for f in os.listdir(seminp['grid_path']) if f.startswith('g.')])
+mb = rp.multiblock.grid(nblks)
+rp.readers.read_raptor_grid(mb,seminp['grid_path'])
+inp = rp.readers.read_raptor_input_file(seminp['inp_path'])
 
 patch_num = []
 block_num = []
-face_dir  = []
 with open('patches.txt','r') as f:
     for line in [i for i in f.readlines() if not i.startswith('#')]:
         l = line.strip().split(',')
         patch_num.append(int(l[0]))
         block_num.append(int(l[1]))
-        face_dir.append(l[2])
 
 npatches = len(patch_num)
 
@@ -111,7 +108,7 @@ for bn,pn in zip(block_num,patch_num):
 
     #We want to store the U momentum points only later, so remember which (y,z) pairs correspond
     # to the U momentum faces.
-    ushape = tuple([nframes]+list(blk.yu[:,:,0].shape))
+    ushape = tuple([seminp['nframes']]+list(blk.yu[:,:,0].shape))
     length = face_y.shape[0]
 
     #We have all the U momentum face centers in the list of points to calculate the fluctuations,
@@ -125,19 +122,22 @@ for bn,pn in zip(block_num,patch_num):
     face_z = np.concatenate((face_z, blk.zw[ 0,:,0]))
     face_z = np.concatenate((face_z, blk.zw[-1,:,0]))
 
-    upp,vpp,wpp = sempy.generate_primes(face_y, face_z, domain, nframes, normalization=normalization, convect=convect)
+    upp,vpp,wpp = sempy.generate_primes(face_y, face_z, domain,
+                                        seminp['nframes'],
+                                        normalization=seminp['normalization'],
+                                        convect=seminp['convect'])
     # up[ nframe , (y,z) pair]
 
     #We already have the u fluctuations for ALL the U momentum faces, so we just pull those directly.
     up = upp[:, 0:length].reshape(ushape)
 
     #We now create interpolators for the v and w fluctuations.
-    vshape = tuple([nframes]+list(blk.yv[:,:,0].shape))
+    vshape = tuple([seminp['nframes']]+list(blk.yv[:,:,0].shape))
     vp = np.empty(vshape)
-    wshape = tuple([nframes]+list(blk.yw[:,:,0].shape))
+    wshape = tuple([seminp['nframes']]+list(blk.yw[:,:,0].shape))
     wp = np.empty(wshape)
     print('########## Interpolating to v,w ############')
-    for i in range(nframes):
+    for i in range(seminp['nframes']):
         vsinterp = itrp.LinearNDInterpolator(np.stack((face_y,face_z),axis=-1), vpp[i,:])
         wsinterp = itrp.LinearNDInterpolator(np.stack((face_y,face_z),axis=-1), wpp[i,:])
         vp[i,:,:] = vsinterp(np.stack((blk.yv[:,:,0].ravel(),blk.zv[:,:,0].ravel()),axis=-1)).reshape(vshape[1:])
@@ -155,7 +155,7 @@ for bn,pn in zip(block_num,patch_num):
     wp = wp/inp['refvl']['U_ref']
 
     tme = total_time*inp['refvl']['U_ref']/inp['refvl']['L_ref']
-    t = np.linspace(0,tme,nframes)
+    t = np.linspace(0,tme,seminp['nframes'])
     bc = 'periodic'
     #Add the mean profile here
     Upu = domain.Ubar_interp(blk.yu[:,:,0])/inp['refvl']['U_ref'] + up
@@ -166,7 +166,7 @@ for bn,pn in zip(block_num,patch_num):
     if not os.path.exists('alphas'):
         os.makedirs('alphas')
 
-    for interval in range(nframes-1):
+    for interval in range(seminp['nframes']-1):
         file_name = './alphas/alphas_{:06d}_{:03d}'.format(pn,interval+1)
         with FortranFile(file_name, 'w') as f90:
             f90.write_record(fu.c[:,interval,:,:].astype(np.float64))
