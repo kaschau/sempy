@@ -25,6 +25,11 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact',
     ys = np.array(ys)
     zs = np.array(zs)
 
+    #As a sanity check, make sure none of our points are outside the domain
+    if (ys.min() < 0.0 or ys.max() > domain.y_height or
+        zs.min() < 0.0 or zs.max() > domain.z_width):
+        raise ValueError('Woah there, some of your points you are trying to calculate fluctuations for are completely outside your domain!.')
+
     #store the input array shape and then flatten the yz pairs
     yshape = ys.shape
     ys = ys.ravel()
@@ -69,10 +74,6 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact',
         xs = np.linspace(0,domain.x_length,nframes)
     #Loop over each location
     for i,(y,z) in enumerate(zip(ys,zs)):
-        #Define "time" points for frames, if its local, we need to recalculate for each y location.
-        if convect == 'local':
-            length = domain.x_length*domain.Ubar_interp(y)/domain.Ublk
-            xs = np.linspace(0,length,nframes)
 
         zero_online = {'u':False,'v':False,'w':False}
         #Compute Rij for current y location
@@ -104,7 +105,11 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact',
         ######################################################################
         # We now have a reduced set of eddys that overlap the current y,z line
         ######################################################################
-
+        #Define "time" points for frames, if its local, we need to recalculate for each y location.
+        if convect == 'local':
+            local_Ubar = domain.Ubar_interp(y)
+            length = domain.x_length*local_Ubar/domain.Ublk
+            xs = np.linspace(0,length,nframes)
         #Storage for un-normalized fluctuations
         primes_no_norm = np.zeros((xs.shape[0],3))
 
@@ -114,14 +119,43 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact',
             #If this line has no eddys on it, move on
             if zero_online[u]:
                 continue
+
+            if convect == 'local':
+               #We need each eddys individual Ubar for the offset calculated below
+                local_eddy_Ubar = domain.Ubar_interp(eddy_locs_on_line[u][:,1])
+
             #Travel down line at this y,z location
             for j,x in enumerate(xs):
                 zero_onpoint = {'u':False,'v':False,'w':False}
+
+                if convect == 'local':
+                    #This may be tough to explain, but just draw it out for yourself and you'll
+                    #figure it out:
+
+                    #If we want each eddy to convect with its own local velocity
+                    #instead of the Ublk velocity, it is not enough to just traverse through the
+                    #mega box at the profile Ubar for the current location's y height. This is
+                    #because the eddys located slightly above/below the location we are
+                    #traversing down (that contribute to fluctuations) are
+                    #moving at different speeds than our current point of interest. So we need to
+                    #calculate an offset to account for that fact that as we have traversed through the
+                    #domain at the local convective speed, the faster eddys will approach
+                    #us slightly more quickly, while the slower eddys
+                    #will approach us more slowly. This x offset will account for that and is merely the difference
+                    #in convection speeds between the current line we are traversing down, and the speeds of
+                    #the individual eddys.
+                    x_offset = (local_Ubar - local_eddy_Ubar)/local_Ubar * x
+                else:
+                    #If all the eddys convect at the same speed, then traversing through the mega box at Ublk
+                    #is identical so the eddys convecting by us at Ublk, so there is no need to offset any
+                    #eddy positions
+                    x_offset = 0.0
+
                 #########################
                 #Compute u'
                 #########################
                 #Find all non zero eddies for u,v,w at current time "x"
-                x_dist = np.abs( eddy_locs_on_line[u][:,0] - x )
+                x_dist = np.abs( (eddy_locs_on_line[u][:,0]+x_offset) - x )
                 eddys_on_point = np.where( x_dist < sigmas_on_line[u][:,k,0] )
                 if len(eddys_on_point[0]) == 0:
                     empty_pts += 1
