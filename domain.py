@@ -34,16 +34,20 @@ class domain():
         self.eps = None
         self.sigmas = None
 
+        self.profile_from = None
         self.sigmas_from = None
         self.stats_from = None
-        self.profile_from = None
-        self.eddy_pop_method = None
+        self.eddy_pop_method = 'random'
+        self.convect = 'uniform'
 
     @property
     def neddy(self):
         return self.eddy_locs.shape[0]
 
-    def set_sem_data(self,sigmas_from='jarrin',stats_from='moser',profile_from='channel',scale_factor=1.0):
+    def set_sem_data(self, sigmas_from='jarrin',
+                           stats_from='moser',
+                           profile_from='channel',
+                           scale_factor=1.0):
 
         self.profile_from = profile_from
         self.sigmas_from = sigmas_from
@@ -89,11 +93,10 @@ class domain():
         #generate epsilons
         self.eps = np.where(np.random.uniform(low=-1,high=1,size=(self.neddy,3))<= 0.0, -1.0,1.0)
 
-    def make_periodic(self, periodic_x=False, periodic_y=False, periodic_z=False,convect='uniform'):
+    def make_periodic(self, periodic_x=False, periodic_y=False, periodic_z=False):
         print('Making domain periodic in {}'.format('x' if periodic_x else '') +
-                                        ' {}'.format('y' if periodic_y else '') +
-                                        ' {}'.format('z' if periodic_z else '') +
-                                        f' using {convect} convection speed')
+                                       ' {}'.format('y' if periodic_y else '') +
+                                       ' {}'.format('z' if periodic_z else '') )
 
         #check if we have epsilons or not
         if not hasattr(self,'eps'):

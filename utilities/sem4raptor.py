@@ -36,6 +36,12 @@ with open(input_file,'r') as f:
                 seminp[key] = int(val)
         except(ValueError):
             seminp[key] = val
+#We need the periodic inputs to be bools
+for s in ['periodic_x','periodic_y','periodic_z']:
+    if s == 'True':
+        seminp[s] = True
+    else:
+        seminp[s] = False
 
 ##############################
 # End Modify Sections
@@ -66,8 +72,7 @@ domain.generate_eps()
 #Make it periodic
 domain.make_periodic(periodic_x=seminp['periodic_x'],
                      periodic_y=seminp['periodic_y'],
-                     periodic_z=seminp['periodic_z'],
-                     convect=seminp['convect'])
+                     periodic_z=seminp['periodic_z'])
 #Compute sigmas
 domain.compute_sigmas()
 #Print out a summarry
@@ -124,8 +129,7 @@ for bn,pn in zip(block_num,patch_num):
 
     upp,vpp,wpp = sempy.generate_primes(face_y, face_z, domain,
                                         seminp['nframes'],
-                                        normalization=seminp['normalization'],
-                                        convect=seminp['convect'])
+                                        normalization=seminp['normalization'])
     # up[ nframe , (y,z) pair]
 
     #We already have the u fluctuations for ALL the U momentum faces, so we just pull those directly.

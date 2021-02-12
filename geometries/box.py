@@ -20,6 +20,8 @@ class box(domain):
             raise ValueError('Please set your flow data before trying to populate your domain')
 
         self.eddy_pop_method = method
+        self.convect = convect
+
         #generate eddy volume
         if self.flow_type == 'channel':
             lows  = [          0.0 - self.sigma_x_max,           0.0 - self.sigma_y_max,          0.0 - self.sigma_z_max]
