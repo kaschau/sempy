@@ -32,7 +32,7 @@ domain.populate(C_Eddy,'PDF',convect=convect)
 #Create the eps
 domain.generate_eps()
 #Make it periodic
-domain.make_periodic(periodic_x=False,periodic_y=False,periodic_z=True,convect=convect)
+domain.make_periodic(periodic_x=False,periodic_y=False,periodic_z=True)
 #Compute sigmas
 domain.compute_sigmas()
 
@@ -46,7 +46,7 @@ ys = np.concatenate((np.linspace(0.0001,0.01*domain.delta,5),
 zs = np.ones(ys.shape[0])*np.pi
 
 #Compute u'
-up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization='exact',convect=convect)
+up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization='exact')
 
 #Compute stats along line
 uus = np.mean(up[:,:]**2,axis=0)
