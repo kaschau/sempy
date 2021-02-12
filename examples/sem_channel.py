@@ -28,7 +28,7 @@ domain = sempy.geometries.box('channel',Ublk,tme,y_height,z_width,delta,utau,vis
 domain.set_sem_data(sigmas_from='jarrin',stats_from='moser',profile_from='channel')
 
 #Populate the domain
-domain.populate(C_Eddy,'PDF',convect=convect)
+domain.populate(C_Eddy,method='PDF',convect=convect)
 #Create the eps
 domain.generate_eps()
 #Make it periodic

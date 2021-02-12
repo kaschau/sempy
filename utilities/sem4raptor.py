@@ -149,18 +149,20 @@ for bn,pn in zip(block_num,patch_num):
 
     #For a periodic spline boundary conditions, the end values must be within machine precision, these
     # end values should already be close, but just in case we set them to identical.
-    if periodic_x:
+    if seminp['periodic_x']:
         up[-1,:,:] = up[0,:,:]
         vp[-1,:,:] = vp[0,:,:]
         wp[-1,:,:] = wp[0,:,:]
+        bc = 'periodic'
+    else:
+        bc = 'not-a-knot'
 
     up = up/inp['refvl']['U_ref']
     vp = vp/inp['refvl']['U_ref']
     wp = wp/inp['refvl']['U_ref']
 
-    tme = total_time*inp['refvl']['U_ref']/inp['refvl']['L_ref']
+    tme = seminp['total_time']*inp['refvl']['U_ref']/inp['refvl']['L_ref']
     t = np.linspace(0,tme,seminp['nframes'])
-    bc = 'periodic'
     #Add the mean profile here
     Upu = domain.Ubar_interp(blk.yu[:,:,0])/inp['refvl']['U_ref'] + up
     fu = itrp.CubicSpline(t,Upu,bc_type=bc,axis=0)
