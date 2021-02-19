@@ -25,9 +25,9 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
     zs = np.array(zs)
 
     #As a sanity check, make sure none of our points are outside the domain
-    if (ys.min() < 0.0 or ys.max() > domain.y_height or
-        zs.min() < 0.0 or zs.max() > domain.z_width):
-        raise ValueError('Woah there, some of your points you are trying to calculate fluctuations for are completely outside your domain!.')
+    if (ys.min() < -0.0001*domain.y_height or ys.max() > 1.0001*domain.y_height or
+        zs.min() < -0.0001*domain.z_width  or zs.max() > 1.0001*domain.z_width):
+        raise ValueError('Woah there, some of your points you are trying to calculate fluctuations for are completely outside your domain!')
 
     #store the input array shape and then flatten the yz pairs
     yshape = ys.shape
