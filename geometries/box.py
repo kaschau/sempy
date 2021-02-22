@@ -14,7 +14,7 @@ class box(domain):
         self.z_width  = z_width
         self.flow_type = flow_type
 
-    def populate(self, C_Eddy=1.0, method='random', convect='local'):
+    def populate(self, C_Eddy=1.0, method='random', convect='uniform'):
 
         if not hasattr(self,'sigma_interp'):
             raise ValueError('Please set your flow data before trying to populate your domain')
@@ -23,7 +23,7 @@ class box(domain):
         self.convect = convect
 
         #generate eddy volume
-        if self.flow_type == 'channel':
+        if self.flow_type in ['channel', 'shearfree']:
             lows  = [          0.0 - self.sigma_x_max,           0.0 - self.sigma_y_max,          0.0 - self.sigma_z_max]
             highs = [self.x_length + self.sigma_x_max, self.y_height + self.sigma_y_max, self.z_width + self.sigma_z_max]
         elif self.flow_type == 'bl':

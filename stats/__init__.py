@@ -2,3 +2,4 @@
 
 from . import moser_channel
 from . import spalart_bl
+from . import isotropic
