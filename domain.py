@@ -9,10 +9,12 @@ class domain():
         self.delta = delta
         self.utau = utau
         self.viscosity = viscosity
-        self.yp1 = viscosity/utau
+        try:
+            self.yp1 = viscosity/utau
+        except TypeError:
+            self.yp1 = None
 
         self.flow_type = None
-
         self.y_height = None
         self.z_height = None
 
@@ -37,8 +39,8 @@ class domain():
         self.profile_from = None
         self.sigmas_from = None
         self.stats_from = None
-        self.eddy_pop_method = 'random'
-        self.convect = 'uniform'
+        self.eddy_pop_method = None 
+        self.convect = None
 
     @property
     def neddy(self):
@@ -58,8 +60,8 @@ class domain():
             from .profiles.channel import add_profile
         elif profile_from == 'bl':
             from .profiles.bl import add_profile
-        elif profile_from == 'spalart':
-            from .profiles.spalart_bl import add_profile
+        elif profile_from == 'uniform':
+            from .profiles.uniform import add_profile
         else:
             raise NameError(f'Unknown profile keyword : {profile_from}')
 
@@ -78,6 +80,8 @@ class domain():
             from .stats.moser_channel import add_stats
         elif stats_from == 'spalart':
             from .stats.spalart_bl import add_stats
+        elif stats_from == 'isotropic':
+            from .stats.isotropic import add_stats
         else:
             raise NameError(f'Unknown stats keyword : {stats_from}')
 
@@ -94,9 +98,10 @@ class domain():
         self.eps = np.where(np.random.uniform(low=-1,high=1,size=(self.neddy,3))<= 0.0, -1.0,1.0)
 
     def make_periodic(self, periodic_x=False, periodic_y=False, periodic_z=False):
-        print('Making domain periodic in {}'.format('x' if periodic_x else '') +
-                                       ' {}'.format('y' if periodic_y else '') +
-                                       ' {}'.format('z' if periodic_z else '') )
+        if True in [periodic_x, periodic_y, periodic_z]:
+            print('Making domain periodic in {}'.format('x' if periodic_x else '') +
+                                           ' {}'.format('y' if periodic_y else '') +
+                                           ' {}'.format('z' if periodic_z else '') )
 
         #check if we have epsilons or not
         if not hasattr(self,'eps'):

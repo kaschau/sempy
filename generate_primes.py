@@ -4,7 +4,7 @@ from .misc import progress_bar
 #Make this process repeatable
 np.random.seed(1010)
 
-def generate_primes(ys,zs,domain,nframes,normalization='exact'):
+def generate_primes(ys,zs,domain,nframes,normalization):
 
     #check if we have eddys or not
     if not hasattr(domain,'eddy_locs'):
@@ -206,7 +206,7 @@ def generate_primes(ys,zs,domain,nframes,normalization='exact'):
             eig_vec = np.linalg.eig(cov)[1]
             primes_no_norm = np.matmul(eig_vec.T,primes_no_norm.T).T
 
-            #Set varianve of each signal to 1
+            #Set variance of each signal to 1
             norm_factor = np.sqrt(np.mean(primes_no_norm**2,axis=0))
             primes_normed = primes_no_norm/norm_factor
 
