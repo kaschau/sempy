@@ -38,7 +38,7 @@ with open(input_file,'r') as f:
             seminp[key] = val
 #We need the periodic inputs to be bools
 for s in ['periodic_x','periodic_y','periodic_z']:
-    if s == 'True':
+    if seminp[s] == 'True':
         seminp[s] = True
     else:
         seminp[s] = False
