@@ -1,20 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sempy
-
+'''
+A reproduction of the data from section 4.4 of Jarrin's thesis in which isotropic turbulence is produced.
+'''
 #Flow
-tme = 100  #Time of signal, used to determine length of box
+tme = 60  #Time of signal, used to determine length of box
 Ublk = 10 #Bulk flow velocity, used to determine length of box
-delta = np.pi/10 #Defined from flow configuration
+delta = None
 viscosity = 1e-5
 utau = None
-nframes = 1000
+nframes = 10000
 #Box geobm
-y_height = delta*2.0
+y_height = 2.0*np.pi
 z_width = y_height
 
 #Eddy Density
-C_Eddy = 1.0
+C_Eddy = 2.0
 
 #eddy convection speed
 convect='uniform'
@@ -29,7 +31,7 @@ pop_meth = 'random'
 domain = sempy.geometries.box('shearfree',Ublk,tme,y_height,z_width,delta,utau,viscosity)
 
 #Set flow properties from existing data
-domain.set_sem_data(sigmas_from='uniform',stats_from='isotropic',profile_from='uniform',scale_factor=delta/10)
+domain.set_sem_data(sigmas_from='uniform',stats_from='isotropic',profile_from='uniform',scale_factor=0.5)
 
 #Populate the domain
 domain.populate(C_Eddy,method=pop_meth,convect=convect)
@@ -43,11 +45,8 @@ domain.compute_sigmas()
 domain.print_info()
 
 #Create y,z coordinate pairs for calculation
-ys = np.concatenate((np.linspace(0.0001*domain.delta,0.01*domain.delta,5),
-                     np.linspace(0.01*domain.delta,1.99*domain.delta,20),
-                     np.linspace(1.99*domain.delta,1.9999*domain.delta,5)))
-
-zs = np.ones(ys.shape[0])*delta
+ys = np.array([np.pi])
+zs = np.ones(ys.shape[0])*y_height
 
 #Compute u'
 up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization=normalization)
@@ -64,82 +63,46 @@ vws = np.mean(vp[:,:]*wp[:,:],axis=0)
 #Compute Ubars
 Us = domain.Ubar_interp(ys) + np.mean(up[:,:],axis=0)
 
-#Compare signal to moser
-#Ubar
-fig, ax1 = plt.subplots()
-ax1.set_ylabel(r'$y$')
-ax1.set_xlabel(r'$\bar{U}$')
-ax1.plot(Us,ys,label=r'$\bar{U}$ SEM', color='orange')
-ax1.scatter(domain.Ubar_interp(ys),ys,label=r'$\bar{U}$ Profile',color='k')
-ax1.legend()
-plt.savefig('Ubar.png')
-plt.close()
-
-#Ruu
-fig, ax1 = plt.subplots()
-ax1.set_ylabel(r'$y$')
-ax1.set_xlabel(r'$R_{uu}$')
-ax1.plot(uus,ys,label=r'$R_{uu}$ SEM', color='orange')
-ax1.scatter(domain.Rij_interp(ys)[:,0,0],ys,label=r'$R_{uu}$ Theory', color='k')
-ax1.legend()
-plt.savefig('Ruu.png')
-plt.close()
-
-#Rvv
-fig, ax1 = plt.subplots()
-ax1.set_ylabel(r'$y$')
-ax1.set_xlabel(r'$R_{vv}$')
-ax1.plot(vvs,ys,label=r'$R_{vv}$ SEM', color='orange')
-ax1.scatter(domain.Rij_interp(ys)[:,1,1],ys,label=r'$R_{vv}$ Moser', color='k')
-ax1.legend()
-plt.savefig('Rvv.png')
-plt.close()
-
-#Rww
-fig, ax1 = plt.subplots()
-ax1.set_ylabel(r'$y$')
-ax1.set_xlabel(r'$R_{ww}$')
-ax1.plot(wws,ys,label=r'$R_{ww}$ SEM', color='orange')
-ax1.scatter(domain.Rij_interp(ys)[:,2,2],ys,label=r'$R_{ww}$ Moser', color='k')
-ax1.legend()
-plt.savefig('Rww.png')
-plt.close()
-
-#Ruv
-fig, ax1 = plt.subplots()
-ax1.set_ylabel(r'$y$')
-ax1.set_xlabel(r'$R_{uv}$')
-ax1.plot(uvs,ys,label=r'$R_{uv}$ SEM', color='orange')
-ax1.scatter(domain.Rij_interp(ys)[:,0,1],ys,label=r'$R_{uv}$ Moser', color='k')
-ax1.legend()
-plt.savefig('Ruv.png')
-plt.close()
-
-#Ruw
-fig, ax1 = plt.subplots()
-ax1.set_ylabel(r'$y$')
-ax1.set_xlabel(r'$R_{uw}$')
-ax1.plot(uws,ys,label=r'$R_{uw}$ SEM', color='orange')
-ax1.scatter(domain.Rij_interp(ys)[:,0,2],ys,label=r'$R_{uw}$ Moser', color='k')
-ax1.legend()
-plt.savefig('Ruw.png')
-plt.close()
-
-#Rvw
-fig, ax1 = plt.subplots()
-ax1.set_ylabel(r'$y$')
-ax1.set_xlabel(r'$R_{vw}$')
-ax1.plot(vws,ys,label=r'$R_{vw}$ SEM', color='orange')
-ax1.scatter(domain.Rij_interp(ys)[:,1,2],ys,label=r'$R_{vw}$ Moser', color='k')
-ax1.legend()
-plt.savefig('Rvw.png')
-plt.close()
-
 #Sample u prime
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$u \prime$')
 ax1.set_xlabel(r't')
 ax1.set_title('Centerline Fluctiations')
-ax1.plot(np.linspace(0,domain.x_length/domain.Ublk,nframes),up[:,int((up.shape[1])/2)],color='orange')
+x = np.linspace(0,domain.x_length/domain.Ublk,nframes)
+xind = np.where(x <= 8)
+ax1.plot(x[xind],10+up[:,int((up.shape[1])/2)][xind],color='orange')
 plt.savefig('uprime.png')
+plt.close()
+
+
+u=up[:,int((up.shape[1])/2)]
+v=vp[:,int((up.shape[1])/2)]
+w=wp[:,int((up.shape[1])/2)]
+uu = []
+vv = []
+ww = []
+uv = []
+uw = []
+vw = []
+for i in range(len(u)-2):
+    uu.append(np.mean(u[1:i+2]**2))
+    vv.append(np.mean(v[1:i+2]**2))
+    ww.append(np.mean(w[1:i+2]**2))
+    uv.append(np.mean(u[1:i+2]*v[1:i+2]))
+    uw.append(np.mean(u[1:i+2]*w[1:i+2]))
+    vw.append(np.mean(v[1:i+2]*w[1:i+2]))
+
+#Convergence
+fig, ax1 = plt.subplots()
+ax1.set_ylabel(r'$<u_i u_j>$')
+ax1.set_xlabel(r't')
+x = np.linspace(0,domain.x_length/domain.Ublk,nframes)[2::]
+ax1.plot(x,uu,color='orange',label='uu')
+ax1.plot(x,vv,color='red',label='vv')
+ax1.plot(x,ww,color='gold',label='ww')
+ax1.plot(x,uv,color='blue',label='uv')
+ax1.plot(x,uw,color='green',label='uw')
+ax1.plot(x,vw,color='k',label='vw')
+ax1.legend()
+plt.savefig('converge.png')
 plt.close()
