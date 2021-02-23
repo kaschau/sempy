@@ -88,7 +88,7 @@ def add_profile(domain):
     Us = np.concatenate((Us, np.flip(Us)))
 
     domain.Ubar_interp = interp1d(ys, Us, kind='linear', bounds_error=False,
-                                  fill_value=(Us[0],Us[-1]), assume_sorted=True)
+                                  fill_value=(Us[0],Us[-1]))
 
 if __name__ == "__main__":
 

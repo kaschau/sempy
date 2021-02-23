@@ -96,7 +96,7 @@ def add_stats(domain):
     y = ys*domain.delta
 
     domain.Rij_interp = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
-                                   fill_value=(stats[0,:,:],stats[-1,:,:]), assume_sorted=True)
+                                 fill_value=(stats[0,:,:],stats[-1,:,:]))
 
 if __name__ == "__main__":
 
