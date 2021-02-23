@@ -112,11 +112,11 @@ class domain():
             raise AttributeError('Please set your domain\'s sigma_interp before making it periodic')
         #Make periodic
         if periodic_x:
-            keep_eddys = np.where(self.eddy_locs[:,0] + np.max(self.sigmas[:,0],axis=1) < self.x_length)
+            keep_eddys = np.where(self.eddy_locs[:,0] + np.max(self.sigmas[:,:,0],axis=1) < self.x_length)
             keep_eddy_locs = self.eddy_locs[keep_eddys]
             keep_eps = self.eps[keep_eddys]
-            periodic_eddys = np.where((self.eddy_locs[:,0] + np.max(self.sigmas[:,0],axis=1) > 0.0) &
-                                      (self.eddy_locs[:,0] - np.max(self.sigmas[:,0],axis=1) < 0.0) )
+            periodic_eddys = np.where((self.eddy_locs[:,0] + np.max(self.sigmas[:,:,0],axis=1) > 0.0) &
+                                      (self.eddy_locs[:,0] - np.max(self.sigmas[:,:,0],axis=1) < 0.0) )
             periodic_eddy_locs = self.eddy_locs[periodic_eddys]
             periodic_eddy_locs[:,0] = periodic_eddy_locs[:,0] + self.x_length
             periodic_eps = self.eps[periodic_eddys]
@@ -125,11 +125,11 @@ class domain():
             #Update the sigma array if it has been created already
             self.sigmas = self.sigma_interp(self.eddy_locs[:,1])
         if periodic_y:
-            keep_eddys = np.where(self.eddy_locs[:,1] + np.max(self.sigmas[:,1],axis=1) < self.y_height)
+            keep_eddys = np.where(self.eddy_locs[:,1] + np.max(self.sigmas[:,:,1],axis=1) < self.y_height)
             keep_eddy_locs = self.eddy_locs[keep_eddys]
             keep_eps = self.eps[keep_eddys]
-            periodic_eddys = np.where((self.eddy_locs[:,1] + np.max(self.sigmas[:,1],axis=1) > 0.0) &
-                                      (self.eddy_locs[:,1] - np.max(self.sigmas[:,1],axis=1) < 0.0) )
+            periodic_eddys = np.where((self.eddy_locs[:,1] + np.max(self.sigmas[:,:,1],axis=1) > 0.0) &
+                                      (self.eddy_locs[:,1] - np.max(self.sigmas[:,:,1],axis=1) < 0.0) )
             periodic_eddy_locs = self.eddy_locs[periodic_eddys]
             periodic_eddy_locs[:,1] = periodic_eddy_locs[:,1] + self.y_height
             periodic_eps = self.eps[periodic_eddys]
@@ -138,11 +138,11 @@ class domain():
             #Update the sigma array if it has been created already
             self.sigmas = self.sigma_interp(self.eddy_locs[:,1])
         if periodic_z:
-            keep_eddys = np.where(self.eddy_locs[:,2] + np.max(self.sigmas[:,2],axis=1) < self.z_width)
+            keep_eddys = np.where(self.eddy_locs[:,2] + np.max(self.sigmas[:,:,2],axis=1) < self.z_width)
             keep_eddy_locs = self.eddy_locs[keep_eddys]
             keep_eps = self.eps[keep_eddys]
-            periodic_eddys = np.where((self.eddy_locs[:,2] + np.max(self.sigmas[:,2],axis=1) > 0.0) &
-                                      (self.eddy_locs[:,2] - np.max(self.sigmas[:,2],axis=1) < 0.0) )
+            periodic_eddys = np.where((self.eddy_locs[:,2] + np.max(self.sigmas[:,:,2],axis=1) > 0.0) &
+                                      (self.eddy_locs[:,2] - np.max(self.sigmas[:,:,2],axis=1) < 0.0) )
             periodic_eddy_locs = self.eddy_locs[periodic_eddys]
             periodic_eddy_locs[:,2] = periodic_eddy_locs[:,2] + self.z_width
             periodic_eps = self.eps[periodic_eddys]
