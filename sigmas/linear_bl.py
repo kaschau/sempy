@@ -54,7 +54,7 @@ scale_factor : float
     sigmas = sigmas*scale_factor
 
     domain.sigma_interp = interp1d(y, sigmas, kind='linear',axis=0,bounds_error=False,
-                                    fill_value=(sigmas[0,:,:],sigmas[-1,:,:]), assume_sorted=True)
+                                   fill_value=(sigmas[0,:,:],sigmas[-1,:,:]))
 
     #determine min,max sigmas
     # Here we assume that signal generation at smallest y value is at yplus=1
