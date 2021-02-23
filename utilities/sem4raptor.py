@@ -69,12 +69,12 @@ domain.populate(seminp['C_Eddy'],
                 convect=seminp['convect'])
 #Create the eps
 domain.generate_eps()
+#Compute sigmas
+domain.compute_sigmas()
 #Make it periodic
 domain.make_periodic(periodic_x=seminp['periodic_x'],
                      periodic_y=seminp['periodic_y'],
                      periodic_z=seminp['periodic_z'])
-#Compute sigmas
-domain.compute_sigmas()
 #Print out a summarry
 domain.print_info()
 

@@ -104,46 +104,51 @@ class domain():
                                            ' {}'.format('z' if periodic_z else '') )
 
         #check if we have epsilons or not
-        if not hasattr(self,'eps'):
+        if self.eps is None:
             raise AttributeError('Please generate your domains epsilons before making it periodic')
-        if not hasattr(self,'sigma_interp'):
+        if self.sigmas is None:
+            raise AttributeError('Please compute your domain\'s sigmas before making it periodic')
+        if self.sigma_interp is None:
             raise AttributeError('Please set your domain\'s sigma_interp before making it periodic')
-        if not hasattr(self,'Ubar_interp'):
-            raise AttributeError('Please set your domain\'s Ubar_inter before making it periodic')
         #Make periodic
         if periodic_x:
-            keep_eddys = np.where(self.eddy_locs[:,0] < self.x_length - self.sigma_x_max)
+            keep_eddys = np.where(self.eddy_locs[:,0] + np.max(self.sigmas[:,0],axis=1) < self.x_length)
             keep_eddy_locs = self.eddy_locs[keep_eddys]
             keep_eps = self.eps[keep_eddys]
-            periodic_eddys = np.where(self.eddy_locs[:,0] < self.sigma_x_max)
+            periodic_eddys = np.where((self.eddy_locs[:,0] + np.max(self.sigmas[:,0],axis=1) > 0.0) &
+                                      (self.eddy_locs[:,0] - np.max(self.sigmas[:,0],axis=1) < 0.0) )
             periodic_eddy_locs = self.eddy_locs[periodic_eddys]
             periodic_eddy_locs[:,0] = periodic_eddy_locs[:,0] + self.x_length
             periodic_eps = self.eps[periodic_eddys]
             self.eddy_locs = np.concatenate( (keep_eddy_locs, periodic_eddy_locs) )
             self.eps = np.concatenate( (keep_eps, periodic_eps) )
+            #Update the sigma array if it has been created already
+            self.sigmas = self.sigma_interp(self.eddy_locs[:,1])
         if periodic_y:
-            keep_eddys = np.where(self.eddy_locs[:,1] < self.y_height - self.sigma_y_max)
+            keep_eddys = np.where(self.eddy_locs[:,1] + np.max(self.sigmas[:,1],axis=1) < self.y_height)
             keep_eddy_locs = self.eddy_locs[keep_eddys]
             keep_eps = self.eps[keep_eddys]
-            periodic_eddys = np.where(self.eddy_locs[:,1] < self.sigma_y_max)
+            periodic_eddys = np.where((self.eddy_locs[:,1] + np.max(self.sigmas[:,1],axis=1) > 0.0) &
+                                      (self.eddy_locs[:,1] - np.max(self.sigmas[:,1],axis=1) < 0.0) )
             periodic_eddy_locs = self.eddy_locs[periodic_eddys]
             periodic_eddy_locs[:,1] = periodic_eddy_locs[:,1] + self.y_height
             periodic_eps = self.eps[periodic_eddys]
             self.eddy_locs = np.concatenate( (keep_eddy_locs, periodic_eddy_locs) )
             self.eps = np.concatenate( (keep_eps, periodic_eps) )
+            #Update the sigma array if it has been created already
+            self.sigmas = self.sigma_interp(self.eddy_locs[:,1])
         if periodic_z:
-            keep_eddys = np.where(self.eddy_locs[:,2] < self.z_width - self.sigma_z_max)
+            keep_eddys = np.where(self.eddy_locs[:,2] + np.max(self.sigmas[:,2],axis=1) < self.z_width)
             keep_eddy_locs = self.eddy_locs[keep_eddys]
             keep_eps = self.eps[keep_eddys]
-            periodic_eddys = np.where(self.eddy_locs[:,2] < self.sigma_z_max)
+            periodic_eddys = np.where((self.eddy_locs[:,2] + np.max(self.sigmas[:,2],axis=1) > 0.0) &
+                                      (self.eddy_locs[:,2] - np.max(self.sigmas[:,2],axis=1) < 0.0) )
             periodic_eddy_locs = self.eddy_locs[periodic_eddys]
             periodic_eddy_locs[:,2] = periodic_eddy_locs[:,2] + self.z_width
             periodic_eps = self.eps[periodic_eddys]
             self.eddy_locs = np.concatenate( (keep_eddy_locs, periodic_eddy_locs) )
             self.eps = np.concatenate( (keep_eps, periodic_eps) )
-
-        #Update the sigma array if it has been created already
-        if hasattr(self,'sigmas'):
+            #Update the sigma array if it has been created already
             self.sigmas = self.sigma_interp(self.eddy_locs[:,1])
 
     def print_info(self):

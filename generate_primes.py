@@ -4,7 +4,7 @@ from .misc import progress_bar
 def generate_primes(ys,zs,domain,nframes,normalization):
 
     #check if we have eddys or not
-    if not hasattr(domain,'eddy_locs'):
+    if domain.eddy_locs is None:
         raise ValueError('Please populate your domain before trying to generate fluctiations')
 
     #Check that nframes is large enough with exact normalization
