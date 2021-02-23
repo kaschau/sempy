@@ -2,8 +2,6 @@ import numpy as np
 import scipy.integrate as integrate
 from sempy.domain import domain
 import sys
-np.random.seed(1010)
-
 
 class box(domain):
 
@@ -13,6 +11,7 @@ class box(domain):
         self.y_height = y_height
         self.z_width  = z_width
         self.flow_type = flow_type
+        self.randseed = np.random.RandomState(10101)
 
     def populate(self, C_Eddy=1.0, method='random', convect='uniform'):
 
@@ -37,7 +36,7 @@ class box(domain):
             #Compute number of eddys
             neddy = int( C_Eddy * self.VB / self.V_sigma_min )
             #Generate random eddy locations
-            self.eddy_locs = np.random.uniform(low=lows,high=highs,size=(neddy,3))
+            self.eddy_locs = self.randseed.uniform(low=lows,high=highs,size=(neddy,3))
 
         elif method == 'PDF':
             if not hasattr(self,'sigma_interp'):
@@ -69,14 +68,14 @@ class box(domain):
             bin_centers = 0.5*( test_ys[1::] + test_ys[0:-1] )
             bin_pdf = 0.5*( pdf[1::] + pdf[0:-1] ) * dy
             #place neddys in bins according to pdf
-            bin_loc = np.random.choice(np.arange(bin_pdf.shape[0]),p=bin_pdf,size=neddy)
+            bin_loc = self.randseed.choice(np.arange(bin_pdf.shape[0]),p=bin_pdf,size=neddy)
 
             #create y values for eddys
             #can only generate values at bin centers, so we add a random value to randomize y placement within the bin
-            eddy_ys = np.take(bin_centers, bin_loc) + np.random.uniform(low=-dy/2.0,high=dy/2.0,size=neddy)
+            eddy_ys = np.take(bin_centers, bin_loc) + self.randseed.uniform(low=-dy/2.0,high=dy/2.0,size=neddy)
 
             #Generate random eddy locations for their x and z locations
-            self.eddy_locs = np.random.uniform(low=lows,high=highs,size=(neddy,3))
+            self.eddy_locs = self.randseed.uniform(low=lows,high=highs,size=(neddy,3))
             #Replace ys with PDF ys
             self.eddy_locs[:,1] = eddy_ys
 
