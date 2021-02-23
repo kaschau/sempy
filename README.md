@@ -8,7 +8,7 @@ There is one key distinctions in how sempy and most SEM implementations work. In
 
 Here is an example of how we [generate fluctuations](./generate_primes.py) in sempy.
 
-We begin by populating a mega box with eddys. This mega box is wide and tall enough to encompass our inlet plane, and long enough to traverse throug it for as long as we want our signal to be.
+We begin by populating a mega box with eddys. This mega box is wide and tall enough to encompass our inlet plane, and long enough to traverse through it for as long as we want our signal to be.
 
 ![All Eddys](./References/readme/all_eddy.png)
 
