@@ -93,12 +93,13 @@ def add_profile(domain):
 if __name__ == "__main__":
 
     import matplotlib.pyplot as plt
+    from pathlib import Path
 
     #Create dummy channel
     domain = type('channel',(),{})
     Re_tau = 587.19
     domain.viscosity = 1.81e-5
-    domain.delta = 0.1
+    domain.delta = 0.05
     domain.utau = Re_tau*domain.viscosity/domain.delta
     domain.Ublk = 2.12630000E+01*domain.utau
 
@@ -110,6 +111,24 @@ if __name__ == "__main__":
 
     Uplot = domain.Ubar_interp(yplot)
 
+    relpath = Path(__file__).parent / "Moser_Channel_ReTau590_Profile.csv"
+    data = np.genfromtxt(relpath,delimiter=',',comments='#',skip_header=5)
+
+    yp = data[:,0]
+    yd = yp/yp.max()
+    npts = yp.shape[0]
+    MU = np.empty(npts*2-1)
+    MU[0:npts] = data[:,1]
+    MU[npts::] = np.flip(MU[0:npts-1])
+    MU = MU*domain.utau
+    yp_trans = 3*np.sqrt(Re_tau)
+    overlap = np.where(yp > yp_trans)
+    #No idea if this is general enough
+    transition = np.exp(-np.exp(-7.5*np.linspace(0,1,overlap[0].shape[0])+2.0))
+    yM = yp*domain.viscosity/domain.utau
+    yM[overlap] = yp[overlap]*domain.viscosity/domain.utau*(1.0-transition) + yd[overlap]*domain.delta*transition
+    yM = np.concatenate((yM,2.0*domain.delta-np.flip(yM[1::])))
+
     fig, ax = plt.subplots(2,1,figsize=(5,10))
 
     ax1 = ax[0]
@@ -117,14 +136,18 @@ if __name__ == "__main__":
     ax1.set_title(f'{string}')
     ax1.set_ylabel(r'$y/ \delta$')
     ax1.set_xlabel(r'$\bar{U}$')
-    ax1.plot(Uplot,yplot/domain.delta)
+    ax1.plot(Uplot,yplot/domain.delta, label=r'$\bar{U}_{SEM}$')
+    ax1.plot(MU,yM/domain.delta, label=r'$\bar{U}_{Moser}$')
+    ax1.legend()
 
     ax2 = ax[1]
     ax2.set_xlabel(r'$y^{+}$')
     ax2.set_ylabel(r'$u^{+}$')
     yplus = yplot*domain.utau/domain.viscosity
-    ax2.plot(yplus[np.where(yplus<100)],Uplot[np.where(yplus<100)]/domain.utau)
+    ax2.plot(yplus[np.where(yplus<100)],Uplot[np.where(yplus<100)]/domain.utau, label=r'$\bar{U}_{SEM}$')
+    ax2.plot(yp[np.where(yp<100)],MU[np.where(yp<100)]/domain.utau, label=r'$\bar{U}_{Moser}$')
     ax2.set_aspect('equal')
+    ax2.legend()
 
     fig.tight_layout()
     plt.show()

@@ -130,7 +130,7 @@ if __name__ == "__main__":
     domain = type('channel',(),{})
     Re_tau = 587.19
     domain.viscosity = 1.81e-5
-    domain.delta = 0.1
+    domain.delta = 0.05
     domain.utau = Re_tau*domain.viscosity/domain.delta
     domain.Ublk = 2.12630000E+01*domain.utau
 
