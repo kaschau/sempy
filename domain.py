@@ -153,6 +153,7 @@ class domain():
 
     def print_info(self):
         print(f'Flow Type: {self.flow_type}')
+        print(f'Domain Length = {self.x_length} [m] ({self.x_length/self.Ublk} [s])')
         print(f'Domain Height = {self.y_height} [m]')
         print(f'Domain Width = {self.z_width} [m]')
 

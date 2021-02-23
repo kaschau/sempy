@@ -2,51 +2,52 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sempy
 
+'''
+Reproduction of Moser Channel DNS at Re_{\tau} = 590
+'''
 #Flow
-Re = 10e5
-tme = 10 #Time of signal, used to determine length of box
-utau = 0.1
-delta = np.pi #Defined from flow configuration
-viscosity = 1e-5
-Ublk = Re*viscosity/delta #Bulk flow velocity, used to determine length of box
-utau = Ublk/(5*np.log10(Re))
+Re_tau = 587.19
+delta = 0.05 #Made this up
+viscosity = 1.81e-5 #Air @ STP
+utau = Re_tau*viscosity/delta
+Ublk = 2.12630000E+01*utau
+tme = 10*2*np.pi*delta/Ublk #Based on FTT of DNS domain
 nframes = 200
 #Box geobm
-y_height = delta*2.0
-z_width = 2*np.pi
+y_height = 2.0*delta
+z_width = np.pi*delta
 
 #Eddy Density
 C_Eddy = 2.0
-
 #eddy convection speed
-convect='local'
-
+convect='uniform'
+#population method
+pop_meth = 'random'
+#normalization
+norm = 'jarrin'
 #Initialize domain
 domain = sempy.geometries.box('channel',Ublk,tme,y_height,z_width,delta,utau,viscosity)
-
 #Set flow properties from existing data
 domain.set_sem_data(sigmas_from='jarrin',stats_from='moser',profile_from='channel')
-
 #Populate the domain
-domain.populate(C_Eddy,method='PDF',convect=convect)
+domain.populate(C_Eddy,method=pop_meth,convect=convect)
 #Create the eps
 domain.generate_eps()
-#Make it periodic
-domain.make_periodic(periodic_x=False,periodic_y=False,periodic_z=True)
 #Compute sigmas
 domain.compute_sigmas()
+#Make it periodic
+domain.make_periodic(periodic_x=False,periodic_y=False,periodic_z=True)
 
 domain.print_info()
 
 #Create y,z coordinate pairs for calculation
-ys = np.concatenate((np.linspace(0.0001,0.01*domain.delta,5),
+ys = np.concatenate((np.linspace(0.0001*domain.delta,0.01*domain.delta,5),
                      np.linspace(0.01*domain.delta,1.99*domain.delta,20),
                      np.linspace(1.99*domain.delta,1.9999*domain.delta,5)))
-
-zs = np.ones(ys.shape[0])*np.pi
+zs = np.ones(ys.shape[0])*z_width/2.0
 
 #Compute u'
-up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization='exact')
+up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization=norm)
 
 #Compute stats along line
 uus = np.mean(up[:,:]**2,axis=0)
@@ -136,6 +137,6 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$u \prime$')
 ax1.set_xlabel(r't')
 ax1.set_title('Centerline Fluctiations')
-ax1.plot(np.linspace(0,domain.x_length,nframes),up[:,int((up.shape[1])/2)],color='orange')
+ax1.plot(np.linspace(0,domain.x_length/domain.Ublk,nframes),up[:,int((up.shape[1])/2)],color='orange')
 plt.savefig('uprime.png')
 plt.close()

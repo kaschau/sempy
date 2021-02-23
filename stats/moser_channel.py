@@ -102,7 +102,7 @@ def add_stats(domain):
     transition = np.exp(-np.exp(-7.5*np.linspace(0,1,overlap[0].shape[0])+2.0))
 
     y = yp*domain.viscosity/domain.utau
-    y[overlap] = yp[overlap]*domain.viscosity/domain.utau*np.flip(transition) + yd[overlap]*domain.delta*transition
+    y[overlap] = yp[overlap]*domain.viscosity/domain.utau*(1.0-transition) + yd[overlap]*domain.delta*transition
     y = np.concatenate((y,2.0*domain.delta-np.flip(y[1::])))
 
     stats = np.empty((y.shape[0],3,3))
@@ -128,15 +128,15 @@ if __name__ == "__main__":
 
     #Create dummy channel
     domain = type('channel',(),{})
-    Re = 10e5
-    domain.viscosity = 1e-5
-    domain.delta = 1.0
-    domain.Ublk = Re*domain.viscosity/domain.delta
-    domain.utau = domain.Ublk/(5*np.log10(Re))
+    Re_tau = 587.19
+    domain.viscosity = 1.81e-5
+    domain.delta = 0.1
+    domain.utau = Re_tau*domain.viscosity/domain.delta
+    domain.Ublk = 2.12630000E+01*domain.utau
 
-    yplot = np.concatenate((np.linspace(0,0.05*domain.delta,1000),
-                            np.linspace(0.05*domain.delta,1.95*domain.delta,100),
-                            np.linspace(1.95*domain.delta,2.0*domain.delta,1000)))
+    yplot = np.concatenate((np.linspace(0,0.05*domain.delta,1000)[0:-1],
+                            np.linspace(0.05*domain.delta,1.95*domain.delta,500),
+                            np.linspace(1.95*domain.delta,2.0*domain.delta,1000)[1::]))
 
     add_stats(domain)
 
@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
     ax3 = ax[1]
     yplus = yplot*domain.utau/domain.viscosity
-    string = 'Moser Profile Re=10e5, '+r'$u_{\tau}=$'+'{:.2f} '.format(domain.utau)+r'$U_{0}=$'+f'{domain.Ublk}'
+    string = 'Moser Profile, '+r'$u_{\tau}=$'+'{:.2f} '.format(domain.utau)+r'$U_{0}=$'+f'{domain.Ublk}'
     ax3.set_title(f'{string}')
     ax3.set_xlabel(r'$y^{+}$')
     ax3.set_ylabel(r'$R_{ii}/u_{\tau}^{2}$')
