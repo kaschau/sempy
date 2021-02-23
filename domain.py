@@ -95,7 +95,7 @@ class domain():
 
     def generate_eps(self):
         #generate epsilons
-        self.eps = np.where(np.random.uniform(low=-1,high=1,size=(self.neddy,3))<= 0.0, -1.0,1.0)
+        self.eps = np.where(self.randseed.uniform(low=-1,high=1,size=(self.neddy,3))<= 0.0, -1.0,1.0)
 
     def make_periodic(self, periodic_x=False, periodic_y=False, periodic_z=False):
         if True in [periodic_x, periodic_y, periodic_z]:

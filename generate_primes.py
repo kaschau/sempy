@@ -1,9 +1,6 @@
 import numpy as np
 from .misc import progress_bar
 
-#Make this process repeatable
-np.random.seed(1010)
-
 def generate_primes(ys,zs,domain,nframes,normalization):
 
     #check if we have eddys or not
