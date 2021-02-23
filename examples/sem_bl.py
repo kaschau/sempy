@@ -26,10 +26,10 @@ domain.set_sem_data(sigmas_from='linear_bl',stats_from='spalart',profile_from='b
 domain.populate(C_Eddy,'PDF')
 #Create the eps
 domain.generate_eps()
-#Make it periodic
-domain.make_periodic(periodic_x=True,periodic_z=True)
 #Compute sigmas
 domain.compute_sigmas()
+#Make it periodic
+domain.make_periodic(periodic_x=True,periodic_z=True)
 
 domain.print_info()
 

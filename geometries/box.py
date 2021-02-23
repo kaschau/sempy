@@ -15,14 +15,14 @@ class box(domain):
 
     def populate(self, C_Eddy=1.0, method='random', convect='uniform'):
 
-        if not hasattr(self,'sigma_interp'):
+        if self.sigma_interp is None:
             raise ValueError('Please set your flow data before trying to populate your domain')
 
         self.eddy_pop_method = method
         self.convect = convect
 
         #generate eddy volume
-        if self.flow_type in ['channel', 'shearfree']:
+        if self.flow_type in ['channel', 'freeshear']:
             lows  = [          0.0 - self.sigma_x_max,           0.0 - self.sigma_y_max,          0.0 - self.sigma_z_max]
             highs = [self.x_length + self.sigma_x_max, self.y_height + self.sigma_y_max, self.z_width + self.sigma_z_max]
         elif self.flow_type == 'bl':
@@ -39,7 +39,7 @@ class box(domain):
             self.eddy_locs = self.randseed.uniform(low=lows,high=highs,size=(neddy,3))
 
         elif method == 'PDF':
-            if not hasattr(self,'sigma_interp'):
+            if self.sigma_interp is None:
                 raise ValueError('If you want to use local eddy convection speeds, please set the sigma interpolator before polulating eddies')
             #Eddy heights as a function of y
             test_ys = np.linspace(lows[1], highs[1], 200)
@@ -106,13 +106,13 @@ class box(domain):
         # we use the local convection speed versus the uniform.
 
         ########################################################################
-        if convect == 'local':
-            #check if the Ubar interpolation are set so we can remove the eddies
-            #that arent going to contribute to the flow
-            if not hasattr(self,'Ubar_interp'):
-                raise ValueError('If you want to use local eddy convection speeds, please set the Ubar interpolator before polulating eddies')
-            keep_eddys = np.where(self.eddy_locs[:,0] < self.x_length*self.Ubar_interp(self.eddy_locs[:,1])/self.Ublk
-                                  + np.max(self.sigma_interp(self.eddy_locs[:,1])[:,:,0],axis=1))
-            print(f'Removing {self.neddy-len(keep_eddys[0])} eddys due to local eddy convection speed usage.')
-            self.eddy_locs = self.eddy_locs[keep_eddys]
+        # if convect == 'local':
+        #     #check if the Ubar interpolation are set so we can remove the eddies
+        #     #that arent going to contribute to the flow
+        #     if self.Ubar_interp:
+        #         raise ValueError('If you want to use local eddy convection speeds, please set the Ubar interpolator before polulating eddies')
+        #     keep_eddys = np.where(self.eddy_locs[:,0] < self.x_length*self.Ubar_interp(self.eddy_locs[:,1])/self.Ublk
+        #                           + np.max(self.sigma_interp(self.eddy_locs[:,1])[:,:,0],axis=1))
+        #     print(f'Removing {self.neddy-len(keep_eddys[0])} eddys due to local eddy convection speed usage.')
+        #     self.eddy_locs = self.eddy_locs[keep_eddys]
         ########################################################################
