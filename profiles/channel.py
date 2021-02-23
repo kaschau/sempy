@@ -113,7 +113,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(2,1,figsize=(5,10))
 
     ax1 = ax[0]
-    string = '$Re_{\tau}=590$, '+r'$u_{\tau}=$'+'{:.2f} '.format(domain.utau)+r'$U_{0}=$'+'{:.6f}'.format(domain.Ublk)
+    string = r'$Re_{\tau}=590$, '+r'$u_{\tau}=$'+'{:.2f} '.format(domain.utau)+r'$U_{0}=$'+'{:.6f}'.format(domain.Ublk)
     ax1.set_title(f'{string}')
     ax1.set_ylabel(r'$y/ \delta$')
     ax1.set_xlabel(r'$\bar{U}$')
