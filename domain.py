@@ -40,7 +40,6 @@ class domain():
         self.sigmas_from = None
         self.stats_from = None
         self.eddy_pop_method = None 
-        self.convect = None
 
     @property
     def neddy(self):
