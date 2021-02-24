@@ -60,13 +60,13 @@ if rank == 0:
                 else:
                     seminp[key] = int(val)
             except ValueError:
-                seminp[key] = val
-        #We need the periodic inputs to be bools
-        for s in ['periodic_x','periodic_y','periodic_z']:
-            if seminp[s] == 'True':
-                seminp[s] = True
-            else:
-                seminp[s] = False
+                if val in ['True','true','t','T']:
+                    seminp[key] = True
+                elif val in ['False','true','f','F']:
+                    seminp[key] = False
+                else:
+                    seminp[key] = val
+
 else:
     seminp = None
 seminp = comm.bcast(seminp,root=0)
