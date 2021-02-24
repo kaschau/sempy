@@ -1,7 +1,41 @@
 import numpy as np
 from .misc import progress_bar
 
-def generate_primes(ys,zs,domain,nframes,normalization):
+def generate_primes(ys,zs,domain,nframes,normalization,convect='uniform',progress=True):
+    '''
+    Generate Primes Function
+
+    Routine to march down the length (time-line) of mega-box at specified (y,z) coordinate points, stopping along the way
+    to calculate the fluctuations at each time point. To improve performace, we first filter out all the eddy in domain
+    that cannot possibly contribute to the group of (y,z) points provided based on the eddy's sigmas in y and z.
+
+    Further, for each (y,z) pair we want to compute a signal for, we filter out the eddys that cannot possible contribute
+    to the current (y,z) point's time line, again based on the eddy's sigmas in y and z.
+
+    Finally, we can filter out the eddys that do not contribute to an individual point as we march down the time line
+    based on the reduced set of eddy's sigmas in x.
+
+    With this very reduced set of eddys that contribute to a point, we compute the fluctuation for that point.
+
+
+    Parameters:
+    -----------
+      ys     : numpy.array
+            Array of y coordinates of any shape
+      zs     : numpy.array
+            Array of shape(y) corresponsing one-to-one matching (y,z) pairs
+      domain : sempy.domain
+            Domain object to fully populated with parameters and dat.
+      nframes : int
+            Number of frames to generate per (y,z) pair
+
+    Returns:
+    --------
+        up,vp,wp : numpy.arrrays
+            Fluctuation result arrays of shape ( (nframes, shape(y)) ). First axis is 'time', second axis is the
+            shape of the input ys and zs arrays.
+            So up[0] is the corresponding u fluctiations at all the y points for the first frame.
+    '''
 
     #check if we have eddys or not
     if domain.eddy_locs is None:
@@ -21,7 +55,7 @@ def generate_primes(ys,zs,domain,nframes,normalization):
     ys = np.array(ys)
     zs = np.array(zs)
 
-    #As a sanity check, make sure none of our points are outside the domain
+    #As a sanity check, make sure none of our points are outside the patch
     if (ys.min() < -0.0001*domain.y_height or ys.max() > 1.0001*domain.y_height or
         zs.min() < -0.0001*domain.z_width  or zs.max() > 1.0001*domain.z_width):
         raise ValueError('Woah there, some of your points you are trying to calculate fluctuations for are completely outside your domain!')
@@ -32,32 +66,33 @@ def generate_primes(ys,zs,domain,nframes,normalization):
     zs = zs.ravel()
 
     #We want to filter out all eddys that are not possibly going to contribute to this set of ys and zs
-    #we are going to refer to the boundinf box that encapsulates ALL y,z pairs ad the 'domain' or 'dom'
-    dom_ymin = ys.min()
-    dom_ymax = ys.max()
-    dom_zmin = zs.min()
-    dom_zmax = zs.max()
-    eddy_in_dom = dict()
-    eddy_locs_in_dom = dict()
-    sigmas_in_dom = dict()
-    eps_in_dom = dict()
+    #we are going to refer to the boundinf box that encapsulates ALL y,z pairs of the current 'patch'
+    patch_ymin = ys.min()
+    patch_ymax = ys.max()
+    patch_zmin = zs.min()
+    patch_zmax = zs.max()
+    eddy_in_patch = dict()
+    eddy_locs_in_patch = dict()
+    sigmas_in_patch = dict()
+    eps_in_patch = dict()
 
     # Because u,v,w fluctuations each have different values of sigma_x,y,z we need to keep seperate lists of the
-    # eddys that can possible contribute to the domain. We also need to track the sigmas and epsilons that correspond
+    # eddys that can possible contribute to the patch. We also need to track the sigmas and epsilons that correspond
     # to these eddy locations.
     for k,u in zip(range(3),['u','v','w']):
-        eddys_in_dom = np.where( ( domain.eddy_locs[:,1] - domain.sigmas[:,k,1] < dom_ymax )
-                               & ( domain.eddy_locs[:,1] + domain.sigmas[:,k,1] > dom_ymin )
-                               & ( domain.eddy_locs[:,2] - domain.sigmas[:,k,2] < dom_zmax )
-                               & ( domain.eddy_locs[:,2] + domain.sigmas[:,k,2] > dom_zmin ) )
-        eddy_locs_in_dom[u] = domain.eddy_locs[eddys_in_dom]
-        sigmas_in_dom[u] = domain.sigmas[eddys_in_dom]
-        eps_in_dom[u] = domain.eps[eddys_in_dom]
+        eddys_in_patch = np.where( ( domain.eddy_locs[:,1] - domain.sigmas[:,k,1] < patch_ymax )
+                                 & ( domain.eddy_locs[:,1] + domain.sigmas[:,k,1] > patch_ymin )
+                                 & ( domain.eddy_locs[:,2] - domain.sigmas[:,k,2] < patch_zmax )
+                                 & ( domain.eddy_locs[:,2] + domain.sigmas[:,k,2] > patch_zmin ) )
+        eddy_locs_in_patch[u] = domain.eddy_locs[eddys_in_patch]
+        sigmas_in_patch[u] = domain.sigmas[eddys_in_patch]
+        eps_in_patch[u] = domain.eps[eddys_in_patch]
 
     ######################################################################
-    # We now have a reduced set of eddys that overlap the current domain
+    # We now have a reduced set of eddys that overlap the current patc
     ######################################################################
-    print(f'Searching a reduced set of {eddy_locs_in_dom["u"].shape[0]} u eddies, {eddy_locs_in_dom["v"].shape[0]} v eddies, and {eddy_locs_in_dom["w"].shape[0]} w eddies using {domain.convect} convection speed')
+    if progress:
+        print(f'Searching a reduced set of {eddy_locs_in_patch["u"].shape[0]} u eddies, {eddy_locs_in_patch["v"].shape[0]} v eddies, and {eddy_locs_in_patch["w"].shape[0]} w eddies using {convect} convection speed')
     #Storage for fluctuations
     up = np.empty((nframes,len(ys)))
     vp = np.empty((nframes,len(ys)))
@@ -66,7 +101,7 @@ def generate_primes(ys,zs,domain,nframes,normalization):
     #just counter for progress display
     total = len(ys)
     #Define "time" points for frames, if its uniform, we only need to do this once.
-    if domain.convect == 'uniform':
+    if convect == 'uniform':
         xs = np.linspace(0,domain.x_length,nframes)
     #Loop over each location
     for i,(y,z) in enumerate(zip(ys,zs)):
@@ -76,19 +111,19 @@ def generate_primes(ys,zs,domain,nframes,normalization):
         Rij = domain.Rij_interp(y)
         #Cholesky decomp of stats
         L = np.linalg.cholesky(Rij)
-
-        progress_bar(i+1,total,'Generating Primes')
+        if progress:
+            progress_bar(i+1,total,'Generating Primes')
         #Find eddies that contribute on the current y,z line. This search is done on the reduced set of
-        # eddys filtered out into the "domain"
+        # eddys filtered on the "patch"
         eddy_locs_on_line = dict()
         sigmas_on_line = dict()
         eps_on_line = dict()
         for k,u in zip(range(3),['u','v','w']):
-            eddys_on_line = np.where( (np.abs( eddy_locs_in_dom[u][:,1] - y ) < sigmas_in_dom[u][:,k,1] )
-                                    & (np.abs( eddy_locs_in_dom[u][:,2] - z ) < sigmas_in_dom[u][:,k,2] ) )
-            eddy_locs_on_line[u] = eddy_locs_in_dom[u][eddys_on_line]
-            sigmas_on_line[u] = sigmas_in_dom[u][eddys_on_line]
-            eps_on_line[u] = eps_in_dom[u][eddys_on_line]
+            eddys_on_line = np.where( (np.abs( eddy_locs_in_patch[u][:,1] - y ) < sigmas_in_patch[u][:,k,1] )
+                                    & (np.abs( eddy_locs_in_patch[u][:,2] - z ) < sigmas_in_patch[u][:,k,2] ) )
+            eddy_locs_on_line[u] = eddy_locs_in_patch[u][eddys_on_line]
+            sigmas_on_line[u] = sigmas_in_patch[u][eddys_on_line]
+            eps_on_line[u] = eps_in_patch[u][eddys_on_line]
 
         #We want to know if an entire line has zero eddys, this will be annoying for BL in the free stream
         # so we will only print out a warning for the BL cases if the value of y is below the BL thickness
@@ -102,7 +137,7 @@ def generate_primes(ys,zs,domain,nframes,normalization):
         # We now have a reduced set of eddys that overlap the current y,z line
         ######################################################################
         #Define "time" points for frames, if its local, we need to recalculate for each y location.
-        if domain.convect == 'local':
+        if convect == 'local':
             local_Ubar = domain.Ubar_interp(y)
             length = domain.x_length*local_Ubar/domain.Ublk
             xs = np.linspace(0,length,nframes)
@@ -116,7 +151,7 @@ def generate_primes(ys,zs,domain,nframes,normalization):
             if zero_online[u]:
                 continue
 
-            if domain.convect == 'local':
+            if convect == 'local':
                #We need each eddys individual Ubar for the offset calculated below
                 local_eddy_Ubar = domain.Ubar_interp(eddy_locs_on_line[u][:,1])
 
@@ -124,7 +159,7 @@ def generate_primes(ys,zs,domain,nframes,normalization):
             for j,x in enumerate(xs):
                 zero_onpoint = {'u':False,'v':False,'w':False}
 
-                if domain.convect == 'local':
+                if convect == 'local':
                     #This may be tough to explain, but just draw it out for yourself and you'll
                     #figure it out:
 

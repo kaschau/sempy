@@ -30,7 +30,7 @@ domain = sempy.geometries.box('channel',Ublk,tme,y_height,z_width,delta,utau,vis
 #Set flow properties from existing data
 domain.set_sem_data(sigmas_from='jarrin',stats_from='moser',profile_from='channel')
 #Populate the domain
-domain.populate(C_Eddy,method=pop_meth,convect=convect)
+domain.populate(C_Eddy,method=pop_meth)
 #Create the eps
 domain.generate_eps()
 #Compute sigmas
@@ -47,7 +47,7 @@ ys = np.concatenate((np.linspace(0.0001*domain.delta,0.01*domain.delta,5),
 zs = np.ones(ys.shape[0])*z_width/2.0
 
 #Compute u'
-up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization=norm)
+up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization=norm,convect=convect)
 
 #Compute stats along line
 uus = np.mean(up[:,:]**2,axis=0)

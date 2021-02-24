@@ -19,7 +19,6 @@ class box(domain):
             raise ValueError('Please set your flow data before trying to populate your domain')
 
         self.eddy_pop_method = method
-        self.convect = convect
 
         #generate eddy volume
         if self.flow_type in ['channel', 'freeshear']:
@@ -39,8 +38,6 @@ class box(domain):
             self.eddy_locs = self.randseed.uniform(low=lows,high=highs,size=(neddy,3))
 
         elif method == 'PDF':
-            if self.sigma_interp is None:
-                raise ValueError('If you want to use local eddy convection speeds, please set the sigma interpolator before polulating eddies')
             #Eddy heights as a function of y
             test_ys = np.linspace(lows[1], highs[1], 200)
             test_sigmas = self.sigma_interp(test_ys)
@@ -97,22 +94,3 @@ class box(domain):
         self.eddy_locs = self.eddy_locs[keep_eddys]
         keep_eddys = np.where( (self.eddy_locs[:,2] - np.max(self.sigma_interp(self.eddy_locs[:,1])[:,:,2],axis=1) < self.z_width  ))
         self.eddy_locs = self.eddy_locs[keep_eddys]
-
-        ########################################################################
-
-        # I dont think the following block is correct. There needs to be a better
-        # way of determining if a eddy is going to effect the solution other than
-        # just the x_sigma values. The variable profile makes this trickier when
-        # we use the local convection speed versus the uniform.
-
-        ########################################################################
-        # if convect == 'local':
-        #     #check if the Ubar interpolation are set so we can remove the eddies
-        #     #that arent going to contribute to the flow
-        #     if self.Ubar_interp:
-        #         raise ValueError('If you want to use local eddy convection speeds, please set the Ubar interpolator before polulating eddies')
-        #     keep_eddys = np.where(self.eddy_locs[:,0] < self.x_length*self.Ubar_interp(self.eddy_locs[:,1])/self.Ublk
-        #                           + np.max(self.sigma_interp(self.eddy_locs[:,1])[:,:,0],axis=1))
-        #     print(f'Removing {self.neddy-len(keep_eddys[0])} eddys due to local eddy convection speed usage.')
-        #     self.eddy_locs = self.eddy_locs[keep_eddys]
-        ########################################################################

@@ -34,7 +34,7 @@ domain = sempy.geometries.box('freeshear',Ublk,tme,y_height,z_width,delta,utau,v
 domain.set_sem_data(sigmas_from='uniform',stats_from='isotropic',profile_from='uniform',scale_factor=0.5)
 
 #Populate the domain
-domain.populate(C_Eddy,method=pop_meth,convect=convect)
+domain.populate(C_Eddy,method=pop_meth)
 #Create the eps
 domain.generate_eps()
 #Compute sigmas
@@ -49,7 +49,7 @@ ys = np.array([np.pi])
 zs = np.array([np.pi])
 
 #Compute u'
-up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization=normalization)
+up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization=normalization,convect=convect)
 
 #Compute stats along line
 uus = np.mean(up[:,:]**2,axis=0)
