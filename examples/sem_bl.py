@@ -38,7 +38,7 @@ ys = np.linspace(0.001*y_height,y_height*0.999,10)
 zs = np.ones(ys.shape[0])*z_width/2.0
 
 #Compute u'
-up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization='exact')
+up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization='exact',convect='uniform')
 
 #Compute stats along line
 uus = np.mean(up[:,:]**2,axis=0)
