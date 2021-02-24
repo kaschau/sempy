@@ -151,7 +151,29 @@ if rank == 0:
     rp.readers.read_raptor_grid(mb,seminp['grid_path'])
     rpinp = rp.readers.read_raptor_input_file(seminp['inp_path'])
     mb.dim_grid(rpinp)
-    mb.compute_metrics(xc=False,xu=True,xv=True,xw=True)
+    #Flip the grid if it is oriented upside down in the true grid
+    if seminp['flipdom']:
+        for bn in block_num:
+            blk = mb[bn-1]
+            blk.y = -blk.y
+            blk.z = -blk.z
+    #Determinw the extents the grid needs to be shifted
+    ymin = np.inf
+    zmin = np.inf
+    for bn in block_num:
+        blk = mb[bn-1]
+        ymin = min(ymin,blk.y[:,:,0].min())
+        zmin = min(zmin,blk.z[:,:,0].min())
+    #Now shift the grid to match the domain (0,0) starting point
+    for bn in block_num:
+        blk = mb[bn-1]
+        blk.y =  blk.y - ymin
+        blk.z =  blk.z - zmin
+        #Compute the locations of face centers
+        blk.compute_U_face_centers()
+        blk.compute_V_face_centers()
+        blk.compute_W_face_centers()
+
 else:
     rpinp = None
 # Send the raptor input file to everyone
@@ -282,6 +304,10 @@ for i,pn in enumerate(my_patch_nums):
     up = up/rpinp['refvl']['U_ref']
     vp = vp/rpinp['refvl']['U_ref']
     wp = wp/rpinp['refvl']['U_ref']
+
+    if seminp['flipdom']:
+        vp = -vp
+        wp = -wp
 
     tme = seminp['total_time']*rpinp['refvl']['U_ref']/rpinp['refvl']['L_ref']
     t = np.linspace(0,tme,seminp['nframes'])
