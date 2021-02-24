@@ -13,7 +13,7 @@ class box(domain):
         self.flow_type = flow_type
         self.randseed = np.random.RandomState(10101)
 
-    def populate(self, C_Eddy=1.0, method='random', convect='uniform'):
+    def populate(self, C_Eddy=1.0, method='random'):
 
         if self.sigma_interp is None:
             raise ValueError('Please set your flow data before trying to populate your domain')
