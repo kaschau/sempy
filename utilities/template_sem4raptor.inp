@@ -36,13 +36,13 @@ viscosity         = 3.33e-5         #kinematic viscocity
 delta             = 0.0254          #channel half height or BL thickness
 utau              = 34.663          #Friction velocity
 Ublk              = 895             #Channel centerline height or U_inf
-total_time        = 0.002           #[s] time of generated signal,
-                                    #   used to determine length of box
 
 ########################################################################
 ############################ SEM VALUES ################################
 ########################################################################
 
+total_time        = 0.002           #[s] time of generated signal,
+                                    #   used to determine length of box
 nframes           = 50              #Number of desired frames over time interval
 C_Eddy            = 3.0             #Eddy Density multiplier
 sigmas_from       = jarrin          #Method of setting eddy length scales
