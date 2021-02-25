@@ -22,14 +22,11 @@ class box(domain):
 
         #generate eddy volume
         if self.flow_type in ['channel', 'freeshear']:
-            lows  = [          0.0 - self.sigma_x_max,           0.0 - self.sigma_y_max,          0.0 - self.sigma_z_max]
-            highs = [self.x_length + self.sigma_x_max, self.y_height + self.sigma_y_max, self.z_width + self.sigma_z_max]
+            lows  = [          0.0 - self.sigma_x_max/2.0,           0.0 - self.sigma_y_max/2.0,          0.0 - self.sigma_z_max/2.0]
+            highs = [self.x_length + self.sigma_x_max/2.0, self.y_height + self.sigma_y_max/2.0, self.z_width + self.sigma_z_max/2.0]
         elif self.flow_type == 'bl':
-            lows  = [          0.0 - self.sigma_x_max,           0.0 - self.sigma_y_max,          0.0 - self.sigma_z_max]
-            highs = [self.x_length + self.sigma_x_max,           0.0 + self.delta      , self.z_width + self.sigma_z_max]
-
-        # Set the eddy box volume
-        self.VB = np.product(np.array(highs) - np.array(lows))
+            lows  = [          0.0 - self.sigma_x_max/2.0,           0.0 - self.sigma_y_max/2.0,          0.0 - self.sigma_z_max/2.0]
+            highs = [self.x_length + self.sigma_x_max/2.0,    self.delta + self.sigma_y_max/2.0, self.z_width + self.sigma_z_max/2.0]
 
         if method == 'random':
             #Compute number of eddys
@@ -94,3 +91,15 @@ class box(domain):
         self.eddy_locs = self.eddy_locs[keep_eddys]
         keep_eddys = np.where( (self.eddy_locs[:,2] - np.max(self.sigma_interp(self.eddy_locs[:,1])[:,:,2],axis=1) < self.z_width  ))
         self.eddy_locs = self.eddy_locs[keep_eddys]
+
+    @property
+    def VB(self):
+        #generate eddy volume
+        if self.flow_type in ['channel', 'freeshear']:
+            lows  = [          0.0 - self.sigma_x_max/2.0,           0.0 - self.sigma_y_max/2.0,          0.0 - self.sigma_z_max/2.0]
+            highs = [self.x_length + self.sigma_x_max/2.0, self.y_height + self.sigma_y_max/2.0, self.z_width + self.sigma_z_max/2.0]
+        elif self.flow_type == 'bl':
+            lows  = [          0.0 - self.sigma_x_max/2.0,           0.0 - self.sigma_y_max/2.0,          0.0 - self.sigma_z_max/2.0]
+            highs = [self.x_length + self.sigma_x_max/2.0,    self.delta + self.sigma_y_max/2.0, self.z_width + self.sigma_z_max/2.0]
+
+        return np.product(np.array(highs) - np.array(lows))
