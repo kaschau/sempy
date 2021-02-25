@@ -31,7 +31,6 @@ class domain():
         self.Rij_interp = None
         self.Ubar_interp = None
 
-        self.VB = None
         self.eddy_locs = None
         self.eps = None
         self.sigmas = None
