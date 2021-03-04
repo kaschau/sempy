@@ -71,7 +71,6 @@ def generate_primes(ys,zs,domain,nframes,normalization,convect='uniform',progres
     patch_ymax = ys.max()
     patch_zmin = zs.min()
     patch_zmax = zs.max()
-    eddy_in_patch = dict()
     eddy_locs_in_patch = dict()
     sigmas_in_patch = dict()
     eps_in_patch = dict()
@@ -153,7 +152,7 @@ def generate_primes(ys,zs,domain,nframes,normalization,convect='uniform',progres
 
             if convect == 'local':
                #We need each eddys individual Ubar for the offset calculated below
-                local_eddy_Ubar = domain.Ubar_interp(eddy_locs_on_line[u][:,1])
+               local_eddy_Ubar = domain.Ubar_interp(eddy_locs_on_line[u][:,1])
 
             #Travel down line at this y,z location
             for j,x in enumerate(xs):
@@ -180,7 +179,7 @@ def generate_primes(ys,zs,domain,nframes,normalization,convect='uniform',progres
                     #If all the eddys convect at the same speed, then traversing through the mega box at Ublk
                     #is identical so the eddys convecting by us at Ublk, so there is no need to offset any
                     #eddy positions
-                    x_offset = 0.0
+                    x_offset = np.zeros(eddy_locs_on_line[u].shape[0])
 
                 #########################
                 #Compute u'
@@ -188,6 +187,7 @@ def generate_primes(ys,zs,domain,nframes,normalization,convect='uniform',progres
                 #Find all non zero eddies for u,v,w at current time "x"
                 x_dist = np.abs( (eddy_locs_on_line[u][:,0]+x_offset) - x )
                 eddys_on_point = np.where( x_dist < sigmas_on_line[u][:,k,0] )
+                x_offset = x_offset[eddys_on_point]
                 if len(eddys_on_point[0]) == 0:
                     empty_pts += 1
                     primes_no_norm[j,k] = 0.0
@@ -197,9 +197,9 @@ def generate_primes(ys,zs,domain,nframes,normalization,convect='uniform',progres
                     # We now have a reduced set of eddys that overlap the current point
                     ######################################################################
                     #Compute distances to all contributing points
-                    x_dist = np.abs( eddy_locs_on_line[u][eddys_on_point][:,0] - x )
-                    y_dist = np.abs( eddy_locs_on_line[u][eddys_on_point][:,1] - y )
-                    z_dist = np.abs( eddy_locs_on_line[u][eddys_on_point][:,2] - z )
+                    x_dist = np.abs( ( eddy_locs_on_line[u][eddys_on_point][:,0]+x_offset) - x )
+                    y_dist = np.abs(   eddy_locs_on_line[u][eddys_on_point][:,1]           - y )
+                    z_dist = np.abs(   eddy_locs_on_line[u][eddys_on_point][:,2]           - z )
 
                     #Collect sigmas from all contributing points
                     x_sigma = sigmas_on_line[u][eddys_on_point][:,k,0]
@@ -244,7 +244,8 @@ def generate_primes(ys,zs,domain,nframes,normalization,convect='uniform',progres
 
         elif normalization == 'jarrin':
             primes_normed = np.sqrt(domain.VB)/np.sqrt(domain.neddy) * primes_no_norm
-
+        elif normalization == 'none':
+            primes_normed = primes_no_norm
         else:
             raise NameError(f'Error: Unknown normalization : {normalization}')
 
