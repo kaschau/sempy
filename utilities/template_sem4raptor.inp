@@ -45,6 +45,8 @@ Ublk              = 895             #Channel centerline height or U_inf
 total_time        = 0.002           #[s] time of generated signal,
                                     #   used to determine length of box
 nframes           = 50              #Number of desired frames over time interval
+interpolate       = True            #Are you going to interpolate the signal or use it
+                                    # as is?
 C_Eddy            = 3.0             #Eddy Density multiplier
 sigmas_from       = jarrin          #Method of setting eddy length scales
 stats_from        = moser           #Method of setting R_{ij} stats
@@ -59,7 +61,7 @@ normalization     = exact           #Method of normalizing the signal. Options a
                                     #    SEM method of converging signal to second
                                     #    order stats. Exact uses maths to strictly
                                     #    enforce these statistics
-convect           = local           #Method of "convecting" eddys. Options are "local"
+convect           = uniform         #Method of "convecting" eddys. Options are "local"
                                     #    and "uniform". Local convects eddys based on
                                     #    their local velocity, uniform convects eddys
                                     #    by Ubulk. (But recal that in sempy, we do not

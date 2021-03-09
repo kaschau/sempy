@@ -1,7 +1,8 @@
 import numpy as np
+from scipy import interpolate as itrp
 from .misc import progress_bar
 
-def generate_primes(ys,zs,domain,nframes,normalization,convect='uniform',progress=True):
+def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect='uniform',progress=True):
     '''
     Generate Primes Function
 
@@ -90,8 +91,8 @@ def generate_primes(ys,zs,domain,nframes,normalization,convect='uniform',progres
     ######################################################################
     # We now have a reduced set of eddys that overlap the current patc
     ######################################################################
-    if progress:
-        print(f'Searching a reduced set of {eddy_locs_in_patch["u"].shape[0]} u eddies, {eddy_locs_in_patch["v"].shape[0]} v eddies, and {eddy_locs_in_patch["w"].shape[0]} w eddies using {convect} convection speed')
+    # if progress:
+    #     print(f'Searching a reduced set of {eddy_locs_in_patch["u"].shape[0]} u eddies, {eddy_locs_in_patch["v"].shape[0]} v eddies, and {eddy_locs_in_patch["w"].shape[0]} w eddies using {convect} convection speed')
     #Storage for fluctuations
     up = np.empty((nframes,len(ys)))
     vp = np.empty((nframes,len(ys)))
@@ -228,6 +229,20 @@ def generate_primes(ys,zs,domain,nframes,normalization,convect='uniform',progres
         #We now have data over the whole line
         ########################################
 
+        #If we are planning on interpolating the signal for a raptor simulaiton, we need to
+        # approximate the interpolation here, then normalize the interpolated signal.
+        # Otherwise the stats of the interpolated signal in raptor will under represent the
+        # desired statistics.
+        if interpolate:
+            pts_btw_frames = 10
+            temp_N = [i for i in range(nframes)]
+            primes_interp = itrp.CubicSpline(temp_N,primes_no_norm,bc_type='not-a-knot',axis=0)
+            intrp_N = np.linspace(0,nframes-1,(nframes-1)*(pts_btw_frames+1)+1)
+            primes_no_norm = primes_interp(intrp_N)
+            frame_indicies = tuple([i*(pts_btw_frames+1) for i in range(nframes)])
+        else:
+            frame_indicies = tuple([i for i in range(nframes)])
+        
         if normalization == 'exact':
             #Condition the total time signals
             #Zero out mean
@@ -253,12 +268,13 @@ def generate_primes(ys,zs,domain,nframes,normalization,convect='uniform',progres
         prime = np.matmul(L, primes_normed.T).T
 
         #Return fluctionats
-        up[:,i] = prime[:,0]
-        vp[:,i] = prime[:,1]
-        wp[:,i] = prime[:,2]
+        up[:,i] = prime[frame_indicies,0]
+        vp[:,i] = prime[frame_indicies,1]
+        wp[:,i] = prime[frame_indicies,2]
 
 
-    up.reshape(tuple([nframes]+list(yshape)))
-    vp.reshape(tuple([nframes]+list(yshape)))
-    wp.reshape(tuple([nframes]+list(yshape)))
+    up = up.reshape(tuple([nframes]+list(yshape)))
+    vp = vp.reshape(tuple([nframes]+list(yshape)))
+    wp = wp.reshape(tuple([nframes]+list(yshape)))
+
     return up,vp,wp

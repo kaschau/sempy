@@ -90,7 +90,6 @@ domain.set_sem_data(sigmas_from=seminp['sigmas_from'],
                     profile_from=seminp['profile_from'],
                     scale_factor=1.0)
 
-
 # Only the zeroth rank populates the domain
 if rank == 0:
     #Populate the domain
@@ -188,17 +187,21 @@ else:
 if progress:
     #Print out a summarry
     domain.print_info()
-    print(f'Generating signal that is {seminp["total_time"]} [s] long, with {seminp["nframes"]} frames.\n')
+    print(f'Generating signal that is {seminp["total_time"]} [s] long, with {seminp["nframes"]} frames using {seminp["convect"]} convection speed.\n')
     print('\n*******************************************************************************')
     print('**************************** Generating Primes ********************************')
     print('*******************************************************************************\n')
 
 for i,pn in enumerate(my_patch_nums):
+    if rank != 0 and pn == None:
+        continue
     #If we are the zeroth block, then we compute and send the patches to all the other blocks
     if rank == 0:
         for send_rank in [j+1 for j in range(size-1)]:
             send_patch_num = all_rank_patches[send_rank][i]
             send_block_num = all_rank_blocks[send_rank][i]
+            if send_patch_num == None:
+                continue
             blk = mb[send_block_num-1]
             #Create the patch for this block
             yu = blk.yu[:,:,0]
@@ -215,9 +218,9 @@ for i,pn in enumerate(my_patch_nums):
             patch_zmax = max([zu.max(),zv.max(),zw.max()])
 
             eddys_in_patch = np.where( ( domain.eddy_locs[:,1] - np.max(domain.sigmas[:,:,1], axis=1) < patch_ymax )
-                                   & ( domain.eddy_locs[:,1] + np.max(domain.sigmas[:,:,1], axis=1) > patch_ymin )
-                                   & ( domain.eddy_locs[:,2] - np.max(domain.sigmas[:,:,2], axis=1) < patch_zmax )
-                                   & ( domain.eddy_locs[:,2] + np.max(domain.sigmas[:,:,2], axis=1) > patch_zmin ) )
+                                     & ( domain.eddy_locs[:,1] + np.max(domain.sigmas[:,:,1], axis=1) > patch_ymin )
+                                     & ( domain.eddy_locs[:,2] - np.max(domain.sigmas[:,:,2], axis=1) < patch_zmax )
+                                     & ( domain.eddy_locs[:,2] + np.max(domain.sigmas[:,:,2], axis=1) > patch_zmin ) )
 
             comm.send(yu, dest=send_rank, tag=12)
             comm.send(zu, dest=send_rank, tag=13)
@@ -251,45 +254,31 @@ for i,pn in enumerate(my_patch_nums):
 
     print(f'Rank {rank} is working on patch #{pn}')
     #Now everyone generates their primes like usual
-    face_y = yu.ravel()
-    face_z = zu.ravel()
-
-    #We want to store the U momentum points only later, so remember which (y,z) pairs correspond
-    # to the U momentum faces.
-    ushape = tuple([seminp['nframes']]+list(yu.shape))
-    length = face_y.shape[0]
-
-    #We have all the U momentum face centers in the list of points to calculate the fluctuations,
-    # now we will add the outer most V,W face centers to the list for interpolation purposes.
-    face_y = np.concatenate((face_y, yv[:, 0]))
-    face_y = np.concatenate((face_y, yv[:,-1]))
-    face_y = np.concatenate((face_y, yw[ 0,:]))
-    face_y = np.concatenate((face_y, yw[-1,:]))
-    face_z = np.concatenate((face_z, zv[:, 0]))
-    face_z = np.concatenate((face_z, zv[:,-1]))
-    face_z = np.concatenate((face_z, zw[ 0,:]))
-    face_z = np.concatenate((face_z, zw[-1,:]))
-
-    upp,vpp,wpp = sempy.generate_primes(face_y, face_z, domain,
-                                        seminp['nframes'],
-                                        normalization=seminp['normalization'],
-                                        progress=progress)
-    # upp[ nframe , (y,z) pair]
-
-    #We already have the u fluctuations for ALL the U momentum faces, so we just pull those directly.
-    up = upp[:, 0:length].reshape(ushape)
-
-    #We now create interpolators for the v and w fluctuations.
-    vshape = tuple([seminp['nframes']]+list(yv.shape))
-    vp = np.empty(vshape)
-    wshape = tuple([seminp['nframes']]+list(yw.shape))
-    wp = np.empty(wshape)
-
-    for i in range(seminp['nframes']):
-        vsinterp = itrp.LinearNDInterpolator(np.stack((face_y,face_z),axis=-1), vpp[i,:])
-        wsinterp = itrp.LinearNDInterpolator(np.stack((face_y,face_z),axis=-1), wpp[i,:])
-        vp[i,:,:] = vsinterp(np.stack((yv.ravel(),zv.ravel()),axis=-1)).reshape(vshape[1:])
-        wp[i,:,:] = wsinterp(np.stack((yw.ravel(),zw.ravel()),axis=-1)).reshape(wshape[1:])
+    if progress:
+        print('******************************* Generating u\' *********************************')
+    up,_,_ = sempy.generate_primes(yu, zu, domain,
+                                   seminp['nframes'],
+                                   normalization=seminp['normalization'],
+                                   interpolate=seminp['interpolate'],
+                                   convect=seminp['convect'],
+                                   progress=progress)
+    if progress:
+        print('******************************* Generating v\' *********************************')
+    _,vp,_ = sempy.generate_primes(yv, zv, domain,
+                                   seminp['nframes'],
+                                   normalization=seminp['normalization'],
+                                   interpolate=seminp['interpolate'],
+                                   convect=seminp['convect'],
+                                   progress=progress)
+    if progress:
+        print('******************************* Generating w\' *********************************')
+    _,_,wp = sempy.generate_primes(yw, zw, domain,
+                                   seminp['nframes'],
+                                   normalization=seminp['normalization'],
+                                   interpolate=seminp['interpolate'],
+                                   convect=seminp['convect'],
+                                   progress=progress)
+    # upp[ nframe , y, z]
 
     #For a periodic spline boundary conditions, the end values must be within machine precision, these
     # end values should already be close, but just in case we set them to identical.
@@ -308,14 +297,18 @@ for i,pn in enumerate(my_patch_nums):
     if seminp['flipdom']:
         vp = -vp
         wp = -wp
+        yv = -yv
+        zv = -zv
+        yw = -yw
+        zw = -zw
 
     tme = seminp['total_time']*rpinp['refvl']['U_ref']/rpinp['refvl']['L_ref']
     t = np.linspace(0,tme,seminp['nframes'])
     #Add the mean profile here
     Upu = domain.Ubar_interp(yu)/rpinp['refvl']['U_ref'] + up
     fu = itrp.CubicSpline(t,Upu,bc_type=bc,axis=0)
-    fv = itrp.CubicSpline(t,vp,bc_type=bc,axis=0)
-    fw = itrp.CubicSpline(t,wp,bc_type=bc,axis=0)
+    fv = itrp.CubicSpline(t,vp ,bc_type=bc,axis=0)
+    fw = itrp.CubicSpline(t,wp ,bc_type=bc,axis=0)
 
     for interval in range(seminp['nframes']-1):
         file_name = output_dir+'/alphas_{:06d}_{:03d}'.format(pn,interval+1)
