@@ -119,7 +119,11 @@ if rank == 0:
 
     npatches = len(patch_num)
     # Now we assign patches to ranks
-    max_ranks_per_block = int(npatches/size+npatches%size)
+    if size > npatches:
+        print('\n\nFYI, patches are assigned to processors, so using more processors than patches gives you no performace increase.\n\n')
+        max_ranks_per_block = 1
+    else:
+        max_ranks_per_block = int(npatches/size)+npatches%size
     all_rank_patches = [[None for j in range(max_ranks_per_block)] for i in range(size)]
     all_rank_blocks = [[None for j in range(max_ranks_per_block)] for i in range(size)]
     i = 0
