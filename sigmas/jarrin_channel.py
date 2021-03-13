@@ -128,7 +128,7 @@ scale_factor : float
     sigmas[:,2,0] = np.clip(sigmas[:,2,0], sigmas[:,2,1].min(), None)
     y = ys*domain.delta
 
-    domain.sigma_interp = interp1d(y, sigmas, kind='linear',axis=0,bounds_error=False,
+    domain.sigma_interp = interp1d(y, sigmas, kind='slinear',axis=0,bounds_error=False,
                                    fill_value=(sigmas[0,:,:],sigmas[-1,:,:]))
 
     #determine min,max sigmas

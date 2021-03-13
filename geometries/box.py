@@ -77,19 +77,13 @@ class box(domain):
             raise NameError(f'Unknown population method : {method}')
 
         # Now, we remove all eddies whose volume of influence lies completely outside the geometry.
-        keep_eddys = np.where( (self.eddy_locs[:,0] + np.max(self.sigma_interp(self.eddy_locs[:,1])[:,:,0],axis=1) > 0.0 ))
-        self.eddy_locs = self.eddy_locs[keep_eddys]
-        keep_eddys = np.where( (self.eddy_locs[:,0] - np.max(self.sigma_interp(self.eddy_locs[:,1])[:,:,0],axis=1) < self.x_length ))
-        self.eddy_locs = self.eddy_locs[keep_eddys]
-
-        keep_eddys = np.where( (self.eddy_locs[:,1] + np.max(self.sigma_interp(self.eddy_locs[:,1])[:,:,1],axis=1) > 0.0 ))
-        self.eddy_locs = self.eddy_locs[keep_eddys]
-        keep_eddys = np.where( (self.eddy_locs[:,1] - np.max(self.sigma_interp(self.eddy_locs[:,1])[:,:,1],axis=1) < self.y_height ))
-        self.eddy_locs = self.eddy_locs[keep_eddys]
-
-        keep_eddys = np.where( (self.eddy_locs[:,2] + np.max(self.sigma_interp(self.eddy_locs[:,1])[:,:,2],axis=1) > 0.0 ))
-        self.eddy_locs = self.eddy_locs[keep_eddys]
-        keep_eddys = np.where( (self.eddy_locs[:,2] - np.max(self.sigma_interp(self.eddy_locs[:,1])[:,:,2],axis=1) < self.z_width  ))
+        temp_sigmas = self.sigma_interp(self.eddy_locs[:,1])
+        keep_eddys = np.where( (self.eddy_locs[:,0] + np.max(temp_sigmas[:,:,0],axis=1) > 0.0 )           &
+                               (self.eddy_locs[:,0] - np.max(temp_sigmas[:,:,0],axis=1) < self.x_length ) &
+                               (self.eddy_locs[:,1] + np.max(temp_sigmas[:,:,1],axis=1) > 0.0 )           &
+                               (self.eddy_locs[:,1] - np.max(temp_sigmas[:,:,1],axis=1) < self.y_height ) &
+                               (self.eddy_locs[:,2] + np.max(temp_sigmas[:,:,2],axis=1) > 0.0 )           &
+                               (self.eddy_locs[:,2] - np.max(temp_sigmas[:,:,2],axis=1) < self.z_width  ) )
         self.eddy_locs = self.eddy_locs[keep_eddys]
 
     @property
