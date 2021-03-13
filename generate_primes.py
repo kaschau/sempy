@@ -217,7 +217,7 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
                     if normalization == 'jarrin':
                         fx = 1.0/np.sqrt(np.product((x_sigma,y_sigma,z_sigma),axis=0)) * fx
 
-                    fx = np.vstack(fx)
+                    fx = fx.reshape((fx.shape[0],1))
                     ej = eps_on_line[u][eddys_on_point]
                     #multiply each eddys function/component by its sign
                     primes_no_norm[j,k] = np.sum( ej*fx ,axis=0)[k] #Only take kth component
@@ -234,6 +234,7 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
         # Otherwise the stats of the interpolated signal in raptor will under represent the
         # desired statistics.
         if interpolate:
+            #Current we approximate with 10 points between frames. Could be experimented with
             pts_btw_frames = 10
             temp_N = [i for i in range(nframes)]
             primes_interp = itrp.CubicSpline(temp_N,primes_no_norm,bc_type='not-a-knot',axis=0)
