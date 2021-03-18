@@ -45,15 +45,28 @@ def add_profile(domain):
             Interpolation functions with input y = *dimensionsal height above the bottom wall*
     '''
 
+    #Some preamble is needed before constricting the boundary layer profile. We must determine
+    # if we have values of kappa and A that in fact lead to a velocity deficit if we extend the
+    # the log-layer out to delta. As this model is predicated on that being true. I have found
+    # that kappa and A can easily make the log law overshoot Ublk if it is extended into the
+    # outer region. It seems kappa is more agreed upon in the literature, so first, we shoot for
+    # values of A that yeild a wake deficit
+    # similar to the classical wake deficit parameter 2\Pi/\kappa.
+
+    Re_tau = domain.utau*domain.delta/domain.viscosity
+    Up_inf = domain.Ublk/domain.utau
+    kappa = 0.4
+    psi = 0.15
+    #Solve for A such that Eq. 2.8 with spec'd value of \Pi is satisfied
+    A = Up_inf - 1/kappa*np.log(Re_tau) - psi
+
+    #Construct the profile layer by layer
     #Viscous sublayer y+=[0,5]
     yplus_vsl = np.linspace(0,5,3)
     us_vsl = yplus_vsl*domain.utau
     ys_vsl = yplus_vsl*domain.viscosity/domain.utau
 
     #Log-law region y+>30, y+<=3(Re_tau)^(1/2)
-    Re_tau = domain.utau*domain.delta/domain.viscosity
-    kappa = 0.41
-    A = 5.2
     yplus_llr = np.linspace(30, 3*np.sqrt(Re_tau) , 100)
     us_llr = (1.0/kappa * np.log(yplus_llr) + A) * domain.utau
     ys_llr = yplus_llr*domain.viscosity/domain.utau
@@ -74,7 +87,7 @@ def add_profile(domain):
     E = 0.5*(1 + erf((ys_or - mu)/np.sqrt(2*sigma**2)) )
     #Make the blending a bit smoother
     s=4; E[0:s] = E[0:s]*np.array([i/s for i in range(s)])
-    Up_inf = domain.Ublk/domain.utau
+    E[0] = 0
     Up_log = 1.0/kappa * np.log(yplus_or) + A
     uplus_or = Up_inf - (Up_inf - Up_log)*(1-E)
     us_or = uplus_or*domain.utau
