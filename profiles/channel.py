@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d,splev
 from scipy.special import erf
 
 '''
@@ -62,21 +62,32 @@ def add_profile(domain):
 
     #Construct the profile layer by layer
     #Viscous sublayer y+=[0,5]
-    yplus_vsl = np.linspace(0,5,3)
-    us_vsl = yplus_vsl*domain.utau
+    yplus_vsl = np.linspace(0,5,5)
+    uplus_vsl = yplus_vsl
+    us_vsl = uplus_vsl*domain.utau
     ys_vsl = yplus_vsl*domain.viscosity/domain.utau
 
     #Log-law region y+>30, y+<=3(Re_tau)^(1/2)
     yplus_llr = np.linspace(30, 3*np.sqrt(Re_tau) , 100)
-    us_llr = (1.0/kappa * np.log(yplus_llr) + A) * domain.utau
+    uplus_llr = 1.0/kappa * np.log(yplus_llr) + A
+    us_llr = uplus_llr*domain.utau
     ys_llr = yplus_llr*domain.viscosity/domain.utau
 
-    #Buffer layer y+=[5,30], we use a simplt quadratic to bridge the visc sublayer and log-law region
-    yplus_bufl = np.linspace(5,30,10)
-    ys_bufl = yplus_bufl*domain.viscosity/domain.utau
+    #Buffer layer y+=[5,30], we use a BSpline with the intersection of
+    # the lines y+=u+ (vsl) and the line from the log-layer to the wall
+    # as a control point.
+    intersection = [(uplus_llr[0]-1/kappa)/(1-1/(kappa*30))]
+    intersection.append(intersection[0])
+    cv = np.array([[yplus_vsl[-1],uplus_vsl[-1]],
+                   [intersection[0],intersection[1]],
+                   [yplus_llr[0],uplus_llr[0]]])
+    degree = 2
+    count= 3
+    kv = np.array([0]*degree + list(range(count-degree+1)) + [count-degree]*degree,dtype='int')
 
-    us_bufl = interp1d([ys_vsl[-2],ys_vsl[-1],ys_llr[0],ys_llr[1]],
-                       [us_vsl[-2],us_vsl[-1],us_llr[0],us_llr[1]],kind='quadratic')(ys_bufl)
+    yplus_bufl,uplus_bufl = np.array(splev(np.linspace(0,(count-degree),30),(kv,cv.T,degree)))
+    us_bufl = uplus_bufl*domain.utau
+    ys_bufl = yplus_bufl*domain.viscosity/domain.utau
 
     #Outer region, this is where the wake-law comes into play. See Table 1 from the paper for these values.
     mu = 0.75*domain.delta
@@ -116,49 +127,42 @@ if __name__ == "__main__":
     domain.utau = Re_tau*domain.viscosity/domain.delta
     domain.Ublk = 2.12630000E+01*domain.utau
 
-    yplot = np.concatenate((np.linspace(0,0.05*domain.delta,1000),
-                            np.linspace(0.05*domain.delta,1.95*domain.delta,100),
-                            np.linspace(1.95*domain.delta,2.0*domain.delta,1000)))
+    ys = np.concatenate((np.linspace(0,0.05*domain.delta,1000),
+                         np.linspace(0.05*domain.delta,1.95*domain.delta,100),
+                         np.linspace(1.95*domain.delta,2.0*domain.delta,1000)))
 
     add_profile(domain)
 
-    Uplot = domain.Ubar_interp(yplot)
+    Us = domain.Ubar_interp(ys)
 
     relpath = Path(__file__).parent / "Moser_Channel_ReTau590_Profile.csv"
     data = np.genfromtxt(relpath,delimiter=',',comments='#',skip_header=5)
 
     yp = data[:,0]
-    yd = yp/yp.max()
     npts = yp.shape[0]
     MU = np.empty(npts*2-1)
     MU[0:npts] = data[:,1]
     MU[npts::] = np.flip(MU[0:npts-1])
-    MU = MU*domain.utau
-    yp_trans = 3*np.sqrt(Re_tau)
-    overlap = np.where(yp > yp_trans)
-    #No idea if this is general enough
-    transition = np.exp(-np.exp(-7.5*np.linspace(0,1,overlap[0].shape[0])+2.0))
-    yM = yp*domain.viscosity/domain.utau
-    yM[overlap] = yp[overlap]*domain.viscosity/domain.utau*(1.0-transition) + yd[overlap]*domain.delta*transition
-    yM = np.concatenate((yM,2.0*domain.delta-np.flip(yM[1::])))
+
+    yd = yp/yp.max()
+    yd = np.concatenate((yd,2-np.flip(yd[0:-1])))
 
     fig, ax = plt.subplots(2,1,figsize=(5,10))
-
     ax1 = ax[0]
     string = r'$Re_{\tau}=590$, '+r'$u_{\tau}=$'+'{:.2f} '.format(domain.utau)+r'$U_{0}=$'+'{:.6f}'.format(domain.Ublk)
     ax1.set_title(f'{string}')
     ax1.set_ylabel(r'$y/ \delta$')
-    ax1.set_xlabel(r'$\bar{U}$')
-    ax1.plot(Uplot,yplot/domain.delta, label=r'$\bar{U}_{SEM}$')
-    ax1.plot(MU,yM/domain.delta, label=r'$\bar{U}_{Moser}$')
+    ax1.set_xlabel(r'$\bar{U}^{+}$')
+    ax1.plot(Us/domain.utau,ys/domain.delta, label=r'$\bar{U}^{+}_{SEM}$')
+    ax1.plot(MU,yd, label=r'$\bar{U}{+}_{Moser}$')
     ax1.legend()
 
     ax2 = ax[1]
     ax2.set_xlabel(r'$y^{+}$')
     ax2.set_ylabel(r'$u^{+}$')
-    yplus = yplot*domain.utau/domain.viscosity
-    ax2.plot(yplus[np.where(yplus<100)],Uplot[np.where(yplus<100)]/domain.utau, label=r'$\bar{U}_{SEM}$')
-    ax2.plot(yp[np.where(yp<100)],MU[np.where(yp<100)]/domain.utau, label=r'$\bar{U}_{Moser}$')
+    yplus = ys*domain.utau/domain.viscosity
+    ax2.plot(yplus[np.where(yplus<100)],Us[np.where(yplus<100)]/domain.utau, label=r'$\bar{U}^{+}_{SEM}$')
+    ax2.plot(yp[np.where(yp<100)],MU[np.where(yp<100)], label=r'$\bar{U}^{+}_{Moser}$')
     ax2.set_aspect('equal')
     ax2.legend()
 
