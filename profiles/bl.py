@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d,splev
 from scipy.special import erf
 
 '''
@@ -54,20 +54,31 @@ def add_profile(domain):
     #Construct the profile layer by layer
     #Viscous sublayer y+=[0,5]
     yplus_vsl = np.linspace(0,5,3)
+    uplus_vsl = yplus_vsl
     us_vsl = yplus_vsl*domain.utau
     ys_vsl = yplus_vsl*domain.viscosity/domain.utau
 
     #Log-law region y+>30, y+<=3(Re_tau)^(1/2)
     yplus_llr = np.linspace(30, 3*np.sqrt(Re_tau) , 100)
-    us_llr = (1.0/kappa * np.log(yplus_llr) + A) * domain.utau
+    uplus_llr = (1.0/kappa * np.log(yplus_llr) + A)
+    us_llr = uplus_llr*domain.utau
     ys_llr = yplus_llr*domain.viscosity/domain.utau
 
-    #Buffer layer y+=[5,30], we use a CubicSpline to bridge the visc sublayer and log-law region
-    yplus_bufl = np.linspace(5,30,10)
-    ys_bufl = yplus_bufl*domain.viscosity/domain.utau
+    #Buffer layer y+=[5,30], we use a BSpline with the intersection of
+    # the lines y+=u+ (vsl) and the line from the log-layer to the wall
+    # as a control point.
+    intersection = [(uplus_llr[0]-1/kappa)/(1-1/(kappa*30))]
+    intersection.append(intersection[0])
+    cv = np.array([[yplus_vsl[-1],uplus_vsl[-1]],
+                   [intersection[0],intersection[1]],
+                   [yplus_llr[0],uplus_llr[0]]])
+    degree = 2
+    count= 3
+    kv = np.array([0]*degree + list(range(count-degree+1)) + [count-degree]*degree,dtype='int')
 
-    us_bufl = interp1d([ys_vsl[-2],ys_vsl[-1],ys_llr[0],ys_llr[1]],
-                       [us_vsl[-2],us_vsl[-1],us_llr[0],us_llr[1]],kind='quadratic')(ys_bufl)
+    yplus_bufl,uplus_bufl = np.array(splev(np.linspace(0,(count-degree),30),(kv,cv.T,degree)))
+    us_bufl = uplus_bufl*domain.utau
+    ys_bufl = yplus_bufl*domain.viscosity/domain.utau
 
     #Outer region, this is where the wake-law comes into play. See Table 1 from the paper for these values.
     mu = 0.54*domain.delta
