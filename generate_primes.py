@@ -26,16 +26,35 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
       zs     : numpy.array
             Array of shape(y) corresponsing one-to-one matching (y,z) pairs
       domain : sempy.domain
-            Domain object to fully populated with parameters and dat.
+            Domain object fully populated with parameters and data.
       nframes : int
             Number of frames to generate per (y,z) pair
+      normalization : str
+            String corresponding to the method of normalizing the signal.
+            Available options are:
+               'jarrin' : Approximates an integral with Vbox/(neddy*V_eddy)
+               'exact'  : Produce exact statistics by bending the signal to your will
+               'none'   : Return the raw sum of the eddys for each point
+      interpolation : bool
+            T/F flag to determine whether your frame rate is high enough to approximate the
+            continuous signal, thus no significalt loss of statistics, or if you plan to interpolate
+            between frames. If True, a time signal is "pre-interpolated" and statistics are imposed
+            on that pre-interpolated signal, then just the frame values are returned. If False, nothing
+            is done
+      convect : str
+            String corresponding to the method of convection through the flow.
+            Current options are:
+               'uniform' : Convect through mega-volume at Ublk everywhere
+               'local'   : Convect through mega-volume at local convective speed based on domain.Ubar_interp(y)
+      progress : bool
+            Whether to display progress bar
 
     Returns:
     --------
         up,vp,wp : numpy.arrrays
             Fluctuation result arrays of shape ( (nframes, shape(y)) ). First axis is 'time', second axis is the
             shape of the input ys and zs arrays.
-            So up[0] is the corresponding u fluctiations at all the y points for the first frame.
+            So up[0] is the corresponding u fluctiations at all the y,z points for the first frame.
     '''
 
     #check if we have eddys or not
@@ -89,7 +108,7 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
         eps_in_patch[u] = domain.eps[eddys_in_patch]
 
     ######################################################################
-    # We now have a reduced set of eddys that overlap the current patc
+    # We now have a reduced set of eddys that overlap the current patch
     ######################################################################
     # if progress:
     #     print(f'Searching a reduced set of {eddy_locs_in_patch["u"].shape[0]} u eddies, {eddy_locs_in_patch["v"].shape[0]} v eddies, and {eddy_locs_in_patch["w"].shape[0]} w eddies using {convect} convection speed')
@@ -236,13 +255,13 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
         if interpolate:
             #Current we approximate with 10 points between frames. Could be experimented with
             pts_btw_frames = 10
-            temp_N = [i for i in range(nframes)]
+            temp_N = [j for j in range(nframes)]
             primes_interp = itrp.CubicSpline(temp_N,primes_no_norm,bc_type='not-a-knot',axis=0)
             intrp_N = np.linspace(0,nframes-1,(nframes-1)*(pts_btw_frames+1)+1)
             primes_no_norm = primes_interp(intrp_N)
-            frame_indicies = tuple([i*(pts_btw_frames+1) for i in range(nframes)])
+            frame_indicies = tuple([j*(pts_btw_frames+1) for j in range(nframes)])
         else:
-            frame_indicies = tuple([i for i in range(nframes)])
+            frame_indicies = tuple([j for j in range(nframes)])
         
         if normalization == 'exact':
             #Condition the total time signals
@@ -252,12 +271,28 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
             #whiten data to eliminate random covariance
             cov = np.cov(primes_no_norm,rowvar=False,bias=True)
             eig_vec = np.linalg.eig(cov)[1]
+            #order eigenvectors to minimize the effect on the original signals
+            order = []
+            perm = np.copy(eig_vec)
+            for row in perm:
+                maxi = np.argmax(np.abs(row))
+                while maxi in order:
+                    row[maxi] = 0.0
+                    maxi = np.argmax(np.abs(row))
+                order.append(maxi)
+            eig_vec = eig_vec[:,order]
+            #rescale any eigenvectors with negative diagonals to be positive
+            if eig_vec[0,0] < 0:
+                eig_vec[:,0] *= -1
+            if eig_vec[1,1] < 0:
+                eig_vec[:,1] *= -1
+            if eig_vec[2,2] < 0:
+                eig_vec[:,2] *= -1
             primes_no_norm = np.matmul(eig_vec.T,primes_no_norm.T).T
 
             #Set variance of each signal to 1
             norm_factor = np.sqrt(np.mean(primes_no_norm**2,axis=0))
             primes_normed = primes_no_norm/norm_factor
-
         elif normalization == 'jarrin':
             primes_normed = np.sqrt(domain.VB)/np.sqrt(domain.neddy) * primes_no_norm
         elif normalization == 'none':
@@ -268,12 +303,12 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
         #Multiply normalized signal by stats
         prime = np.matmul(L, primes_normed.T).T
 
-        #Return fluctionats
+        #Keep only the points on the frames
         up[:,i] = prime[frame_indicies,0]
         vp[:,i] = prime[frame_indicies,1]
         wp[:,i] = prime[frame_indicies,2]
 
-
+    #Return fluctuations
     up = up.reshape(tuple([nframes]+list(yshape)))
     vp = vp.reshape(tuple([nframes]+list(yshape)))
     wp = wp.reshape(tuple([nframes]+list(yshape)))
