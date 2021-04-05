@@ -18,7 +18,7 @@ y_height = 2.0*delta
 z_width = np.pi*delta
 
 #Eddy Density
-C_Eddy = 2.0
+C_Eddy = 1.0
 #eddy convection speed
 convect='uniform'
 #population method
