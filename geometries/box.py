@@ -21,28 +21,38 @@ class box(domain):
         self.eddy_pop_method = method
 
         #generate eddy volume
-        if self.flow_type in ['channel', 'freeshear']:
-            lows  = [          0.0 - self.sigma_x_max,
-                               0.0 - np.max(self.sigma_interp(0.0)[:,1]),
-                               0.0 - self.sigma_z_max]
-            highs = [self.x_length + self.sigma_x_max,
-                     self.y_height + np.max(self.sigma_interp(self.y_height)[:,1]),
-                     self.z_width  + self.sigma_z_max]
-        elif self.flow_type == 'bl':
-            lows  = [          0.0 - self.sigma_x_max,
-                               0.0 - np.max(self.sigma_interp(0.0)[:,1]),
-                               0.0 - self.sigma_z_max]
-            highs = [self.x_length + self.sigma_x_max,
-                     self.delta    + np.max(self.sigma_interp(self.delta)[:,1]),
-                     self.z_width  + self.sigma_z_max]
-
         if method == 'random':
+            #Set the extents of the eddy volume in x,y,z
+            lows  = [              0.0 - self.sigma_x_max,
+                                   0.0 - self.sigma_y_max,
+                                   0.0 - self.sigma_z_max]
+            if self.flow_type in ['channel', 'freeshear']:
+                highs = [self.x_length + self.sigma_x_max,
+                         self.y_height + self.sigma_y_max,
+                         self.z_width  + self.sigma_z_max]
+            elif self.flow_type == 'bl':
+                highs = [self.x_length + self.sigma_x_max,
+                         self.delta    + self.sigma_y_max,
+                         self.z_width  + self.sigma_z_max]
             #Compute number of eddys
-            neddy = int( C_Eddy * self.VB / self.V_sigma_min )
+            VB = np.product(np.array(highs) - np.array(lows))
+            neddy = int( C_Eddy * VB / self.V_sigma_min )
             #Generate random eddy locations
             self.eddy_locs = self.randseed.uniform(low=lows,high=highs,size=(neddy,3))
 
         elif method == 'PDF':
+            #Set the extents of the eddy volume in x,y,z
+            lows  = [              0.0 - self.sigma_x_max,
+                                   0.0 - np.max(self.sigma_interp(0.0)[:,1]),
+                                   0.0 - self.sigma_z_max]
+            if self.flow_type in ['channel', 'freeshear']:
+                highs = [self.x_length + self.sigma_x_max,
+                         self.y_height + np.max(self.sigma_interp(self.y_height)[:,1]),
+                         self.z_width  + self.sigma_z_max]
+            elif self.flow_type == 'bl':
+                highs = [self.x_length + self.sigma_x_max,
+                         self.delta    + np.max(self.sigma_interp(self.delta)[:,1]),
+                         self.z_width  + self.sigma_z_max]
             #Eddy heights as a function of y
             test_ys = np.linspace(lows[1], highs[1], 200)
             test_sigmas = self.sigma_interp(test_ys)
@@ -64,7 +74,8 @@ class box(domain):
             #Compute average eddy volume
             expected_Veddy = integrate.trapz(pdf*Y_eddy,test_ys)**3
             #Compute neddy
-            neddy = int( C_Eddy * self.VB / expected_Veddy )
+            VB = np.product(np.array(highs) - np.array(lows))
+            neddy = int( C_Eddy * VB / expected_Veddy )
             #Create bins for placing eddys in y
             dy = np.abs(test_ys[1]-test_ys[0])
             bin_centers = 0.5*( test_ys[1::] + test_ys[0:-1] )
@@ -93,23 +104,3 @@ class box(domain):
                                (self.eddy_locs[:,2] + np.max(temp_sigmas[:,:,2],axis=1) > 0.0 )           &
                                (self.eddy_locs[:,2] - np.max(temp_sigmas[:,:,2],axis=1) < self.z_width  ) )
         self.eddy_locs = self.eddy_locs[keep_eddys]
-
-    @property
-    def VB(self):
-        #generate eddy volume
-        if self.flow_type in ['channel', 'freeshear']:
-            lows  = [          0.0 - self.sigma_x_max,
-                               0.0 - np.max(self.sigma_interp(0.0)[:,1]),
-                               0.0 - self.sigma_z_max]
-            highs = [self.x_length + self.sigma_x_max,
-                     self.y_height + np.max(self.sigma_interp(self.y_height)[:,1]),
-                     self.z_width  + self.sigma_z_max]
-        elif self.flow_type == 'bl':
-            lows  = [          0.0 - self.sigma_x_max,
-                               0.0 - np.max(self.sigma_interp(0.0)[:,1]),
-                               0.0 - self.sigma_z_max]
-            highs = [self.x_length + self.sigma_x_max,
-                     self.delta    + np.max(self.sigma_interp(self.delta)[:,1]),
-                     self.z_width  + self.sigma_z_max]
-
-        return np.product(np.array(highs) - np.array(lows))

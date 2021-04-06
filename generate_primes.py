@@ -294,7 +294,16 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
             norm_factor = np.sqrt(np.mean(primes_no_norm**2,axis=0))
             primes_normed = primes_no_norm/norm_factor
         elif normalization == 'jarrin':
-            primes_normed = np.sqrt(domain.VB)/np.sqrt(domain.neddy) * primes_no_norm
+            if domain.flow_type in ['channel','free_shear']:
+                VB = (2*domain.sigma_x_max)*(domain.y_height+2*domain.sigma_y_max)*(domain.z_width+2*domain.sigma_z_max)
+                Vdom =(domain.x_length+2*domain.sigma_x_max)*(domain.y_height+2*domain.sigma_y_max)*(domain.z_width+2*domain.sigma_z_max)
+            elif domain.flow_type == 'bl':
+                VB = (2*domain.sigma_x_max)*(domain.delta+2*domain.sigma_y_max)*(domain.z_width+2*domain.sigma_z_max)
+                Vdom =(domain.x_length+2*domain.sigma_x_max)*(domain.delta+2*domain.sigma_y_max)*(domain.z_width+2*domain.sigma_z_max)
+
+            #We compute the "Eddy Volume" and "Neddy" from the original SEM
+            Neddy = domain.neddy * VB/Vdom
+            primes_normed = np.sqrt(VB)/np.sqrt(Neddy) * primes_no_norm
         elif normalization == 'none':
             primes_normed = primes_no_norm
         else:
