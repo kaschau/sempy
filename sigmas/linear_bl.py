@@ -19,7 +19,7 @@ def add_sigmas(domain, scale_factor=1.0):
       domain : sempy.channel
             Channel object to populate with the sigma interpolator, and sigma mins and maxs
 
-scale_factor : float
+      scale_factor : float
             Scaling factor for default sigmas, keep 1 unless your doing some sensitivity study
 
     Returns:
@@ -68,8 +68,8 @@ scale_factor : float
     domain.sigma_z_min = np.min(test_sigmas[:,:,2])
     domain.sigma_z_max = np.max(test_sigmas[:,:,2])
 
-    domain.V_sigma_min = np.min(np.product(test_sigmas,axis=1))
-    domain.V_sigma_max = np.max(np.product(test_sigmas,axis=1))
+    domain.V_sigma_min = np.min(np.product(test_sigmas,axis=2))
+    domain.V_sigma_max = np.max(np.product(test_sigmas,axis=2))
 
 if __name__ == '__main__':
 

@@ -20,7 +20,7 @@ def add_sigmas(domain, scale_factor=1.0):
       domain : sempy.channel
             Channel object to populate with the sigma interpolator, and sigma mins and maxs
 
-scale_factor : float
+      scale_factor : float
             Scaling factor for default sigmas, keep 1 unless your doing some sensitivity study
 
     Returns:

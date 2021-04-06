@@ -140,8 +140,8 @@ scale_factor : float
     domain.sigma_z_min = np.min(test_sigmas[:,:,2])
     domain.sigma_z_max = np.max(test_sigmas[:,:,2])
 
-    domain.V_sigma_min = np.min(np.product(test_sigmas,axis=1))
-    domain.V_sigma_max = np.max(np.product(test_sigmas,axis=1))
+    domain.V_sigma_min = np.min(np.product(test_sigmas,axis=2))
+    domain.V_sigma_max = np.max(np.product(test_sigmas,axis=2))
 
 if __name__ == '__main__':
 
@@ -149,10 +149,10 @@ if __name__ == '__main__':
 
     #Create dummy channel
     domain = type('channel',(),{})
-    domain.y_height = 2
     domain.viscosity = 1.0
     domain.utau = 1.0
     domain.delta = 1.0
+    domain.y_height = 2*domain.delta
     domain.Ublk = 1.0
     domain.yp1 = 1e-8
     add_sigmas(domain)
