@@ -38,11 +38,16 @@ class domain():
         self.profile_from = None
         self.sigmas_from = None
         self.stats_from = None
-        self.eddy_pop_method = None 
+        self.eddy_pop_method = None
+
+        self._neddy = None
 
     @property
     def neddy(self):
-        return self.eddy_locs.shape[0]
+        if self._neddy is None:
+            return self.eddy_locs.shape[0]
+        else:
+            return self._neddy
 
     def set_sem_data(self, sigmas_from='jarrin',
                            stats_from='moser',
