@@ -103,6 +103,15 @@ if rank == 0:
     domain.make_periodic(periodic_x=seminp['periodic_x'],
                          periodic_y=seminp['periodic_y'],
                          periodic_z=seminp['periodic_z'])
+    temp_neddy = domain.neddy
+else:
+    temp_neddy = None
+#We have to overwrite the worker processes' neddy property
+# so that each worker know how many eddys are in the actual
+# domain
+temp_neddy = comm.bcast(temp_neddy,root=0)
+if rank != 0:
+    domain._neddy = temp_neddy
 
 ############################################################################################
 # Read in patches.txt
