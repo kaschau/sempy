@@ -1,4 +1,4 @@
-
+import numpy as np
 
 def jarrin_norm(signal,domain):
 
