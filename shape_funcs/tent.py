@@ -1,0 +1,4 @@
+
+
+
+def tent(dists,sigmas):
