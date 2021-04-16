@@ -1,8 +1,8 @@
 import numpy as np
 from scipy import interpolate as itrp
 from .misc import progress_bar
-from .norm import *
-
+from .normalization import *
+import sys
 def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect='uniform',progress=True):
     '''
     Generate Primes Function
@@ -125,8 +125,8 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
             progress_bar(i+1,total,'Generating Primes')
         #Find eddies that contribute on the current y,z line. This search is done on the reduced set of
         # eddys filtered on the "patch"
-        eddys_on_line = np.where( (np.abs( eddy_locs_in_patch[:,1] - y ) < sigmas_in_patch[:,k,1] )
-                                & (np.abs( eddy_locs_in_patch[:,2] - z ) < sigmas_in_patch[:,k,2] ) )
+        eddys_on_line = np.where( (np.abs( eddy_locs_in_patch[:,1] - y ) < np.max(sigmas_in_patch[:,:,1],axis=1 ))
+                                & (np.abs( eddy_locs_in_patch[:,2] - z ) < np.max(sigmas_in_patch[:,:,2],axis=1 )) )
         eddy_locs_on_line = eddy_locs_in_patch[eddys_on_line]
         sigmas_on_line = sigmas_in_patch[eddys_on_line]
         eps_on_line = eps_in_patch[eddys_on_line]
@@ -202,9 +202,9 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
             # We now have a reduced set of eddys that overlap the current point
             ######################################################################
             #Compute distances to all contributing points
-            x_dist = np.abs( ( eddy_locs_on_line[eddys_on_point][:,0]+x_offset) - x )
-            y_dist = np.abs(   eddy_locs_on_line[eddys_on_point][:,1]           - y )
-            z_dist = np.abs(   eddy_locs_on_line[eddys_on_point][:,2]           - z )
+            x_dist = eddy_locs_on_line[eddys_on_point][:,0]+x_offset - x
+            y_dist = eddy_locs_on_line[eddys_on_point][:,1]          - y
+            z_dist = eddy_locs_on_line[eddys_on_point][:,2]          - z
 
             #Collect sigmas from all contributing points
             x_sigma = sigmas_on_line[eddys_on_point][:,:,0]
@@ -212,19 +212,22 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
             z_sigma = sigmas_on_line[eddys_on_point][:,:,2]
 
             #Individual f(x) 'tent' functions for each contributing point
-            fxx = np.sqrt(1.5)*(1.0-x_dist/x_sigma)
-            fxy = np.sqrt(1.5)*(1.0-y_dist/y_sigma)
-            fxz = np.sqrt(1.5)*(1.0-z_dist/z_sigma)
+            fxx = np.sqrt(1.5)*(1.0-np.abs(x_dist.reshape((x_dist.shape[0],1)))/x_sigma)
+            fxy = np.sqrt(1.5)*(1.0-np.abs(y_dist.reshape((y_dist.shape[0],1)))/y_sigma)
+            fxz = np.sqrt(1.5)*(1.0-np.abs(z_dist.reshape((z_dist.shape[0],1)))/z_sigma)
+
+            np.clip(fxx,0.0,None,out=fxx)
+            np.clip(fxy,0.0,None,out=fxy)
+            np.clip(fxz,0.0,None,out=fxz)
 
             #Total f(x) from each contributing point
             fx  = fxx*fxy*fxz
             if normalization == 'jarrin':
                 fx = 1.0/np.sqrt(np.product((x_sigma,y_sigma,z_sigma),axis=0)) * fx
 
-            fx = fx.reshape((fx.shape[0],1))
-            ej = eps_on_line[u][eddys_on_point]
+            ej = eps_on_line[eddys_on_point]
             #multiply each eddys function/component by its sign
-            primes_no_norm[j,k] = np.sum( ej*fx ,axis=0)[k] #Only take kth component
+            primes_no_norm[j,:] = np.sum( ej*fx ,axis=0) #Only take kth component
 
         if empty_pts > 10:
             print(f'Warning, {empty_pts} points with zero fluctuations detected at y={y},z={z}\n')
