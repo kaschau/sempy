@@ -1,6 +1,19 @@
 import numpy as np
 
 def exact_norm(signal):
+    '''
+    Exact normalization, this normalization explicitely creates a funciton of zero mean, unit variance,
+    and zero covariance between the signal.
+
+    Parameters:
+    -----------
+      signal   : numpy.array
+            Array of shape(N,3) where N is the length of the signal
+    Returns:
+    --------
+        signal : numpy.arrray
+            Array of shape(N,3) of the fluctuation components normalized
+    '''
 
     #Zero out mean
     signal = signal - np.mean(signal,axis=0)
@@ -29,5 +42,6 @@ def exact_norm(signal):
 
     #Set variance of each signal to 1
     norm_factor = np.sqrt(np.mean(signal**2,axis=0))
+    signal = signal/norm_factor
 
-    return signal/norm_factor
+    return signal
