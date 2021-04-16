@@ -38,3 +38,25 @@ def tent(dists,sigmas):
 
     #Total f(x) from each contributing point
     return fxx*fxy*fxz
+
+if __name__ == '__main__':
+
+    nsig = 100
+    u_length_scale = 1.0
+    v_length_scale = 0.5
+    w_length_scale = 0.25
+    sigs = np.empty((nsig,3))
+    line = np.linspace(-u_length_scale,u_length_scale,nsig)
+    for ii,i in enumerate(line):
+        dists = np.array([[i,0,0]])
+        sigmas= np.zeros((1,3,3))
+        sigmas[:,0,:] = u_length_scale
+        sigmas[:,1,:] = v_length_scale
+        sigmas[:,2,:] = w_length_scale
+        sigs[ii,:] = tent(dists,sigmas)[0]
+
+    import matplotlib.pyplot as plt
+    lo = plt.plot(line,sigs)
+    plt.legend(lo, (f'u={u_length_scale}', f'v={v_length_scale}', f'w={w_length_scale}'))
+    plt.grid()
+    plt.show()

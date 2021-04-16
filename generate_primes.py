@@ -5,7 +5,11 @@ from . import normalization as norm
 from . import shape_funcs
 import sys
 
-def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect='uniform',progress=True):
+def generate_primes(ys,zs,domain,nframes,normalization,
+                    shape='tent',
+                    interpolate=False,
+                    convect='uniform',
+                    progress=True):
     '''
     Generate Primes Function
 
@@ -106,8 +110,7 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
     ######################################################################
     # We now have a reduced set of eddys that overlap the current patch
     ######################################################################
-    # if progress:
-    #     print(f'Searching a reduced set of {eddy_locs_in_patch["u"].shape[0]} u eddies, {eddy_locs_in_patch["v"].shape[0]} v eddies, and {eddy_locs_in_patch["w"].shape[0]} w eddies using {convect} convection speed')
+
     #Storage for fluctuations
     up = np.empty((nframes,len(ys)))
     vp = np.empty((nframes,len(ys)))
@@ -115,16 +118,19 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
 
     #just counter for progress display
     total = len(ys)
-    #Define "time" points for frames, if its uniform, we only need to do this once.
+
+    #Define "time" points for frames, if we are using uniform
+    # convection, we only need to do this once.
     if convect == 'uniform':
         xs = np.linspace(0,domain.x_length,nframes)
-    #Loop over each location
+
+    #Loop over each location in current patch
     for i,(y,z) in enumerate(zip(ys,zs)):
 
         zero_online = False
-
         if progress:
             progress_bar(i+1,total,'Generating Primes')
+
         #Find eddies that contribute on the current y,z line. This search is done on the reduced set of
         # eddys filtered on the "patch"
         eddys_on_line = np.where( (np.abs( eddy_locs_in_patch[:,1] - y ) < np.max(sigmas_in_patch[:,:,1],axis=1 ))
@@ -143,11 +149,14 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
         ######################################################################
         # We now have a reduced set of eddys that overlap the current y,z line
         ######################################################################
-        #Define "time" points for frames, if its local, we need to recalculate for each y location.
+
+        #Define "time" points for frames, if we are using
+        # local convection we need to recalculate for each y location.
         if convect == 'local':
             local_Ubar = domain.Ubar_interp(y)
             length = domain.x_length*local_Ubar/domain.Ublk
             xs = np.linspace(0,length,nframes)
+
         #Storage for un-normalized fluctuations
         primes_no_norm = np.zeros((xs.shape[0],3))
 
@@ -189,20 +198,19 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
                 x_offset = np.zeros(eddy_locs_on_line.shape[0])
 
             #########################
-            #Compute u'
+            #Compute the fluctuations
             #########################
-            #Find all non zero eddies for u,v,w at current time "x"
+            #Find all non zero eddies for at current time "x"
             x_dist = np.abs( (eddy_locs_on_line[:,0]+x_offset) - x )
             eddys_on_point = np.where( x_dist < np.max(sigmas_on_line[:,:,0],axis=1) )
             x_offset = x_offset[eddys_on_point]
             if len(eddys_on_point[0]) == 0:
                 empty_pts += 1
-                primes_no_norm[j,:] = 0.0
                 continue
 
-            ######################################################################
+            ###################################################################
             # We now have a reduced set of eddys that overlap the current point
-            ######################################################################
+            ###################################################################
 
             #Compute distances to all contributing eddys
             dists = np.empty((len(eddys_on_point[0]),3))
@@ -214,21 +222,31 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
             sigmas_on_point = sigmas_on_line[eddys_on_point]
 
             #Compute the fluctuation contributions of each eddy, for each component
-            fx = shape_funcs.tent(dists,sigmas_on_point)
+            # via a "shape function"
+            if shape == 'tent':
+                fx = shape_funcs.tent(dists,sigmas_on_point)
+            elif shape == 'blob':
+                fx = shape_funcs.blob(dists,sigmas_on_point)
+            else:
+                raise NameError(f'Error: Unknown shape function : {shape}')
 
+            #We have to do this here for jarrin even though its ugly AF
             if normalization == 'jarrin':
                 fx = 1.0/np.sqrt(np.product(sigmas_on_point,axis=2)) * fx
 
+            #Grab the eplison sign for each eddy+component
             ej = eps_on_line[eddys_on_point]
             #multiply each eddys function/component by its sign
             primes_no_norm[j,:] = np.sum( ej*fx ,axis=0)
 
+        #We will warn the user if we detect more that 10 empty points along this line.a
         if empty_pts > 10:
             print(f'Warning, {empty_pts} points with zero fluctuations detected at y={y},z={z}\n')
 
-        ########################################
-        #We now have data over the whole line
-        ########################################
+        ################################################################
+        #We now have un-normalized fluctuation data over the entire time
+        # series at this (y.z) locaiton
+        ################################################################
 
         #If we are planning on interpolating the signal for a raptor simulaiton, we need to
         # approximate the interpolation here, then normalize the interpolated signal.
@@ -245,7 +263,7 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
         else:
             frame_indicies = tuple([j for j in range(nframes)])
 
-        #Normalize the total time signals
+        #Normalize the time signals
         if normalization == 'exact':
             primes_normed = norm.exact_norm(primes_no_norm)
         elif normalization == 'jarrin':
