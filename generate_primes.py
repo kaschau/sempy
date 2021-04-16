@@ -2,7 +2,8 @@ import numpy as np
 from scipy import interpolate as itrp
 from .misc import progress_bar
 from .normalization import *
-import sys
+from .shape_funcs import *
+
 def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect='uniform',progress=True):
     '''
     Generate Primes Function
@@ -211,17 +212,8 @@ def generate_primes(ys,zs,domain,nframes,normalization,interpolate=False,convect
             y_sigma = sigmas_on_line[eddys_on_point][:,:,1]
             z_sigma = sigmas_on_line[eddys_on_point][:,:,2]
 
-            #Individual f(x) 'tent' functions for each contributing point
-            fxx = np.sqrt(1.5)*(1.0-np.abs(x_dist.reshape((x_dist.shape[0],1)))/x_sigma)
-            fxy = np.sqrt(1.5)*(1.0-np.abs(y_dist.reshape((y_dist.shape[0],1)))/y_sigma)
-            fxz = np.sqrt(1.5)*(1.0-np.abs(z_dist.reshape((z_dist.shape[0],1)))/z_sigma)
+            fx = tent(x_dist,y_dist,z_dist,x_sigma,y_sigma,z_sigma)
 
-            np.clip(fxx,0.0,None,out=fxx)
-            np.clip(fxy,0.0,None,out=fxy)
-            np.clip(fxz,0.0,None,out=fxz)
-
-            #Total f(x) from each contributing point
-            fx  = fxx*fxy*fxz
             if normalization == 'jarrin':
                 fx = 1.0/np.sqrt(np.product((x_sigma,y_sigma,z_sigma),axis=0)) * fx
 

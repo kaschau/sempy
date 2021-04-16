@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from . import tent
+from .tent import tent
