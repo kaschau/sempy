@@ -1,5 +1,7 @@
 import numpy as np
+from numba import njit
 
+@njit
 def blob(dists,sigmas):
     '''
     The legendary tent function. NOTE: distances in dists are not absolute valued.
@@ -42,7 +44,8 @@ def blob(dists,sigmas):
                 small_eddy = big_eddy*np.cos(np.pi*d[xyz]/(2.0*s[smlr,xyz]))
                 fx[smlr,xyz] = small_eddy
 
-        fxx[i,:] = np.product(fx,axis=1)
+        for k in range(3):
+            fxx[i,k] = np.prod(fx[k])
 
     #Total f(x) from each contributing eddy
     return fxx
