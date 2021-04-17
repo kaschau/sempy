@@ -34,7 +34,7 @@ def blob(dists,sigmas):
         # compute the "big" eddy, and then the other two small eddys
         for xyz in range(3):
             max_component = np.argmax(s[:,xyz])
-            big_eddy = 0.5*(np.cos(np.pi*d[xyz]/s[max_component,xyz])+1.0)
+            big_eddy = np.cos(np.pi*d[xyz]/(2.0*s[max_component,xyz]))
 
             fx[max_component,xyz] = big_eddy
 
@@ -52,7 +52,7 @@ def blob(dists,sigmas):
 
 if __name__ == '__main__':
 
-    nsig = 100
+    nsig = 101
     u_length_scale = 1.0
     v_length_scale = 0.5
     w_length_scale = 0.25
