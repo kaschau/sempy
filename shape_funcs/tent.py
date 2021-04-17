@@ -41,7 +41,7 @@ def tent(dists,sigmas):
 
 if __name__ == '__main__':
 
-    nsig = 100
+    nsig = 101
     u_length_scale = 1.0
     v_length_scale = 0.5
     w_length_scale = 0.25
