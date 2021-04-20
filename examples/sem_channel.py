@@ -55,10 +55,6 @@ up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,
                                  normalization=norm,
                                  convect=convect,
                                  shape=shape)
-with open('shapefunc.npy','wb') as f:
-    np.save(f,up)
-    np.save(f,vp)
-    np.save(f,wp)
 
 #Compute stats along line
 uus = np.mean(up[:,:]**2,axis=0)
