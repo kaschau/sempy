@@ -37,7 +37,12 @@ def tent(dists,sigmas):
     np.clip(fxz,0.0,None,out=fxz)
 
     #Total f(x) from each contributing point
-    return fxx*fxy*fxz
+    fx = fxx*fxy*fxz
+
+    #For tracking purposes, see if this point has zero contributions
+    tent.empty = np.any( ( np.sum(fx, axis=0) == 0.0 ) )
+
+    return fx
 
 if __name__ == '__main__':
 

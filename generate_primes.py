@@ -225,6 +225,8 @@ def generate_primes(ys,zs,domain,nframes,normalization,
             # via a "shape function"
             if shape == 'tent':
                 fx = shape_funcs.tent(dists,sigmas_on_point)
+                if shape_funcs.tent.empty:
+                    empty_pts += 1
             elif shape == 'blob':
                 fx = shape_funcs.blob(dists,sigmas_on_point)
             else:
@@ -234,10 +236,8 @@ def generate_primes(ys,zs,domain,nframes,normalization,
             if normalization == 'jarrin':
                 fx = 1.0/np.sqrt(np.product(sigmas_on_point,axis=2)) * fx
 
-            #Grab the eplison sign for each eddy+component
-            ej = eps_on_line[eddys_on_point]
             #multiply each eddys function/component by its sign
-            primes_no_norm[j,:] = np.sum( ej*fx ,axis=0)
+            primes_no_norm[j,:] = np.sum( eps_on_line[eddys_on_point]*fx ,axis=0)
 
         #We will warn the user if we detect more that 10 empty points along this line.a
         if empty_pts > 10:
