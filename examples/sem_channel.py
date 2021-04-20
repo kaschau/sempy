@@ -25,6 +25,9 @@ convect='uniform'
 pop_meth = 'random'
 #normalization
 norm = 'jarrin'
+#shape funcion
+shape = 'tent'
+
 #Initialize domain
 domain = sempy.geometries.box('channel',Ublk,tme,y_height,z_width,delta,utau,viscosity)
 #Set flow properties from existing data
@@ -47,7 +50,10 @@ ys = np.concatenate((np.linspace(0.0001*domain.delta,0.01*domain.delta,5),
 zs = np.ones(ys.shape[0])*z_width/2.0
 
 #Compute u'
-up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization=norm,convect=convect)
+up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,
+                                 normalization=norm,
+                                 convect=convect,
+                                 shape=shape)
 
 #Compute stats along line
 uus = np.mean(up[:,:]**2,axis=0)
