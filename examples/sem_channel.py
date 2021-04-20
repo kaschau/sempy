@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 import sempy
 
 '''
@@ -25,6 +26,9 @@ convect='uniform'
 pop_meth = 'random'
 #normalization
 norm = 'jarrin'
+#shape funcion
+shape = 'tent'
+
 #Initialize domain
 domain = sempy.geometries.box('channel',Ublk,tme,y_height,z_width,delta,utau,viscosity)
 #Set flow properties from existing data
@@ -47,7 +51,10 @@ ys = np.concatenate((np.linspace(0.0001*domain.delta,0.01*domain.delta,5),
 zs = np.ones(ys.shape[0])*z_width/2.0
 
 #Compute u'
-up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,normalization=norm,convect=convect)
+up,vp,wp = sempy.generate_primes(ys,zs,domain,nframes,
+                                 normalization=norm,
+                                 convect=convect,
+                                 shape=shape)
 
 #Compute stats along line
 uus = np.mean(up[:,:]**2,axis=0)
@@ -62,6 +69,16 @@ vws = np.mean(vp[:,:]*wp[:,:],axis=0)
 Us = domain.Ubar_interp(ys) + np.mean(up[:,:],axis=0)
 
 #Compare signal to moser
+# Make some plots
+if matplotlib.checkdep_usetex(True):
+    plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+plt.rcParams['figure.figsize'] = (6,4.5)
+plt.rcParams['figure.dpi'] = 200
+plt.rcParams['figure.autolayout'] = True
+plt.rcParams['font.size'] = 14
+plt.rcParams['lines.linewidth'] = 1.0
+
 #Ubar
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
@@ -77,7 +94,7 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r'$y$')
 ax1.set_xlabel(r'$R_{uu}$')
 ax1.plot(uus,ys,label=r'$R_{uu}$ SEM', color='orange')
-ax1.scatter(domain.Rij_interp(ys)[:,0,0],ys,label=r'$R_{uu}$ Theory', color='k')
+ax1.scatter(domain.Rij_interp(ys)[:,0,0],ys,label=r'$R_{uu}$ Moser', color='k')
 ax1.legend()
 plt.savefig('Ruu.png')
 plt.close()
@@ -133,10 +150,21 @@ plt.savefig('Rvw.png')
 plt.close()
 
 #Sample u prime
-fig, ax1 = plt.subplots()
-ax1.set_ylabel(r'$u \prime$')
-ax1.set_xlabel(r't')
+plt.rcParams['figure.figsize'] = (4,6.5)
+fig, (ax1,ax2,ax3) = plt.subplots(nrows=3,ncols=1)
+ax1.set_ylabel(r'$u^{\prime}$')
+ax1.grid(linestyle='--')
 ax1.set_title('Centerline Fluctiations')
 ax1.plot(np.linspace(0,domain.x_length/domain.Ublk,nframes),up[:,int((up.shape[1])/2)],color='orange')
+
+ax2.set_ylabel(r'$v^{\prime}$')
+ax2.grid(linestyle='--')
+ax2.plot(np.linspace(0,domain.x_length/domain.Ublk,nframes),vp[:,int((vp.shape[1])/2)],color='blue')
+
+ax3.set_ylabel(r'$w^{\prime}$')
+ax3.grid(linestyle='--')
+ax3.set_xlabel(r'$Time$')
+
+ax3.plot(np.linspace(0,domain.x_length/domain.Ublk,nframes),wp[:,int((wp.shape[1])/2)],color='green')
 plt.savefig('uprime.png')
 plt.close()
