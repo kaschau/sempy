@@ -71,6 +71,10 @@ else:
     seminp = None
 seminp = comm.bcast(seminp,root=0)
 
+if seminp['nframes'] > 9999:
+    raise ValueError('Error: Currently, the interpolation procedure in RAPTOR is only setup for nframes < 9999')
+
+
 ############################################################################################
 # Create the domain based on above inputs
 ############################################################################################
