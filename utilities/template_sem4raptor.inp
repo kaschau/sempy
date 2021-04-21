@@ -67,7 +67,7 @@ convect           = uniform         #Method of "convecting" eddys. Options are "
                                     #    by Ubulk. (But recal that in sempy, we do not
                                     #    convect eddys, but instead convect through eddies
                                     #    in the mega box)
-
+shape             = tent            #Shape function for an eddy.
 ########################################################################
 ############################ RAPTOR VALUES #############################
 ########################################################################

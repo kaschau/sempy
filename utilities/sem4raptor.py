@@ -274,6 +274,7 @@ for i,pn in enumerate(my_patch_nums):
                                    normalization=seminp['normalization'],
                                    interpolate=seminp['interpolate'],
                                    convect=seminp['convect'],
+                                   shape=seminp['shape'],
                                    progress=progress)
     if progress:
         print('******************************* Generating v\' *********************************')
@@ -282,6 +283,7 @@ for i,pn in enumerate(my_patch_nums):
                                    normalization=seminp['normalization'],
                                    interpolate=seminp['interpolate'],
                                    convect=seminp['convect'],
+                                   shape=seminp['shape'],
                                    progress=progress)
     if progress:
         print('******************************* Generating w\' *********************************')
@@ -290,6 +292,7 @@ for i,pn in enumerate(my_patch_nums):
                                    normalization=seminp['normalization'],
                                    interpolate=seminp['interpolate'],
                                    convect=seminp['convect'],
+                                   shape=seminp['shape'],
                                    progress=progress)
     # upp[ nframe , y, z]
 
