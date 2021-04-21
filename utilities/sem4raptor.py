@@ -327,7 +327,7 @@ for i,pn in enumerate(my_patch_nums):
     fw = itrp.CubicSpline(t,wp ,bc_type=bc,axis=0)
 
     for interval in range(seminp['nframes']-1):
-        file_name = output_dir+'/alphas_{:06d}_{:03d}'.format(pn,interval+1)
+        file_name = output_dir+'/alphas_{:06d}_{:04d}'.format(pn,interval+1)
         with FortranFile(file_name, 'w') as f90:
             f90.write_record(fu.c[:,interval,:,:].astype(np.float64))
             f90.write_record(fv.c[:,interval,:,:].astype(np.float64))
