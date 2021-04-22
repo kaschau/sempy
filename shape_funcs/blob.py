@@ -92,7 +92,7 @@ if __name__ == '__main__':
     plt.rcParams['figure.autolayout'] = True
     plt.rcParams['font.size'] = 14
     plt.rcParams['lines.linewidth'] = 1.0
-    plt.rcParams['image.cmap'] = 'coolwarm'
+    plt.rcParams['image.cmap'] = 'seismic'
 
     fig,ax = plt.subplots()
     lo = ax.plot(line,sigs)
@@ -122,10 +122,18 @@ if __name__ == '__main__':
         sigmas[:,2,0] = wx_length_scale
         sigmas[:,2,1] = wy_length_scale
 
+        levels = np.linspace(-1,1,31)
+
         sigs = blob(dists,sigmas)
         fig,ax = plt.subplots()
-        tcf = ax.tricontourf(X.ravel(),Y.ravel(),sigs[:,0], levels=np.linspace(-1,1,31))
-        fig.colorbar(tcf,ticks=np.linspace(-1,1,11))
+        triang = matplotlib.tri.Triangulation(X.ravel(),Y.ravel())
+        zero = np.less(np.abs(sigs[:,0]), 1e-16)
+        mask = np.all(np.where(zero[triang.triangles], True, False), axis=1)
+        triang.set_mask(mask)
+        tcf = ax.tricontourf(triang,sigs[:,0], levels=levels)
+        ax.scatter([0],[0],color='k',zorder=4)
+        cb = fig.colorbar(tcf,ticks=np.linspace(-1,1,11))
+        cb.set_label(r'$u^{*}$'+' Contribution')
         ax.set_title(r'$\sigma_{ux}=$' + f'{ux_length_scale}, '+r'$\sigma_{uy}=$'+f'{uy_length_scale}')
         ax.set_xlabel('x')
         ax.set_ylabel('y')
@@ -133,8 +141,12 @@ if __name__ == '__main__':
         plt.show()
 
         fig,ax = plt.subplots()
-        tcf = ax.tricontourf(X.ravel(),Y.ravel(),sigs[:,1], levels=np.linspace(-1,1,31))
+        mask = np.all(np.where(zero[triang.triangles], True, False), axis=1)
+        triang.set_mask(mask)
+        tcf = ax.tricontourf(triang,sigs[:,1], levels=levels)
+        ax.scatter([0],[0],color='k',zorder=4)
         cb = fig.colorbar(tcf,ticks=np.linspace(-1,1,11))
+        cb.set_label(r'$v^{*}$'+' Contribution')
         ax.set_title(r'$\sigma_{vx}$='+f'{vx_length_scale}, ' + r'$\sigma_{vy}=$'+f'{vy_length_scale}')
         ax.set_xlabel('x')
         ax.set_ylabel('y')
@@ -142,8 +154,12 @@ if __name__ == '__main__':
         plt.show()
 
         fig,ax = plt.subplots()
-        tcf = ax.tricontourf(X.ravel(),Y.ravel(),sigs[:,2], levels=np.linspace(-1,1,31))
+        mask = np.all(np.where(zero[triang.triangles], True, False), axis=1)
+        triang.set_mask(mask)
+        tcf = ax.tricontourf(triang,sigs[:,2], levels=levels)
+        ax.scatter([0],[0],color='k',zorder=4)
         cb = fig.colorbar(tcf,ticks=np.linspace(-1,1,11))
+        cb.set_label(r'$w^{*}$'+' Contribution')
         ax.set_title(r'$\sigma_{wx}$='+f'{wx_length_scale}, ' + r'$\sigma_{wy}=$'+f'{wy_length_scale}')
         ax.set_xlabel('x')
         ax.set_ylabel('y')

@@ -116,7 +116,6 @@ def add_profile(domain):
 
 if __name__ == "__main__":
 
-    import matplotlib.pyplot as plt
     from pathlib import Path
 
     #Create dummy channel
@@ -128,8 +127,7 @@ if __name__ == "__main__":
     domain.Ublk = 2.12630000E+01*domain.utau
 
     ys = np.concatenate((np.linspace(0,0.05*domain.delta,1000),
-                         np.linspace(0.05*domain.delta,1.95*domain.delta,100),
-                         np.linspace(1.95*domain.delta,2.0*domain.delta,1000)))
+                         np.linspace(0.05*domain.delta,1.0*domain.delta,100)))
 
     add_profile(domain)
 
@@ -140,31 +138,35 @@ if __name__ == "__main__":
 
     yp = data[:,0]
     npts = yp.shape[0]
-    MU = np.empty(npts*2-1)
-    MU[0:npts] = data[:,1]
-    MU[npts::] = np.flip(MU[0:npts-1])
+    MU = data[:,1]
 
     yd = yp/yp.max()
-    yd = np.concatenate((yd,2-np.flip(yd[0:-1])))
 
-    fig, ax = plt.subplots(2,1,figsize=(5,10))
-    ax1 = ax[0]
-    string = r'$Re_{\tau}=590$, '+r'$u_{\tau}=$'+'{:.2f} '.format(domain.utau)+r'$U_{0}=$'+'{:.6f}'.format(domain.Ublk)
+    import matplotlib.pyplot as plt
+    import matplotlib
+    if matplotlib.checkdep_usetex(True):
+        plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
+    plt.rcParams['figure.figsize'] = (6,4.5)
+    plt.rcParams['figure.dpi'] = 200
+    plt.rcParams['figure.autolayout'] = True
+    plt.rcParams['font.size'] = 14
+    plt.rcParams['lines.linewidth'] = 1.0
+
+    fig, (ax1,ax2) = plt.subplots(2,1,figsize=(5,10))
+    string = r'$Re_{\tau}=590$, '+r'$u_{\tau}=$'+f'{domain.utau:.2f} '+r'$U_{0}=$'+f'{domain.Ublk:.2f}'
     ax1.set_title(f'{string}')
     ax1.set_ylabel(r'$y/ \delta$')
-    ax1.set_xlabel(r'$\bar{U}^{+}$')
-    ax1.plot(Us/domain.utau,ys/domain.delta, label=r'$\bar{U}^{+}_{SEM}$')
-    ax1.plot(MU,yd, label=r'$\bar{U}{+}_{Moser}$')
+    ax1.set_xlabel(r'$\overline{U}^{+}$')
+    ax1.plot(Us/domain.utau,ys/domain.delta, label='SEM')
+    ax1.plot(MU,yd, label='Moser')
     ax1.legend()
 
-    ax2 = ax[1]
     ax2.set_xlabel(r'$y^{+}$')
     ax2.set_ylabel(r'$u^{+}$')
     yplus = ys*domain.utau/domain.viscosity
-    ax2.plot(yplus[np.where(yplus<100)],Us[np.where(yplus<100)]/domain.utau, label=r'$\bar{U}^{+}_{SEM}$')
-    ax2.plot(yp[np.where(yp<100)],MU[np.where(yp<100)], label=r'$\bar{U}^{+}_{Moser}$')
+    ax2.plot(yplus[np.where(yplus<100)],Us[np.where(yplus<100)]/domain.utau)
+    ax2.plot(yp[np.where(yp<100)],MU[np.where(yp<100)])
     ax2.set_aspect('equal')
-    ax2.legend()
 
-    fig.tight_layout()
     plt.show()
