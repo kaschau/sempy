@@ -145,8 +145,6 @@ scale_factor : float
 
 if __name__ == '__main__':
 
-    import matplotlib.pyplot as plt
-
     #Create dummy channel
     domain = type('channel',(),{})
     domain.viscosity = 1.0
@@ -168,6 +166,17 @@ if __name__ == '__main__':
 
     Tww_plot = sigmas[:,2,0]
     Lww_plot = sigmas[:,2,1]
+
+    import matplotlib.pyplot as plt
+    import matplotlib
+    if matplotlib.checkdep_usetex(True):
+        plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
+    plt.rcParams['figure.figsize'] = (6,4.5)
+    plt.rcParams['figure.dpi'] = 200
+    plt.rcParams['figure.autolayout'] = True
+    plt.rcParams['font.size'] = 14
+    plt.rcParams['lines.linewidth'] = 1.0
 
     fig, ax1 = plt.subplots()
     ax1.set_xlabel(r'$y/ \delta$')

@@ -124,8 +124,6 @@ def add_stats(domain):
 
 if __name__ == "__main__":
 
-    import matplotlib.pyplot as plt
-
     #Create dummy channel
     domain = type('channel',(),{})
     Re_tau = 587.19
@@ -135,8 +133,7 @@ if __name__ == "__main__":
     domain.Ublk = 2.12630000E+01*domain.utau
 
     yplot = np.concatenate((np.linspace(0,0.05*domain.delta,1000)[0:-1],
-                            np.linspace(0.05*domain.delta,1.95*domain.delta,500),
-                            np.linspace(1.95*domain.delta,2.0*domain.delta,1000)[1::]))
+                            np.linspace(0.05*domain.delta,1.0*domain.delta,500)))
 
     add_stats(domain)
 
@@ -150,33 +147,36 @@ if __name__ == "__main__":
     Ruw_plot = Rij[:,0,2]/domain.utau**2
     Rvw_plot = Rij[:,1,2]/domain.utau**2
 
-    fig, ax = plt.subplots(1,2,figsize=(12,5))
-    ax1 = ax[0]
-    ax1.set_ylabel(r'$y/ \delta$')
-    ax1.set_xlabel(r'$R_{ii}/u_{\tau}^{2}$')
-    ax1.plot(Ruu_plot,yplot,label=r'$uu$')
-    ax1.plot(Rvv_plot,yplot,label=r'$vv$')
-    ax1.plot(Rww_plot,yplot,label=r'$ww$')
-    ax1.legend()
-    ax1.set_title('Moser Channel Reynolds Stress')
+    import matplotlib.pyplot as plt
+    import matplotlib
+    if matplotlib.checkdep_usetex(True):
+        plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
+    plt.rcParams['figure.figsize'] = (6,4.5)
+    plt.rcParams['figure.dpi'] = 200
+    plt.rcParams['figure.autolayout'] = True
+    plt.rcParams['font.size'] = 14
+    plt.rcParams['lines.linewidth'] = 1.0
 
-    ax2 = ax1.twiny()
-    ax2.set_xlabel(r'$R_{ij}/u_{\tau}^{2}$')
-    ax2.plot(Ruv_plot,yplot,label='$uv$',linestyle='--')
-    ax2.plot(Ruw_plot,yplot,label='$vw$',linestyle='--')
-    ax2.plot(Rvw_plot,yplot,label='$vw$',linestyle='--')
+    fig, (ax1,ax2) = plt.subplots(1,2,figsize=(12,5))
+    ax1.set_ylabel(r'$y/ \delta$')
+    ax1.set_xlabel(r'$R_{ij}/u_{\tau}^{2}$')
+    ax1.plot(Ruu_plot,yplot/domain.delta,label=r'$uu$')
+    ax1.plot(Rvv_plot,yplot/domain.delta,label=r'$vv$')
+    ax1.plot(Rww_plot,yplot/domain.delta,label=r'$ww$')
+    ax1.plot(Ruv_plot,yplot/domain.delta,label='$uv$',linestyle='--',color='C0')
+    ax1.plot(Ruw_plot,yplot/domain.delta,label='$vw$',linestyle='--',color='C1')
+    ax1.plot(Rvw_plot,yplot/domain.delta,label='$vw$',linestyle='--',color='C2')
+    ax1.legend()
+
+    plt.suptitle('Moser Channel Reynolds Stress')
+
+    yplus = yplot*domain.utau/domain.viscosity
+    ax2.set_xlabel(r'$y^{+}$')
+    ax2.set_ylabel(r'$R_{ii}/u_{\tau}^{2}$')
+    ax2.plot(yplus[np.where((yplus<100))],Ruu_plot[np.where((yplus<100))],label=r'$uu$')
+    ax2.plot(yplus[np.where((yplus<100))],Rvv_plot[np.where((yplus<100))],label=r'$vv$')
+    ax2.plot(yplus[np.where((yplus<100))],Rww_plot[np.where((yplus<100))],label=r'$ww$')
     ax2.legend()
 
-    ax3 = ax[1]
-    yplus = yplot*domain.utau/domain.viscosity
-    string = 'Moser Profile, '+r'$u_{\tau}=$'+'{:.2f} '.format(domain.utau)+r'$U_{0}=$'+f'{domain.Ublk}'
-    ax3.set_title(f'{string}')
-    ax3.set_xlabel(r'$y^{+}$')
-    ax3.set_ylabel(r'$R_{ii}/u_{\tau}^{2}$')
-    ax3.plot(yplus[np.where((yplus<100))],Ruu_plot[np.where((yplus<100))],label=r'$uu$')
-    ax3.plot(yplus[np.where((yplus<100))],Rvv_plot[np.where((yplus<100))],label=r'$vv$')
-    ax3.plot(yplus[np.where((yplus<100))],Rww_plot[np.where((yplus<100))],label=r'$ww$')
-    ax3.legend()
-
-    fig.tight_layout()
     plt.show()
