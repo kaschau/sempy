@@ -219,8 +219,13 @@ anim = mpl.animation.FuncAnimation(fig, animate,
                                    frames=seminp['nframes']-1,
                                    fargs=(TriU,'u'),
                                    repeat=False)
-anim.save('U.mp4',
-          writer=mpl.animation.FFMpegWriter())
+try:
+    anim.save('U.mp4',
+              writer=mpl.animation.FFMpegWriter())
+except FileNotFoundError:
+    anim.save('U.gif',
+              writer='imagemagick',
+              fps=8)
 plt.cla()
 
 ############################################################################################
@@ -250,8 +255,13 @@ anim = mpl.animation.FuncAnimation(fig, animate,
                                    frames=seminp['nframes']-1,
                                    fargs=(TriV,'v',),
                                    repeat=False)
-anim.save('v.mp4',
-          writer=mpl.animation.FFMpegWriter())
+try:
+    anim.save('v.mp4',
+              writer=mpl.animation.FFMpegWriter())
+except FileNotFoundError:
+    anim.save('v.gif',
+              writer='imagemagick',
+              fps=8)
 plt.cla()
 
 ############################################################################################
@@ -281,6 +291,11 @@ anim = mpl.animation.FuncAnimation(fig, animate,
                                    frames=seminp['nframes']-1,
                                    fargs=(TriW,'w',),
                                    repeat=False)
-anim.save('w.mp4',
-          writer=mpl.animation.FFMpegWriter())
+try:
+    anim.save('w.mp4',
+              writer=mpl.animation.FFMpegWriter())
+except FileNotFoundError:
+    anim.save('w.gif',
+              writer='imagemagick',
+              fps=8)
 plt.cla()
