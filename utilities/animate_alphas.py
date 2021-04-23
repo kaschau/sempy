@@ -221,11 +221,11 @@ anim = mpl.animation.FuncAnimation(fig, animate,
                                    repeat=False)
 try:
     anim.save('U.mp4',
-              writer=mpl.animation.FFMpegWriter())
+              writer=mpl.animation.FFMpegWriter(fps=10))
 except FileNotFoundError:
     anim.save('U.gif',
-              writer='imagemagick',
-              fps=8)
+              writer=mpl.animation.PillowWriter(fps=10))
+
 plt.cla()
 
 ############################################################################################
@@ -257,11 +257,11 @@ anim = mpl.animation.FuncAnimation(fig, animate,
                                    repeat=False)
 try:
     anim.save('v.mp4',
-              writer=mpl.animation.FFMpegWriter())
+              writer=mpl.animation.FFMpegWriter(fps=10))
 except FileNotFoundError:
     anim.save('v.gif',
-              writer='imagemagick',
-              fps=8)
+              writer=mpl.animation.PillowWriter(fps=10))
+
 plt.cla()
 
 ############################################################################################
@@ -293,9 +293,9 @@ anim = mpl.animation.FuncAnimation(fig, animate,
                                    repeat=False)
 try:
     anim.save('w.mp4',
-              writer=mpl.animation.FFMpegWriter())
+              writer=mpl.animation.FFMpegWriter(fps=10))
 except FileNotFoundError:
     anim.save('w.gif',
-              writer='imagemagick',
-              fps=8)
+              writer=mpl.animation.PillowWriter(fps=10))
+
 plt.cla()
