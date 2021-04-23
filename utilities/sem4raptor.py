@@ -136,7 +136,7 @@ if rank == 0:
         print('\n\nFYI, patches are assigned to processors, so using more processors than patches gives you no performace increase.\n\n')
         max_ranks_per_block = 1
     else:
-        max_ranks_per_block = int(npatches/size)+npatches%size
+        max_ranks_per_block = int(npatches/size) + (1 if npatches%size > 0 else 0)
     all_rank_patches = [[None for j in range(max_ranks_per_block)] for i in range(size)]
     all_rank_blocks = [[None for j in range(max_ranks_per_block)] for i in range(size)]
     i = 0
