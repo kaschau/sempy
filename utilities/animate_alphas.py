@@ -11,6 +11,8 @@ in ./<sem4raptor.inp>_alphas
 
 Creats three videos, U.mp4, v.mp4, and w.mp4
 
+Plots are all non dimensional raptor values.
+
 Example
 -------
 /path/to/sempy/utilities/animate_alphas.py <sem.inp>
@@ -95,8 +97,6 @@ npatches = len(patch_num)
 nblks = len([f for f in os.listdir(seminp['grid_path']) if f.startswith('g.')])
 mb = rp.multiblock.grid(nblks)
 rp.readers.read_raptor_grid(mb,seminp['grid_path'])
-rpinp = rp.readers.read_raptor_input_file(seminp['inp_path'])
-mb.dim_grid(rpinp)
 #Flip the grid if it is oriented upside down in the true grid
 if seminp['flipdom']:
     for bn in block_num:
@@ -151,8 +151,8 @@ TriW = mpl.tri.Triangulation(wz,wy)
 ############################################################################################
 # Function to read in frames
 ############################################################################################
-def get_frame(frame,comp='u'):
-    alpha = np.array([])
+def get_frame(frame,comp):
+    alphas = np.array([])
     for i,pn in enumerate(patch_num):
         file_name = output_dir+'/alphas_{:06d}_{:04d}'.format(pn,frame)
         with FortranFile(file_name, 'r') as f90:
@@ -168,9 +168,9 @@ def get_frame(frame,comp='u'):
             else:
                 raise ValueError(f'Unknown component {comp}')
 
-            alpha = np.concatenate((alpha,a.ravel()))
+            alphas = np.concatenate((alphas,a.ravel()))
 
-    return alpha
+    return alphas
 
 
 ############################################################################################
@@ -184,8 +184,18 @@ plt.rcParams['figure.autolayout'] = True
 plt.rcParams['font.size'] = 12
 plt.rcParams['image.cmap'] = 'autumn'
 
+# animation function
+def animate(i,Tri,comp):
+    global tcf
+    for c in tcf.collections:
+        c.remove()  # removes only the contours, leaves the rest intact
+    alphas = get_frame(i+1,comp)
+    tcf = ax.tricontourf(Tri,alphas,levels=levels)
+    ax.set_title(f'Frame {i+1}')
+    return tcf
+
 ############################################################################################
-# Film u 
+# Film u
 ############################################################################################
 print('Animating U')
 fig,ax = plt.subplots()
@@ -193,21 +203,17 @@ ax.set_xlabel(r'$y/L_{ref}$')
 ax.set_ylabel(r'$z/L_{ref}$')
 ax.set_aspect('equal')
 
-alpha = get_frame(1,'u')
-levels = np.linspace(0, alpha.max(),100)
-tcf = ax.tricontourf(TriU,alpha,levels=levels)
+alphas = get_frame(1,'u')
+levels = np.linspace(0, alphas.max() ,100)
+ticks = np.linspace(0, alphas.max() ,11)
+tcf = ax.tricontourf(TriU,np.zeros(alphas.shape),levels=levels)
 ratio = uy.max()/uz.max()
-cb = plt.colorbar(tcf, fraction=0.046*ratio, pad=0.05, label=r'$\overline{U}+u^{\prime}$')
+cb = plt.colorbar(tcf,
+                  ticks=ticks,
+                  fraction=0.046*ratio,
+                  pad=0.05,
+                  label=r'$\overline{U}+u^{\prime}$')
 
-# animation function
-def animate(i,Tri,comp):
-    global tcf
-    for c in tcf.collections:
-        c.remove()  # removes only the contours, leaves the rest intact
-    alpha = get_frame(i+1,comp)
-    tcf = ax.tricontourf(Tri,alpha,levels=levels)
-    ax.set_title(f'Frame {i+1}')
-    return tcf
 
 anim = mpl.animation.FuncAnimation(fig, animate,
                                    frames=seminp['nframes']-1,
@@ -228,12 +234,17 @@ ax.set_xlabel(r'$y/L_{ref}$')
 ax.set_ylabel(r'$z/L_{ref}$')
 ax.set_aspect('equal')
 
-alpha = get_frame(1,'v')
-symm = max(alpha.max(),abs(alpha.min()))
+alphas = get_frame(1,'v')
+symm = max(alphas.max(),abs(alphas.min()))
 levels = np.linspace(-symm,symm,100)
-tcf = ax.tricontourf(TriV,alpha,levels=levels)
+ticks = np.linspace(-symm,symm,11)
+tcf = ax.tricontourf(TriV,alphas,levels=levels)
 ratio = vy.max()/vz.max()
-cb = plt.colorbar(tcf, fraction=0.046*ratio, pad=0.05, label=r'$v^{\prime}$')
+cb = plt.colorbar(tcf,
+                  ticks=ticks,
+                  fraction=0.046*ratio,
+                  pad=0.05,
+                  label=r'$v^{\prime}$')
 
 anim = mpl.animation.FuncAnimation(fig, animate,
                                    frames=seminp['nframes']-1,
@@ -244,7 +255,7 @@ anim.save('v.mp4',
 plt.cla()
 
 ############################################################################################
-# Film v
+# Film w
 ############################################################################################
 print('Animating w')
 
@@ -253,12 +264,18 @@ ax.set_xlabel(r'$y/L_{ref}$')
 ax.set_ylabel(r'$z/L_{ref}$')
 ax.set_aspect('equal')
 
-alpha = get_frame(1,'w')
-symm = max(alpha.max(),abs(alpha.min()))
+alphas = get_frame(1,'w')
+symm = max(alphas.max(),abs(alphas.min()))
+symm = float(f'{symm:.2e}')
 levels = np.linspace(-symm,symm,100)
-tcf = ax.tricontourf(TriW,alpha,levels=levels)
+ticks = np.linspace(-symm,symm,11)
+tcf = ax.tricontourf(TriW,np.zeros(alphas.shape),levels=levels)
 ratio = wy.max()/wz.max()
-cb = plt.colorbar(tcf, fraction=0.046*ratio, pad=0.05, label=r'$w^{\prime}$')
+cb = plt.colorbar(tcf,
+                  ticks=ticks,
+                  fraction=0.046*ratio,
+                  pad=0.05,
+                  label=r'$w^{\prime}$')
 
 anim = mpl.animation.FuncAnimation(fig, animate,
                                    frames=seminp['nframes']-1,
