@@ -136,7 +136,7 @@ if rank == 0:
         print('\n\nFYI, patches are assigned to processors, so using more processors than patches gives you no performace increase.\n\n')
         max_ranks_per_block = 1
     else:
-        max_ranks_per_block = int(npatches/size)+npatches%size
+        max_ranks_per_block = int(npatches/size) + (1 if npatches%size > 0 else 0)
     all_rank_patches = [[None for j in range(max_ranks_per_block)] for i in range(size)]
     all_rank_blocks = [[None for j in range(max_ranks_per_block)] for i in range(size)]
     i = 0
@@ -163,6 +163,11 @@ else:
 # Only rank ones reads in the grid
 if rank == 0:
     nblks = len([f for f in os.listdir(seminp['grid_path']) if f.startswith('g.')])
+    if nblks == 0:
+        nblks = len([f for f in os.listdir(seminp['grid_path']) if f=='grid'])
+    if nblks == 0:
+        raise ValueError(f'Cant find any grid files in {seminp["grid_path"]}')
+
     mb = rp.multiblock.grid(nblks)
     rp.readers.read_raptor_grid(mb,seminp['grid_path'])
     rpinp = rp.readers.read_raptor_input_file(seminp['inp_path'])
