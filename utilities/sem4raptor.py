@@ -163,6 +163,11 @@ else:
 # Only rank ones reads in the grid
 if rank == 0:
     nblks = len([f for f in os.listdir(seminp['grid_path']) if f.startswith('g.')])
+    if nblks == 0:
+        nblks = len([f for f in os.listdir(seminp['grid_path']) if f=='grid'])
+    if nblks == 0:
+        raise ValueError(f'Cant find any grid files in {seminp["grid_path"]}')
+
     mb = rp.multiblock.grid(nblks)
     rp.readers.read_raptor_grid(mb,seminp['grid_path'])
     rpinp = rp.readers.read_raptor_input_file(seminp['inp_path'])
