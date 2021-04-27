@@ -56,23 +56,23 @@ class box(domain):
             #Eddy heights as a function of y
             test_ys = np.linspace(lows[1], highs[1], 200)
             test_sigmas = self.sigma_interp(test_ys)
-            #Smallest eddy y height
-            Y_eddy = np.min(test_sigmas[:,:,1], axis=1)
-            # Find the smallest eddy y and largest eddy y
-            Y_eddy_min = Y_eddy.min()
-            Y_eddy_max = Y_eddy.max()
+            #Smallest eddy volume
+            V_eddy = np.min(np.product(test_sigmas,axis=1),axis=1)
+            # Find the smallest eddy V and largest eddy V
+            V_eddy_min = V_eddy.min()
+            V_eddy_max = V_eddy.max()
             #This ratio sets how much more likely the small eddy placement is compared to the large eddy placement
-            Y_ratio = Y_eddy_max/Y_eddy_min
+            V_ratio = (V_eddy_max/V_eddy_min)
             #Flip and shift so largest eddy sits on zero
-            Y_eddy_prime = - ( Y_eddy - Y_eddy_min ) + (Y_eddy_max-Y_eddy_min)
+            V_eddy_prime = - ( V_eddy - V_eddy_min ) + (V_eddy_max-V_eddy_min)
 
             #Rescale so lowest point is equal to one
-            Y_eddy_prime = Y_eddy_prime/Y_eddy_max*Y_ratio + 1.0
-            Y_eddy_norm = integrate.trapz(Y_eddy_prime,test_ys)
+            V_eddy_prime = (V_eddy_prime/V_eddy_max)*V_ratio + 1.0
+            V_eddy_norm = integrate.trapz(V_eddy_prime,test_ys)
             #Create a PDF of eddy placement in y by normalizing pdf integral
-            pdf = Y_eddy_prime/Y_eddy_norm
+            pdf = V_eddy_prime/V_eddy_norm
             #Compute average eddy volume
-            expected_Veddy = integrate.trapz(pdf*Y_eddy,test_ys)**3
+            expected_Veddy = integrate.trapz(pdf*V_eddy,test_ys)
             #Compute neddy
             VB = np.product(np.array(highs) - np.array(lows))
             neddy = int( C_Eddy * VB / expected_Veddy )
