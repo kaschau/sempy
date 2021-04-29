@@ -204,8 +204,8 @@ def animate(i,Tri,comp):
 ############################################################################################
 print('Animating U')
 fig,ax = plt.subplots()
-ax.set_xlabel(r'$y/L_{ref}$')
-ax.set_ylabel(r'$z/L_{ref}$')
+ax.set_xlabel(r'$z/L_{ref}$')
+ax.set_ylabel(r'$y/L_{ref}$')
 ax.set_aspect('equal')
 
 alphas = get_frame(1,'u')
@@ -240,8 +240,8 @@ plt.rcParams['image.cmap'] = 'seismic'
 print('Animating v')
 
 fig,ax = plt.subplots()
-ax.set_xlabel(r'$y/L_{ref}$')
-ax.set_ylabel(r'$z/L_{ref}$')
+ax.set_xlabel(r'$z/L_{ref}$')
+ax.set_ylabel(r'$y/L_{ref}$')
 ax.set_aspect('equal')
 
 alphas = get_frame(1,'v')
@@ -275,8 +275,8 @@ plt.cla()
 print('Animating w')
 
 fig,ax = plt.subplots()
-ax.set_xlabel(r'$y/L_{ref}$')
-ax.set_ylabel(r'$z/L_{ref}$')
+ax.set_xlabel(r'$z/L_{ref}$')
+ax.set_ylabel(r'$y/L_{ref}$')
 ax.set_aspect('equal')
 
 alphas = get_frame(1,'w')
