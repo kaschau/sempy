@@ -21,8 +21,8 @@
 ########################################################################
 
 domain_type        = channel        #What type of flow is this channel or bl?
-y_height           = 0.0508         #[m]
-z_width            = 0.00544        #[m]
+y_height           = 0.1            #[m]
+z_width            = 0.3            #[m]
 
 periodic_x         = True           #periodic in time?
 periodic_y         = False
@@ -33,23 +33,23 @@ flipdom            = False          #Is your grid upside down?
 ########################### FLOW VALUES ################################
 ########################################################################
 
-viscosity         = 3.33e-5         #kinematic viscocity
-delta             = 0.0254          #channel half height or BL thickness
-utau              = 34.663          #Friction velocity
-Ublk              = 895             #Channel centerline height or U_inf
+viscosity         = 1.81e-5         #kinematic viscocity
+delta             = 0.05            #channel half height or BL thickness
+utau              = 0.21256278      #Friction velocity
+Ublk              = 4.519722        #Channel centerline height or U_inf
 
 ########################################################################
 ############################ SEM VALUES ################################
 ########################################################################
 
-total_time        = 0.002           #[s] time of generated signal,
+total_time        = 0.5             #[s] time of generated signal,
                                     #   used to determine length of box
-nframes           = 50              #Number of desired frames over time interval
+nframes           = 200             #Number of desired frames over time interval
 interpolate       = True            #Are you going to interpolate the signal or use it
                                     # as is?
-C_Eddy            = 3.0             #Eddy Density multiplier
-sigmas_from       = jarrin          #Method of setting eddy length scales
-stats_from        = moser           #Method of setting R_{ij} stats
+C_Eddy            = 1.0             #Eddy Density multiplier
+sigmas_from       = jarrin          #Target eddy length scales
+stats_from        = moser           #Target R_{ij} stats
 profile_from      = channel         #Method of generating \bar{U} profile
 population_method = PDF             #Method of placing eddys, 'PDF' places more
                                     #    eddys where eddys are smaller and fewer
@@ -68,6 +68,10 @@ convect           = uniform         #Method of "convecting" eddys. Options are "
                                     #    convect eddys, but instead convect through eddies
                                     #    in the mega box)
 shape             = tent            #Shape function for an eddy.
+scale_factor      = 1.0             #Scale factor for modifying size of the eddys by a
+                                    # consistent factor. Also use this to set the eddy size
+                                    # when prescribing 'isotropic' for sigmas_from
+
 ########################################################################
 ############################ RAPTOR VALUES #############################
 ########################################################################
