@@ -92,7 +92,7 @@ domain = sempy.geometries.box(seminp['domain_type'],
 domain.set_sem_data(sigmas_from=seminp['sigmas_from'],
                     stats_from=seminp['stats_from'],
                     profile_from=seminp['profile_from'],
-                    scale_factor=1.0)
+                    scale_factor=seminp['scale_factor'])
 
 # Only the zeroth rank populates the domain
 if rank == 0:
