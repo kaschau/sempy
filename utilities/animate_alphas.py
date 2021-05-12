@@ -20,7 +20,6 @@ Example
 '''
 
 import raptorpy as rp
-import sempy
 import numpy as np
 from scipy.io import FortranFile
 import os
@@ -56,25 +55,6 @@ with open(input_file,'r') as f:
                 seminp[key] = False
             else:
                 seminp[key] = val
-
-############################################################################################
-# Create the domain based on above inputs
-############################################################################################
-#Initialize domain
-domain = sempy.geometries.box(seminp['domain_type'],
-                              seminp['Ublk'],
-                              seminp['total_time'],
-                              seminp['y_height'],
-                              seminp['z_width'],
-                              seminp['delta'],
-                              seminp['utau'],
-                              seminp['viscosity'])
-
-#Set flow properties from existing data
-domain.set_sem_data(sigmas_from=seminp['sigmas_from'],
-                    stats_from=seminp['stats_from'],
-                    profile_from=seminp['profile_from'],
-                    scale_factor=1.0)
 
 ############################################################################################
 # Read in patches.txt
