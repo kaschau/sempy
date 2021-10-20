@@ -205,8 +205,6 @@ if rank == 0:
         blk.z = blk.z - zmin
         # Compute the locations of face centers
         blk.compute_U_face_centers()
-        blk.compute_V_face_centers()
-        blk.compute_W_face_centers()
 
 else:
     rpinp = None
