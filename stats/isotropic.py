@@ -1,24 +1,24 @@
 import numpy as np
 
-'''
+"""
 
 ISOTROPIC TURBULENCE FLOW
 
-'''
+"""
+
 
 def Rij_interp(y):
-    I = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]])
+    I = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
     try:
-        rij = np.repeat(I[np.newaxis,:,:], y.shape[0],axis=0)
+        rij = np.repeat(I[np.newaxis, :, :], y.shape[0], axis=0)
     except IndexError:
         rij = I
 
     return rij
 
 
-
 def add_stats(domain):
-    ''' Function that returns a 1d interpolation object creted from the data above.
+    """Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
     -----------
@@ -47,6 +47,6 @@ def add_stats(domain):
                       [ R_vu   R_vv   R_vw ],
                       [ R_wu   R_wv   R_ww ] ]
 
-    '''
+    """
 
     domain.Rij_interp = Rij_interp

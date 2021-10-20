@@ -1,13 +1,14 @@
 import numpy as np
 
-'''
+"""
 
 Constant, uniform mean flow
 
-'''
+"""
+
 
 def add_profile(domain):
-    ''' Function that returns a callable object creted from the data above.
+    """Function that returns a callable object creted from the data above.
 
     Parameters:
     -----------
@@ -22,6 +23,6 @@ def add_profile(domain):
 
         Ubar_interp : scipy.interpolate.1dinterp
             Interpolation functions with input y = *dimensionsal height above the bottom wall*
-    '''
+    """
 
-    domain.Ubar_interp = lambda y: np.ones(y.shape)*domain.Ublk
+    domain.Ubar_interp = lambda y: np.ones(y.shape) * domain.Ublk

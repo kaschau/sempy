@@ -2,7 +2,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from pathlib import Path
 
-'''
+"""
 
 CHANNEL FLOW
 
@@ -25,42 +25,43 @@ Statistics normalized as Rij/u_tau^2 and \bar{U}/u_tau
 We flip the sign of Ruv and Rvw in the top half of the channel as "v" is pointing in the other direction
 from the top wall's perspective, making the data defined contuniously from 0-->2.
 
-'''
+"""
 
 relpath = Path(__file__).parent / "Moser_Channel_ReTau590.csv"
-data = np.genfromtxt(relpath,delimiter=',',comments='#',skip_header=5)
+data = np.genfromtxt(relpath, delimiter=",", comments="#", skip_header=5)
 
-yp = data[:,0]
-yd = yp/yp.max()
+yp = data[:, 0]
+yd = yp / yp.max()
 
 npts = yp.shape[0]
 
-Ruu = np.empty(npts*2-1)
-Ruu[0:npts] = data[:,1]
-Ruu[npts::] = np.flip(Ruu[0:npts-1])
+Ruu = np.empty(npts * 2 - 1)
+Ruu[0:npts] = data[:, 1]
+Ruu[npts::] = np.flip(Ruu[0 : npts - 1])
 
-Rvv = np.empty(npts*2-1)
-Rvv[0:npts] = data[:,2]
-Rvv[npts::] = np.flip(Rvv[0:npts-1])
+Rvv = np.empty(npts * 2 - 1)
+Rvv[0:npts] = data[:, 2]
+Rvv[npts::] = np.flip(Rvv[0 : npts - 1])
 
-Rww = np.empty(npts*2-1)
-Rww[0:npts] = data[:,3]
-Rww[npts::] = np.flip(Rww[0:npts-1])
+Rww = np.empty(npts * 2 - 1)
+Rww[0:npts] = data[:, 3]
+Rww[npts::] = np.flip(Rww[0 : npts - 1])
 
-Ruv = np.empty(npts*2-1)
-Ruv[0:npts] = data[:,4]
-Ruv[npts::] = -np.flip(Ruv[0:npts-1])
+Ruv = np.empty(npts * 2 - 1)
+Ruv[0:npts] = data[:, 4]
+Ruv[npts::] = -np.flip(Ruv[0 : npts - 1])
 
-Ruw = np.empty(npts*2-1)
-Ruw[0:npts] = data[:,5]
-Ruw[npts::] = np.flip(Ruw[0:npts-1])
+Ruw = np.empty(npts * 2 - 1)
+Ruw[0:npts] = data[:, 5]
+Ruw[npts::] = np.flip(Ruw[0 : npts - 1])
 
-Rvw = np.empty(npts*2-1)
-Rvw[0:npts] = data[:,6]
-Rvw[npts::] = -np.flip(Rvw[0:npts-1])
+Rvw = np.empty(npts * 2 - 1)
+Rvw[0:npts] = data[:, 6]
+Rvw[npts::] = -np.flip(Rvw[0 : npts - 1])
+
 
 def add_stats(domain):
-    ''' Function that returns a 1d interpolation object creted from the data above.
+    """Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
     -----------
@@ -92,91 +93,112 @@ def add_stats(domain):
             Another neat property of the interpolator is that the out of bounds values are
             set to the bottom and top wall values so calls above or below those y values
             return the values at the wall.
-    '''
+    """
 
-    Re_tau = domain.utau*domain.delta/domain.viscosity
-    yp_trans = 3*np.sqrt(Re_tau)
+    Re_tau = domain.utau * domain.delta / domain.viscosity
+    yp_trans = 3 * np.sqrt(Re_tau)
     overlap = np.where(yp > yp_trans)
 
-    #No idea if this is general enough
-    transition = np.exp(-np.exp(-7.5*np.linspace(0,1,overlap[0].shape[0])+2.0))
+    # No idea if this is general enough
+    transition = np.exp(-np.exp(-7.5 * np.linspace(0, 1, overlap[0].shape[0]) + 2.0))
 
-    y = yp*domain.viscosity/domain.utau
-    y[overlap] = yp[overlap]*domain.viscosity/domain.utau*(1.0-transition) + yd[overlap]*domain.delta*transition
-    y = np.concatenate((y,2.0*domain.delta-np.flip(y[1::])))
+    y = yp * domain.viscosity / domain.utau
+    y[overlap] = (
+        yp[overlap] * domain.viscosity / domain.utau * (1.0 - transition)
+        + yd[overlap] * domain.delta * transition
+    )
+    y = np.concatenate((y, 2.0 * domain.delta - np.flip(y[1::])))
 
-    stats = np.empty((y.shape[0],3,3))
+    stats = np.empty((y.shape[0], 3, 3))
 
-    stats[:,0,0] = Ruu*domain.utau**2
-    stats[:,0,1] = Ruv*domain.utau**2
-    stats[:,0,2] = Ruw*domain.utau**2
+    stats[:, 0, 0] = Ruu * domain.utau ** 2
+    stats[:, 0, 1] = Ruv * domain.utau ** 2
+    stats[:, 0, 2] = Ruw * domain.utau ** 2
 
-    stats[:,1,0] = stats[:,0,1]
-    stats[:,1,1] = Rvv*domain.utau**2
-    stats[:,1,2] = Rvw*domain.utau**2
+    stats[:, 1, 0] = stats[:, 0, 1]
+    stats[:, 1, 1] = Rvv * domain.utau ** 2
+    stats[:, 1, 2] = Rvw * domain.utau ** 2
 
-    stats[:,2,0] = stats[:,0,2]
-    stats[:,2,1] = stats[:,1,2]
-    stats[:,2,2] = Rww*domain.utau**2
+    stats[:, 2, 0] = stats[:, 0, 2]
+    stats[:, 2, 1] = stats[:, 1, 2]
+    stats[:, 2, 2] = Rww * domain.utau ** 2
 
-    domain.Rij_interp = interp1d(y, stats, kind='linear',axis=0,bounds_error=False,
-                                 fill_value=(stats[0,:,:],stats[-1,:,:]))
+    domain.Rij_interp = interp1d(
+        y,
+        stats,
+        kind="linear",
+        axis=0,
+        bounds_error=False,
+        fill_value=(stats[0, :, :], stats[-1, :, :]),
+    )
+
 
 if __name__ == "__main__":
 
-    #Create dummy channel
-    domain = type('channel',(),{})
+    # Create dummy channel
+    domain = type("channel", (), {})
     Re_tau = 587.19
     domain.viscosity = 1.81e-5
     domain.delta = 0.05
-    domain.utau = Re_tau*domain.viscosity/domain.delta
-    domain.Ublk = 2.12630000E+01*domain.utau
+    domain.utau = Re_tau * domain.viscosity / domain.delta
+    domain.Ublk = 2.12630000e01 * domain.utau
 
-    yplot = np.concatenate((np.linspace(0,0.05*domain.delta,1000)[0:-1],
-                            np.linspace(0.05*domain.delta,1.0*domain.delta,500)))
+    yplot = np.concatenate(
+        (
+            np.linspace(0, 0.05 * domain.delta, 1000)[0:-1],
+            np.linspace(0.05 * domain.delta, 1.0 * domain.delta, 500),
+        )
+    )
 
     add_stats(domain)
 
     Rij = domain.Rij_interp(yplot)
 
-    Ruu_plot = Rij[:,0,0]/domain.utau**2
-    Rvv_plot = Rij[:,1,1]/domain.utau**2
-    Rww_plot = Rij[:,2,2]/domain.utau**2
+    Ruu_plot = Rij[:, 0, 0] / domain.utau ** 2
+    Rvv_plot = Rij[:, 1, 1] / domain.utau ** 2
+    Rww_plot = Rij[:, 2, 2] / domain.utau ** 2
 
-    Ruv_plot = Rij[:,0,1]/domain.utau**2
-    Ruw_plot = Rij[:,0,2]/domain.utau**2
-    Rvw_plot = Rij[:,1,2]/domain.utau**2
+    Ruv_plot = Rij[:, 0, 1] / domain.utau ** 2
+    Ruw_plot = Rij[:, 0, 2] / domain.utau ** 2
+    Rvw_plot = Rij[:, 1, 2] / domain.utau ** 2
 
     import matplotlib.pyplot as plt
     import matplotlib
-    if matplotlib.checkdep_usetex(True):
-        plt.rc('text', usetex=True)
-    plt.rc('font', family='serif')
-    plt.rcParams['figure.figsize'] = (6,4.5)
-    plt.rcParams['figure.dpi'] = 200
-    plt.rcParams['figure.autolayout'] = True
-    plt.rcParams['font.size'] = 14
-    plt.rcParams['lines.linewidth'] = 1.0
 
-    fig, (ax1,ax2) = plt.subplots(1,2,figsize=(12,5))
-    ax1.set_ylabel(r'$y/ \delta$')
-    ax1.set_xlabel(r'$R_{ij}/u_{\tau}^{2}$')
-    ax1.plot(Ruu_plot,yplot/domain.delta,label=r'$uu$')
-    ax1.plot(Rvv_plot,yplot/domain.delta,label=r'$vv$')
-    ax1.plot(Rww_plot,yplot/domain.delta,label=r'$ww$')
-    ax1.plot(Ruv_plot,yplot/domain.delta,label='$uv$',linestyle='--',color='C0')
-    ax1.plot(Ruw_plot,yplot/domain.delta,label='$vw$',linestyle='--',color='C1')
-    ax1.plot(Rvw_plot,yplot/domain.delta,label='$vw$',linestyle='--',color='C2')
+    if matplotlib.checkdep_usetex(True):
+        plt.rc("text", usetex=True)
+    plt.rc("font", family="serif")
+    plt.rcParams["figure.figsize"] = (6, 4.5)
+    plt.rcParams["figure.dpi"] = 200
+    plt.rcParams["figure.autolayout"] = True
+    plt.rcParams["font.size"] = 14
+    plt.rcParams["lines.linewidth"] = 1.0
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    ax1.set_ylabel(r"$y/ \delta$")
+    ax1.set_xlabel(r"$R_{ij}/u_{\tau}^{2}$")
+    ax1.plot(Ruu_plot, yplot / domain.delta, label=r"$uu$")
+    ax1.plot(Rvv_plot, yplot / domain.delta, label=r"$vv$")
+    ax1.plot(Rww_plot, yplot / domain.delta, label=r"$ww$")
+    ax1.plot(Ruv_plot, yplot / domain.delta, label="$uv$", linestyle="--", color="C0")
+    ax1.plot(Ruw_plot, yplot / domain.delta, label="$vw$", linestyle="--", color="C1")
+    ax1.plot(Rvw_plot, yplot / domain.delta, label="$vw$", linestyle="--", color="C2")
     ax1.legend()
 
-    plt.suptitle('Moser Channel Reynolds Stress')
+    plt.suptitle("Moser Channel Reynolds Stress")
 
-    yplus = yplot*domain.utau/domain.viscosity
-    ax2.set_xlabel(r'$y^{+}$')
-    ax2.set_ylabel(r'$R_{ii}/u_{\tau}^{2}$')
-    ax2.plot(yplus[np.where((yplus<100))],Ruu_plot[np.where((yplus<100))],label=r'$uu$')
-    ax2.plot(yplus[np.where((yplus<100))],Rvv_plot[np.where((yplus<100))],label=r'$vv$')
-    ax2.plot(yplus[np.where((yplus<100))],Rww_plot[np.where((yplus<100))],label=r'$ww$')
+    yplus = yplot * domain.utau / domain.viscosity
+    ax2.set_xlabel(r"$y^{+}$")
+    ax2.set_ylabel(r"$R_{ii}/u_{\tau}^{2}$")
+    ax2.plot(
+        yplus[np.where((yplus < 100))], Ruu_plot[np.where((yplus < 100))], label=r"$uu$"
+    )
+    ax2.plot(
+        yplus[np.where((yplus < 100))], Rvv_plot[np.where((yplus < 100))], label=r"$vv$"
+    )
+    ax2.plot(
+        yplus[np.where((yplus < 100))], Rww_plot[np.where((yplus < 100))], label=r"$ww$"
+    )
     ax2.legend()
 
     plt.show()
