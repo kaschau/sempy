@@ -54,7 +54,7 @@ def addSigmas(domain, scaleFactor=1.0):
 
     sigmas = sigmas * scaleFactor
 
-    domain.sigma_interp = interp1d(
+    domain.sigmaInterp = interp1d(
         y,
         sigmas,
         kind="slinear",
@@ -68,15 +68,15 @@ def addSigmas(domain, scaleFactor=1.0):
     testYs = np.linspace(domain.yp1, domain.yHeight - domain.yp1, 200)
     testSigmas = domain.sigmaInterp(testYs)
 
-    domain.sigma_x_min = np.min(testSigmas[:, :, 0])
-    domain.sigma_x_max = np.max(testSigmas[:, :, 0])
-    domain.sigma_y_min = np.min(testSigmas[:, :, 1])
-    domain.sigma_y_max = np.max(testSigmas[:, :, 1])
-    domain.sigma_z_min = np.min(testSigmas[:, :, 2])
-    domain.sigma_z_max = np.max(testSigmas[:, :, 2])
+    domain.sigmaXMin = np.min(testSigmas[:, :, 0])
+    domain.sigmaXMax = np.max(testSigmas[:, :, 0])
+    domain.sigmaYMin = np.min(testSigmas[:, :, 1])
+    domain.sigmaYMax = np.max(testSigmas[:, :, 1])
+    domain.sigmaZMin = np.min(testSigmas[:, :, 2])
+    domain.sigmaZMax = np.max(testSigmas[:, :, 2])
 
-    domain.V_sigma_min = np.min(np.product(testSigmas, axis=2))
-    domain.V_sigma_max = np.max(np.product(testSigmas, axis=2))
+    domain.vSigmaMin = np.min(np.product(testSigmas, axis=2))
+    domain.vSigmaMax = np.max(np.product(testSigmas, axis=2))
 
 
 if __name__ == "__main__":
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     # Create dummy channel
     domain = type("bl", (), {})
-    domain.y_height = 1.2
+    domain.yHeight = 1.2
     domain.viscosity = 1.0
     domain.utau = 1.0
     domain.delta = 1.0
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     addSigmas(domain)
 
     yplot = np.linspace(0, 1.2, 100)
-    sigmas = domain.sigma_interp(yplot)
+    sigmas = domain.sigmaInterp(yplot)
 
     sigma_plot = sigmas[:, 0, 0]
 

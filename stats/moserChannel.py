@@ -96,7 +96,7 @@ def addStats(domain):
     """
 
     reTau = domain.utau * domain.delta / domain.viscosity
-    ypTrans = 3 * np.sqrt(Re_tau)
+    ypTrans = 3 * np.sqrt(reTau)
     overlap = np.where(yp > ypTrans)
 
     # No idea if this is general enough

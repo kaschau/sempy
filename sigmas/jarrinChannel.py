@@ -221,7 +221,7 @@ def addSigmas(domain, scaleFactor=1.0):
 
     # determine min,max sigmas
     # Here we assume that signal generation at smallest y value is at yplus=1
-    testYs = np.linspace(domain.yp1, domain.y_height - domain.yp1, 200)
+    testYs = np.linspace(domain.yp1, domain.yHeight - domain.yp1, 200)
     testSigmas = domain.sigmaInterp(testYs)
 
     domain.sigmaXMin = np.min(testSigmas[:, :, 0])

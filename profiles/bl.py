@@ -45,7 +45,7 @@ def addProfile(domain):
     # values of A that yeild a wake deficit
     # similar to the classical wake deficit parameter 2\Pi/\kappa.
 
-    Re_tau = domain.utau * domain.delta / domain.viscosity
+    reTau = domain.utau * domain.delta / domain.viscosity
     upInf = domain.Ublk / domain.utau
     kappa = 0.4
     psi = 2.32
@@ -60,7 +60,7 @@ def addProfile(domain):
     ysVsl = yplusVsl * domain.viscosity / domain.utau
 
     # Log-law region y+>30, y+<=3(Re_tau)^(1/2)
-    yplusLlr = np.linspace(30, 3 * np.sqrt(Re_tau), 100)
+    yplusLlr = np.linspace(30, 3 * np.sqrt(reTau), 100)
     uplusLlr = 1.0 / kappa * np.log(yplusLlr) + A
     usLlr = uplusLlr * domain.utau
     ysLlr = yplusLlr * domain.viscosity / domain.utau
