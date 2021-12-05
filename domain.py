@@ -4,7 +4,7 @@ import numpy as np
 class domain:
     __slots__ = [
         "xLength",
-        "Ublk",
+        "Uo",
         "delta",
         "viscosity",
         "yp1",
@@ -33,10 +33,10 @@ class domain:
         "radseed",
     ]
 
-    def __init__(self, Ublk, totalTime, delta, utau, viscosity):
+    def __init__(self, Uo, totalTime, delta, utau, viscosity):
 
-        self.xLength = Ublk * totalTime
-        self.Ublk = Ublk
+        self.xLength = Uo * totalTime
+        self.Uo = Uo
         self.delta = delta
         self.utau = utau
         self.viscosity = viscosity
@@ -217,12 +217,12 @@ class domain:
 
     def __repr__(self):
         string = f"\nFlow Type: {self.flowType}\n"
-        string += f"Domain Length = {self.xLength} [m] ({self.xLength/self.Ublk} [s])\n"
+        string += f"Domain Length = {self.xLength} [m] ({self.xLength/self.Uo} [s])\n"
         string += f"Domain Height = {self.yHeight} [m]\n"
         string += f"Domain Width = {self.zWidth} [m]\n"
 
         string += "Flow Parameters:\n"
-        string += f"    U_bulk = {self.Ublk} [m/s]\n"
+        string += f"    U_bulk = {self.Uo} [m/s]\n"
         string += f"    delta = {self.delta} [m]\n"
         string += f"    u_tau = {self.utau} [m/s]\n"
         string += f"    viscosity(nu) = {self.viscosity} [m^2/s]\n"

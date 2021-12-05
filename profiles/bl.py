@@ -40,13 +40,13 @@ def addProfile(domain):
     # Some preamble is needed before constricting the boundary layer profile. We must determine
     # if we have values of kappa and A that in fact lead to a velocity deficit if we extend the
     # the log-layer out to delta. As this model is predicated on that being true. I have found
-    # that kappa and A can easily make the log law overshoot Ublk if it is extended into the
+    # that kappa and A can easily make the log law overshoot Uo if it is extended into the
     # outer region. It seems kappa is more agreed upon in the literature, so first, we shoot for
     # values of A that yeild a wake deficit
     # similar to the classical wake deficit parameter 2\Pi/\kappa.
 
     reTau = domain.utau * domain.delta / domain.viscosity
-    upInf = domain.Ublk / domain.utau
+    upInf = domain.Uo / domain.utau
     kappa = 0.4
     psi = 2.32
     # Solve for A such that Eq. 2.8 with spec'd value of \Pi is satisfied
@@ -123,8 +123,8 @@ if __name__ == "__main__":
     Re = 10e5
     domain.viscosity = 1e-5
     domain.delta = 1.0
-    domain.Ublk = Re * domain.viscosity / domain.delta
-    domain.utau = domain.Ublk / (5 * np.log10(Re))
+    domain.Uo = Re * domain.viscosity / domain.delta
+    domain.utau = domain.Uo / (5 * np.log10(Re))
 
     yplot = np.concatenate(
         (
@@ -145,7 +145,7 @@ if __name__ == "__main__":
         + r"$u_{\tau}=$"
         + "{:.2f} ".format(domain.utau)
         + r"$U_{0}=$"
-        + f"{domain.Ublk}"
+        + f"{domain.Uo}"
     )
     ax1.set_title(f"{string}")
     ax1.set_ylabel(r"$y/ \delta$")

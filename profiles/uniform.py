@@ -25,4 +25,4 @@ def addProfile(domain):
             Interpolation functions with input y = *dimensionsal height above the bottom wall*
     """
 
-    domain.ubarInterp = lambda y: np.ones(y.shape) * domain.Ublk
+    domain.ubarInterp = lambda y: np.ones(y.shape) * domain.Uo

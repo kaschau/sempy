@@ -11,8 +11,8 @@ Re_tau = 587.19
 delta = 0.05  # Made this up
 viscosity = 1.81e-5  # Air @ STP
 utau = Re_tau * viscosity / delta
-Ublk = 2.12630000e01 * utau
-tme = 10 * 2 * np.pi * delta / Ublk  # Based on FTT of DNS domain
+Uo = 2.12630000e01 * utau
+tme = 10 * 2 * np.pi * delta / Uo  # Based on FTT of DNS domain
 nframes = 200
 # Box geom
 yHeight = 2.0 * delta
@@ -31,7 +31,7 @@ shape = "tent"
 
 # Initialize domain
 domain = sempy.geometries.box(
-    "channel", Ublk, tme, yHeight, zWidth, delta, utau, viscosity
+    "channel", Uo, tme, yHeight, zWidth, delta, utau, viscosity
 )
 # Set flow properties from existing data
 domain.setSemData(sigmasFrom="jarrin", statsFrom="moser", profileFrom="channel")
@@ -161,7 +161,7 @@ ax1.set_ylabel(r"$u^{\prime}$")
 ax1.grid(linestyle="--")
 ax1.set_title("Centerline Fluctiations")
 ax1.plot(
-    np.linspace(0, domain.xLength / domain.Ublk, nframes),
+    np.linspace(0, domain.xLength / domain.Uo, nframes),
     up[:, int((up.shape[1]) / 2)],
     color="orange",
 )
@@ -169,7 +169,7 @@ ax1.plot(
 ax2.set_ylabel(r"$v^{\prime}$")
 ax2.grid(linestyle="--")
 ax2.plot(
-    np.linspace(0, domain.xLength / domain.Ublk, nframes),
+    np.linspace(0, domain.xLength / domain.Uo, nframes),
     vp[:, int((vp.shape[1]) / 2)],
     color="blue",
 )
@@ -179,7 +179,7 @@ ax3.grid(linestyle="--")
 ax3.set_xlabel(r"$Time$")
 
 ax3.plot(
-    np.linspace(0, domain.xLength / domain.Ublk, nframes),
+    np.linspace(0, domain.xLength / domain.Uo, nframes),
     wp[:, int((wp.shape[1]) / 2)],
     color="green",
 )

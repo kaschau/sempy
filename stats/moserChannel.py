@@ -141,7 +141,7 @@ if __name__ == "__main__":
     domain.viscosity = 1.81e-5
     domain.delta = 0.05
     domain.utau = reTau * domain.viscosity / domain.delta
-    domain.Ublk = 2.12630000e01 * domain.utau
+    domain.Uo = 2.12630000e01 * domain.utau
 
     yplot = np.concatenate(
         (

@@ -68,7 +68,7 @@ if seminp["nframes"] > 9999:
 # Initialize domain
 domain = sempy.geometries.box(
     seminp["domainType"],
-    seminp["Ublk"],
+    seminp["Uo"],
     seminp["totalTime"],
     seminp["yHeight"],
     seminp["zWidth"],

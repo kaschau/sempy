@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sempy
 
 # Flow
-Ublk = 10  # Bulk flow velocity, used to determine length of box
+Uo = 10  # Bulk flow velocity, used to determine length of box
 tme = 10  # Time of signal, used to determine length of box
 utau = 0.1
 delta = 1.0  # Defined from flow configuration
@@ -17,7 +17,7 @@ zWidth = 2 * delta
 cEddy = 1.0
 
 # Initialize domain as 'bl'
-domain = sempy.geometries.box("bl", Ublk, tme, yHeight, zWidth, delta, utau, viscosity)
+domain = sempy.geometries.box("bl", Uo, tme, yHeight, zWidth, delta, utau, viscosity)
 
 # Set flow properties from existing data
 domain.setSemData(sigmasFrom="linear_bl", statsFrom="spalart", profileFrom="bl")
