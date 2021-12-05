@@ -194,15 +194,15 @@ def addSigmas(domain, scaleFactor=1.0):
 
     sigmas = np.empty((ys.shape[0], 3, 3))
 
-    sigmas[:, 0, 0] = Tuu * domain.delta / domain.utau * domain.Ublk
+    sigmas[:, 0, 0] = Tuu * domain.delta / domain.utau * domain.Uo
     sigmas[:, 0, 1] = Luu * domain.delta
     sigmas[:, 0, 2] = Luu * domain.delta
 
-    sigmas[:, 1, 0] = Tvv * domain.delta / domain.utau * domain.Ublk
+    sigmas[:, 1, 0] = Tvv * domain.delta / domain.utau * domain.Uo
     sigmas[:, 1, 1] = Lvv * domain.delta
     sigmas[:, 1, 2] = Lvv * domain.delta
 
-    sigmas[:, 2, 0] = Tww * domain.delta / domain.utau * domain.Ublk
+    sigmas[:, 2, 0] = Tww * domain.delta / domain.utau * domain.Uo
     sigmas[:, 2, 1] = Lww * domain.delta
     sigmas[:, 2, 2] = Lww * domain.delta
 
@@ -243,7 +243,7 @@ if __name__ == "__main__":
     domain.utau = 1.0
     domain.delta = 1.0
     domain.yHeight = 2 * domain.delta
-    domain.Ublk = 1.0
+    domain.Uo = 1.0
     domain.yp1 = 1e-8
     addSigmas(domain)
 

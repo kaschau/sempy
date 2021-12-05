@@ -7,7 +7,7 @@ A reproduction of the data from section 4.4 of Jarrin's thesis in which isotropi
 """
 # Flow
 tme = 60  # Time of signal, used to determine length of box
-Ublk = 10  # Bulk flow velocity, used to determine length of box
+Uo = 10  # Bulk flow velocity, used to determine length of box
 delta = None
 viscosity = 1e-5
 utau = None
@@ -30,7 +30,7 @@ popMeth = "random"
 
 # Initialize domain
 domain = sempy.geometries.box(
-    "freeshear", Ublk, tme, yHeight, zWidth, delta, utau, viscosity
+    "freeshear", Uo, tme, yHeight, zWidth, delta, utau, viscosity
 )
 
 # Set flow properties from existing data
@@ -78,7 +78,7 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r"$u \prime$")
 ax1.set_xlabel(r"t")
 ax1.set_title("Centerline Fluctiations")
-x = np.linspace(0, domain.xLength / domain.Ublk, nframes)
+x = np.linspace(0, domain.xLength / domain.Uo, nframes)
 xind = np.where(x <= 8)
 ax1.plot(x[xind], 10 + up[:, int((up.shape[1]) / 2)][xind], color="orange")
 plt.savefig("uprime.png")
@@ -106,7 +106,7 @@ for i in range(len(u) - 2):
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r"$<u_i u_j>$")
 ax1.set_xlabel(r"t")
-x = np.linspace(0, domain.xLength / domain.Ublk, nframes)[2::]
+x = np.linspace(0, domain.xLength / domain.Uo, nframes)[2::]
 ax1.plot(x, uu, color="orange", label="uu")
 ax1.plot(x, vv, color="red", label="vv")
 ax1.plot(x, ww, color="gold", label="ww")

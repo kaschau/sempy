@@ -58,7 +58,7 @@ def generatePrimes(
       convect : str
             String corresponding to the method of convection through the flow.
             Current options are:
-               'uniform' : Convect through mega-volume at Ublk everywhere
+               'uniform' : Convect through mega-volume at Uo everywhere
                'local'   : Convect through mega-volume at local convective speed based on domain.Ubar_interp(y)
       progress : bool
             Whether to display progress bar
@@ -180,7 +180,7 @@ def generatePrimes(
         # local convection we need to recalculate for each y location.
         if convect == "local":
             localUbar = domain.ubarInterp(y)
-            length = domain.xLength * localUbar / domain.Ublk
+            length = domain.xLength * localUbar / domain.Uo
             xs = np.linspace(0, length, nframes)
 
         # Storage for un-normalized fluctuations
@@ -205,7 +205,7 @@ def generatePrimes(
                 # figure it out:
 
                 # If we want each eddy to convect with its own local velocity
-                # instead of the Ublk velocity, it is not enough to just traverse through the
+                # instead of the Uo velocity, it is not enough to just traverse through the
                 # mega box at the profile Ubar for the current location's y height. This is
                 # because the eddys located slightly above/below the location we are
                 # traversing down (that contribute to fluctuations) are
@@ -218,8 +218,8 @@ def generatePrimes(
                 # the individual eddys.
                 xOffset = (localUbar - localEddyUbar) / localUbar * x
             else:
-                # If all the eddys convect at the same speed, then traversing through the mega box at Ublk
-                # is identical so the eddys convecting by us at Ublk, so there is no need to offset any
+                # If all the eddys convect at the same speed, then traversing through the mega box at Uo
+                # is identical so the eddys convecting by us at Uo, so there is no need to offset any
                 # eddy positions
                 xOffset = np.zeros(eddyLocsOnLine.shape[0])
 

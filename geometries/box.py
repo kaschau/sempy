@@ -4,9 +4,9 @@ from sempy.domain import domain
 
 
 class box(domain):
-    def __init__(self, flowType, Ublk, tme, yHeight, zWidth, delta, utau, viscosity):
+    def __init__(self, flowType, Uo, tme, yHeight, zWidth, delta, utau, viscosity):
 
-        super().__init__(Ublk, tme, delta, utau, viscosity)
+        super().__init__(Uo, tme, delta, utau, viscosity)
         self.yHeight = yHeight
         self.zWidth = zWidth
         self.flowType = flowType

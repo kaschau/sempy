@@ -47,7 +47,7 @@ Ublk: 4.519722             # Channel centerline height or U_inf
 totalTime: 0.5             # [s] time of generated signal,
                            # used to determine length of box
 nframes: 200               # Number of desired frames over time interval
-interpolate: True          # Are you going to interpolate the signal or use it
+interpolate: true          # Are you going to interpolate the signal or use it
                            # as is?
 cEddy: 1.0                 # Eddy Density multiplier
 sigmasFrom: jarrin         # Target eddy length scales
