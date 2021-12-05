@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from . import moser_channel
-from . import spalart_bl
+from . import moserChannel
+from . import spalartBL
 from . import isotropic

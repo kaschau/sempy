@@ -64,15 +64,15 @@ with open(input_file, "r") as f:
 # Read in patches.txt
 ############################################################################################
 # Only the zeroth rank reads in patches.txt
-patch_num = []
-block_num = []
+patchNum = []
+blockNum = []
 with open("patches.txt", "r") as f:
     for line in [i for i in f.readlines() if not i.startswith("#")]:
         li = line.strip().split(",")
-        patch_num.append(int(li[0]))
-        block_num.append(int(li[1]))
+        patchNum.append(int(li[0]))
+        blockNum.append(int(li[1]))
 
-npatches = len(patch_num)
+npatches = len(patchNum)
 
 ############################################################################################
 # RAPTOR stuff (read in grid and make the patches)
@@ -88,19 +88,19 @@ mb = rp.multiblock.grid(nblks)
 rp.readers.read_raptor_grid(mb, seminp["grid_path"])
 # Flip the grid if it is oriented upside down in the true grid
 if seminp["flipdom"]:
-    for bn in block_num:
+    for bn in blockNum:
         blk = mb[bn - 1]
         blk.y = -blk.y
         blk.z = -blk.z
 # Determinw the extents the grid needs to be shifted
 ymin = np.inf
 zmin = np.inf
-for bn in block_num:
+for bn in blockNum:
     blk = mb[bn - 1]
     ymin = min(ymin, blk.y[:, :, 0].min())
     zmin = min(zmin, blk.z[:, :, 0].min())
 # Now shift the grid to match the domain (0,0) starting point
-for bn in block_num:
+for bn in blockNum:
     blk = mb[bn - 1]
     blk.y = blk.y - ymin
     blk.z = blk.z - zmin
@@ -122,7 +122,7 @@ wz = np.array([])
 
 ny = []
 nz = []
-for bn in block_num:
+for bn in blockNum:
     blk = mb[bn - 1]
     uy = np.concatenate((uy, blk.yu[:, :, 0].ravel()))
     uz = np.concatenate((uz, blk.zu[:, :, 0].ravel()))
@@ -142,9 +142,9 @@ TriW = mpl.tri.Triangulation(wz, wy)
 ############################################################################################
 
 
-def get_frame(frame, comp):
+def getFrame(frame, comp):
     alphas = np.array([])
-    for i, pn in enumerate(patch_num):
+    for i, pn in enumerate(patchNum):
         file_name = output_dir + "/alphas_{:06d}_{:04d}".format(pn, frame)
         with FortranFile(file_name, "r") as f90:
             if comp == "u":
@@ -188,7 +188,7 @@ def animate(i, Tri, comp):
     global tcf
     for c in tcf.collections:
         c.remove()  # removes only the contours, leaves the rest intact
-    alphas = get_frame(i + 1, comp)
+    alphas = getFrame(i + 1, comp)
     tcf = ax.tricontourf(Tri, alphas, levels=levels)
     ax.set_title(f"Frame {i+1}")
     return tcf
@@ -203,7 +203,7 @@ ax.set_xlabel(r"$z/L_{ref}$")
 ax.set_ylabel(r"$y/L_{ref}$")
 ax.set_aspect("equal")
 
-alphas = get_frame(1, "u")
+alphas = getFrame(1, "u")
 levels = np.linspace(0, alphas.max(), 100)
 ticks = np.linspace(0, alphas.max(), 11)
 tcf = ax.tricontourf(TriU, np.zeros(alphas.shape), levels=levels)
@@ -238,7 +238,7 @@ ax.set_xlabel(r"$z/L_{ref}$")
 ax.set_ylabel(r"$y/L_{ref}$")
 ax.set_aspect("equal")
 
-alphas = get_frame(1, "v")
+alphas = getFrame(1, "v")
 symm = max(alphas.max(), abs(alphas.min()))
 levels = np.linspace(-symm, symm, 100)
 ticks = np.linspace(-symm, symm, 11)
@@ -275,7 +275,7 @@ ax.set_xlabel(r"$z/L_{ref}$")
 ax.set_ylabel(r"$y/L_{ref}$")
 ax.set_aspect("equal")
 
-alphas = get_frame(1, "w")
+alphas = getFrame(1, "w")
 symm = max(alphas.max(), abs(alphas.min()))
 symm = float(f"{symm:.2e}")
 levels = np.linspace(-symm, symm, 100)

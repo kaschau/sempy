@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """This utility generates files full of cubic spline coefficients representing a turbulent signal
 that can be applied at the inlet of a RAPTOR simulation. Just call this utility with
 an input file. There must also be a file where this utility is run called : patches.txt
@@ -21,16 +22,16 @@ mpiexec -np <np> /path/to/sempy/utilities/sem4raptor.py <sem.inp>
 
 """
 
-import raptorpy as rp
+from mpi4py import MPI
+import sys
+import os
+import peregrinepy as pg
 import sempy
 import numpy as np
-from mpi4py import MPI
-from scipy.io import FortranFile
+import yaml
 from scipy import interpolate as itrp
-import os
-import sys
 
-input_file = sys.argv[1]
+inputFile = sys.argv[1]
 
 # Initialize the parallel information for each rank
 comm = MPI.COMM_WORLD
@@ -38,39 +39,19 @@ rank = comm.Get_rank()
 size = comm.Get_size()
 
 # Use the input file name as the output directory
-output_dir = input_file.split(".")[0] + "_alphas"
+outputDir = inputFile.split(".")[0] + "_alphas"
 if rank == 0:
-    if os.path.exists(output_dir):
+    if os.path.exists(outputDir):
         pass
     else:
-        os.makedirs(output_dir)
+        os.makedirs(outputDir)
 ############################################################################################
 # Read in SEM parameters
 ############################################################################################
 # The zeroth rank will read in the input file and give it to the other ranks
 if rank == 0:
-    seminp = dict()
-    with open(input_file, "r") as f:
-        for line in [
-            i
-            for i in f.readlines()
-            if not i.replace(" ", "").startswith("#") and i.strip() != ""
-        ]:
-            nocomment = line.strip().split("#")[0]
-            key, val = tuple(nocomment.replace(" ", "").split("="))
-            try:  # convert numbers to floats or ints
-                if "." in val:
-                    seminp[key] = float(val)
-                else:
-                    seminp[key] = int(val)
-            except ValueError:
-                if val in ["True", "true", "t", "T"]:
-                    seminp[key] = True
-                elif val in ["False", "true", "f", "F"]:
-                    seminp[key] = False
-                else:
-                    seminp[key] = val
-
+    with open(inputFile, "r") as f:
+        seminp = yaml.load(f, Loader=yaml.FullLoader)
 else:
     seminp = None
 seminp = comm.bcast(seminp, root=0)
@@ -86,130 +67,127 @@ if seminp["nframes"] > 9999:
 ############################################################################################
 # Initialize domain
 domain = sempy.geometries.box(
-    seminp["domain_type"],
+    seminp["domainType"],
     seminp["Ublk"],
-    seminp["total_time"],
-    seminp["y_height"],
-    seminp["z_width"],
+    seminp["totalTime"],
+    seminp["yHeight"],
+    seminp["zWidth"],
     seminp["delta"],
     seminp["utau"],
     seminp["viscosity"],
 )
 
 # Set flow properties from existing data
-domain.set_sem_data(
-    sigmas_from=seminp["sigmas_from"],
-    stats_from=seminp["stats_from"],
-    profile_from=seminp["profile_from"],
-    scale_factor=seminp["scale_factor"],
+domain.setSemData(
+    sigmasFrom=seminp["sigmasFrom"],
+    statsFrom=seminp["statsFrom"],
+    profileFrom=seminp["profileFrom"],
+    scaleFactor=seminp["scaleFactor"],
 )
 
 # Only the zeroth rank populates the domain
 if rank == 0:
     # Populate the domain
-    domain.populate(seminp["C_Eddy"], seminp["population_method"])
+    domain.populate(seminp["cEddy"], seminp["populationMethod"])
     # Create the eps
-    domain.generate_eps()
+    domain.generateEps()
     # Compute sigmas
-    domain.compute_sigmas()
+    domain.computeSigmas()
     # Make it periodic
-    domain.make_periodic(
-        periodic_x=seminp["periodic_x"],
-        periodic_y=seminp["periodic_y"],
-        periodic_z=seminp["periodic_z"],
+    domain.makePeriodic(
+        periodicX=seminp["periodicX"],
+        periodicY=seminp["periodicY"],
+        periodicZ=seminp["periodicZ"],
     )
-    temp_neddy = domain.neddy
+    tempNeddy = domain.neddy
 else:
-    temp_neddy = None
+    tempNeddy = None
 # We have to overwrite the worker processes' neddy property
 # so that each worker know how many eddys are in the actual
 # domain
-temp_neddy = comm.bcast(temp_neddy, root=0)
+tempNeddy = comm.bcast(tempNeddy, root=0)
 if rank != 0:
-    domain._neddy = temp_neddy
+    domain._neddy = tempNeddy
 
 ############################################################################################
 # Read in patches.txt
 ############################################################################################
 # Only the zeroth rank reads in patches.txt
 if rank == 0:
-    patch_num = []
-    block_num = []
+    patchNum = []
+    blockNum = []
     with open("patches.txt", "r") as f:
         for line in [i for i in f.readlines() if not i.startswith("#")]:
             li = line.strip().split(",")
-            patch_num.append(int(li[0]))
-            block_num.append(int(li[1]))
+            patchNum.append(int(li[0]))
+            blockNum.append(int(li[1]))
 
-    npatches = len(patch_num)
+    npatches = len(patchNum)
     # Now we assign patches to ranks
     if size > npatches:
         print(
             "\n\nFYI, patches are assigned to processors, so using more processors than patches gives you no performace increase.\n\n"
         )
-        max_ranks_per_block = 1
+        maxRanksPerBlock = 1
     else:
-        max_ranks_per_block = int(npatches / size) + (1 if npatches % size > 0 else 0)
-    all_rank_patches = [[None for j in range(max_ranks_per_block)] for i in range(size)]
-    all_rank_blocks = [[None for j in range(max_ranks_per_block)] for i in range(size)]
+        maxRanksPerBlock = int(npatches / size) + (1 if npatches % size > 0 else 0)
+    allRankPatches = [[None for j in range(maxRanksPerBlock)] for i in range(size)]
+    allRankBlocks = [[None for j in range(maxRanksPerBlock)] for i in range(size)]
     i = 0
     j = 0
-    for bn, pn in zip(block_num, patch_num):
-        all_rank_patches[i][j] = pn
-        all_rank_blocks[i][j] = bn
+    for bn, pn in zip(blockNum, patchNum):
+        allRankPatches[i][j] = pn
+        allRankBlocks[i][j] = bn
         i += 1
         if i == size:
             i = 0
             j += 1
-    my_patch_nums = all_rank_patches[0]
-    my_block_nums = all_rank_blocks[0]
+    myPatchNums = allRankPatches[0]
+    myBlockNums = allRankBlocks[0]
     # Send the list of patch numbers to the respective ranks ranks
-    for i, rsp in enumerate(all_rank_patches[1::]):
+    for i, rsp in enumerate(allRankPatches[1::]):
         comm.send(rsp, dest=i + 1, tag=11)
 else:
-    my_patch_nums = comm.recv(source=0, tag=11)
+    myPatchNums = comm.recv(source=0, tag=11)
 
 
 ############################################################################################
-# RAPTOR stuff (read in grid and make the patches)
+# PEREGRINE stuff (read in grid and make the patches)
 ############################################################################################
 # Only rank ones reads in the grid
 if rank == 0:
-    nblks = len([f for f in os.listdir(seminp["grid_path"]) if f.startswith("g.")])
+    nblks = len(
+        [
+            f
+            for f in os.listdir(seminp["gridPath"])
+            if f.startswith("gv.") and f.endswith(".h5")
+        ]
+    )
     if nblks == 0:
-        nblks = len([f for f in os.listdir(seminp["grid_path"]) if f == "grid"])
-    if nblks == 0:
-        raise ValueError(f'Cant find any grid files in {seminp["grid_path"]}')
+        raise ValueError(f'Cant find any grid files in {seminp["gridPath"]}')
 
-    mb = rp.multiblock.grid(nblks)
-    rp.readers.read_raptor_grid(mb, seminp["grid_path"])
-    rpinp = rp.readers.read_raptor_input_file(seminp["inp_path"])
-    mb.dim_grid(rpinp)
+    mb = pg.multiBlock.grid(nblks)
+    pg.readers.read_raptor_grid(mb, seminp["gridPath"])
     # Flip the grid if it is oriented upside down in the true grid
     if seminp["flipdom"]:
-        for bn in block_num:
+        for bn in blockNum:
             blk = mb[bn - 1]
             blk.y = -blk.y
             blk.z = -blk.z
-    # Determinw the extents the grid needs to be shifted
+    # Determine the extents the grid needs to be shifted
     ymin = np.inf
     zmin = np.inf
-    for bn in block_num:
+    for bn in blockNum:
         blk = mb[bn - 1]
-        ymin = min(ymin, blk.y[:, :, 0].min())
-        zmin = min(zmin, blk.z[:, :, 0].min())
+        ymin = min(ymin, blk.array["y"][0, :, :].min())
+        zmin = min(zmin, blk.array["z"][0, :, :].min())
     # Now shift the grid to match the domain (0,0) starting point
-    for bn in block_num:
+    for bn in blockNum:
         blk = mb[bn - 1]
-        blk.y = blk.y - ymin
-        blk.z = blk.z - zmin
+        blk.y = blk.array["y"] - ymin
+        blk.z = blk.array["z"] - zmin
         # Compute the locations of face centers
-        blk.compute_U_face_centers()
-
-else:
-    rpinp = None
-# Send the raptor input file to everyone
-rpinp = comm.bcast(rpinp, root=0)
+        blk.computeMetrics(fdOrder=2)
 
 # Progress bar gets messsy with all the blocks, so we only show progress with rank 0
 if rank == 0:
@@ -219,9 +197,9 @@ else:
 
 if progress:
     # Print out a summarry
-    domain.print_info()
+    print(domain)
     print(
-        f'Generating signal that is {seminp["total_time"]} [s] long, with {seminp["nframes"]} frames using {seminp["convect"]} convection speed.\n'
+        f'Generating signal that is {seminp["totalTime"]} [s] long, with {seminp["nframes"]} frames using {seminp["convect"]} convection speed.\n'
     )
     print(
         "\n*******************************************************************************"
@@ -233,60 +211,60 @@ if progress:
         "*******************************************************************************\n"
     )
 
-for i, pn in enumerate(my_patch_nums):
+for i, pn in enumerate(myPatchNums):
     if rank != 0 and pn is None:
         continue
     # If we are the zeroth block, then we compute and send the patches to all the other blocks
     if rank == 0:
-        for send_rank in [j + 1 for j in range(size - 1)]:
-            send_patch_num = all_rank_patches[send_rank][i]
-            send_block_num = all_rank_blocks[send_rank][i]
-            if send_patch_num is None:
+        for sendRank in [j + 1 for j in range(size - 1)]:
+            sendPatchNum = allRankPatches[sendRank][i]
+            sendBlockNum = allRankBlocks[sendRank][i]
+            if sendPatchNum is None:
                 continue
-            blk = mb[send_block_num - 1]
+            blk = mb[sendBlockNum - 1]
             # Create the patch for this block
-            yu = blk.yu[:, :, 0]
-            zu = blk.zu[:, :, 0]
+            yc = blk.array["iyc"][0, :, :]
+            zc = blk.array["izc"][0, :, :]
             # We want to filter out all eddys that are not possibly going to contribute to this set of ys and zs
             # we are going to refer to the bounding box that encapsulates ALL y,z pairs ad the 'domain' or 'dom'
-            patch_ymin = yu.min()
-            patch_ymax = yu.max()
-            patch_zmin = zu.min()
-            patch_zmax = zu.max()
+            patchYmin = yc.min()
+            patchYmax = yc.max()
+            patchZmin = zc.min()
+            patchZmax = zc.max()
 
-            eddys_in_patch = np.where(
+            eddysInPatch = np.where(
                 (
-                    domain.eddy_locs[:, 1] - np.max(domain.sigmas[:, :, 1], axis=1)
-                    < patch_ymax
+                    domain.eddyLocs[:, 1] - np.max(domain.sigmas[:, :, 1], axis=1)
+                    < patchYmax
                 )
                 & (
-                    domain.eddy_locs[:, 1] + np.max(domain.sigmas[:, :, 1], axis=1)
-                    > patch_ymin
+                    domain.eddyLocs[:, 1] + np.max(domain.sigmas[:, :, 1], axis=1)
+                    > patchYmin
                 )
                 & (
-                    domain.eddy_locs[:, 2] - np.max(domain.sigmas[:, :, 2], axis=1)
-                    < patch_zmax
+                    domain.eddyLocs[:, 2] - np.max(domain.sigmas[:, :, 2], axis=1)
+                    < patchZmax
                 )
                 & (
-                    domain.eddy_locs[:, 2] + np.max(domain.sigmas[:, :, 2], axis=1)
-                    > patch_zmin
+                    domain.eddyLocs[:, 2] + np.max(domain.sigmas[:, :, 2], axis=1)
+                    > patchZmin
                 )
             )
 
-            comm.send(yu, dest=send_rank, tag=12)
-            comm.send(zu, dest=send_rank, tag=13)
-            comm.send(domain.eddy_locs[eddys_in_patch], dest=send_rank, tag=18)
-            comm.send(domain.eps[eddys_in_patch], dest=send_rank, tag=19)
-            comm.send(domain.sigmas[eddys_in_patch], dest=send_rank, tag=20)
+            comm.send(yc, dest=sendRank, tag=12)
+            comm.send(zc, dest=sendRank, tag=13)
+            comm.send(domain.eddy_locs[eddysInPatch], dest=sendRank, tag=18)
+            comm.send(domain.eps[eddysInPatch], dest=sendRank, tag=19)
+            comm.send(domain.sigmas[eddysInPatch], dest=sendRank, tag=20)
 
         # Let the zeroth block do some work too
-        blk = mb[my_block_nums[i] - 1]
-        yu = blk.yu[:, :, 0]
-        zu = blk.zu[:, :, 0]
+        blk = mb[myBlockNums[i] - 1]
+        yc = blk.array["iyc"][0, :, :]
+        zc = blk.array["izc"][0, :, :]
     # Other blocks receive for their data
     else:
-        yu = comm.recv(source=0, tag=12)
-        zu = comm.recv(source=0, tag=13)
+        yc = comm.recv(source=0, tag=12)
+        zc = comm.recv(source=0, tag=13)
         domain.eddy_locs = comm.recv(source=0, tag=18)
         domain.eps = comm.recv(source=0, tag=19)
         domain.sigmas = comm.recv(source=0, tag=20)
@@ -298,8 +276,8 @@ for i, pn in enumerate(my_patch_nums):
             "******************************* Generating u' *********************************"
         )
     up, vp, wp = sempy.generate_primes(
-        yu,
-        zu,
+        yc,
+        zc,
         domain,
         seminp["nframes"],
         normalization=seminp["normalization"],
@@ -311,7 +289,7 @@ for i, pn in enumerate(my_patch_nums):
 
     # For a periodic spline boundary conditions, the end values must be within machine precision, these
     # end values should already be close, but just in case we set them to identical.
-    if seminp["periodic_x"]:
+    if seminp["periodicX"]:
         up[-1, :, :] = up[0, :, :]
         vp[-1, :, :] = vp[0, :, :]
         wp[-1, :, :] = wp[0, :, :]
@@ -319,25 +297,20 @@ for i, pn in enumerate(my_patch_nums):
     else:
         bc = "not-a-knot"
 
-    up = up / rpinp["refvl"]["U_ref"]
-    vp = vp / rpinp["refvl"]["U_ref"]
-    wp = wp / rpinp["refvl"]["U_ref"]
-
     if seminp["flipdom"]:
         vp = -vp
         wp = -wp
 
-    tme = seminp["total_time"] * rpinp["refvl"]["U_ref"] / rpinp["refvl"]["L_ref"]
-    t = np.linspace(0, tme, seminp["nframes"])
+    t = np.linspace(0, seminp["totalTime"], seminp["nframes"])
     # Add the mean profile here
-    Upu = domain.Ubar_interp(yu) / rpinp["refvl"]["U_ref"] + up
+    Upu = domain.ubarInterp(yc) + up
     fu = itrp.CubicSpline(t, Upu, bc_type=bc, axis=0)
     fv = itrp.CubicSpline(t, vp, bc_type=bc, axis=0)
     fw = itrp.CubicSpline(t, wp, bc_type=bc, axis=0)
 
     for interval in range(seminp["nframes"] - 1):
-        file_name = output_dir + "/alphas_{:06d}_{:04d}".format(pn, interval + 1)
-        with FortranFile(file_name, "w") as f90:
-            f90.write_record(fu.c[:, interval, :, :].astype(np.float64))
-            f90.write_record(fv.c[:, interval, :, :].astype(np.float64))
-            f90.write_record(fw.c[:, interval, :, :].astype(np.float64))
+        fileName = outputDir + "/alphas_{:06d}_{:04d}".format(pn, interval + 1)
+        with open(fileName, "w") as f:
+            np.save(f, fu.c[:, interval, :, :])
+            np.save(f, fv.c[:, interval, :, :])
+            np.save(f, fw.c[:, interval, :, :])

@@ -60,7 +60,7 @@ Rvw[0:npts] = data[:, 6]
 Rvw[npts::] = -np.flip(Rvw[0 : npts - 1])
 
 
-def add_stats(domain):
+def addStats(domain):
     """Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
@@ -95,9 +95,9 @@ def add_stats(domain):
             return the values at the wall.
     """
 
-    Re_tau = domain.utau * domain.delta / domain.viscosity
-    yp_trans = 3 * np.sqrt(Re_tau)
-    overlap = np.where(yp > yp_trans)
+    reTau = domain.utau * domain.delta / domain.viscosity
+    ypTrans = 3 * np.sqrt(Re_tau)
+    overlap = np.where(yp > ypTrans)
 
     # No idea if this is general enough
     transition = np.exp(-np.exp(-7.5 * np.linspace(0, 1, overlap[0].shape[0]) + 2.0))
@@ -123,7 +123,7 @@ def add_stats(domain):
     stats[:, 2, 1] = stats[:, 1, 2]
     stats[:, 2, 2] = Rww * domain.utau ** 2
 
-    domain.Rij_interp = interp1d(
+    domain.rijInterp = interp1d(
         y,
         stats,
         kind="linear",
@@ -137,10 +137,10 @@ if __name__ == "__main__":
 
     # Create dummy channel
     domain = type("channel", (), {})
-    Re_tau = 587.19
+    reTau = 587.19
     domain.viscosity = 1.81e-5
     domain.delta = 0.05
-    domain.utau = Re_tau * domain.viscosity / domain.delta
+    domain.utau = reTau * domain.viscosity / domain.delta
     domain.Ublk = 2.12630000e01 * domain.utau
 
     yplot = np.concatenate(
@@ -150,9 +150,9 @@ if __name__ == "__main__":
         )
     )
 
-    add_stats(domain)
+    addStats(domain)
 
-    Rij = domain.Rij_interp(yplot)
+    Rij = domain.rijInterp(yplot)
 
     Ruu_plot = Rij[:, 0, 0] / domain.utau ** 2
     Rvv_plot = Rij[:, 1, 1] / domain.utau ** 2
