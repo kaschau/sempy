@@ -3,7 +3,7 @@
 import sys
 
 
-def progress_bar(current, total, note=""):
+def progressBar(current, total, note=""):
     length = 41
     completed = int(round(length * current / float(total)))
 
