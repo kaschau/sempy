@@ -19,7 +19,7 @@ See References/Paper/Revisiting-the-law-of-the-wake-in-wall-turbulence_2016.pdf
 """
 
 
-def add_profile(domain):
+def addProfile(domain):
     """Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
@@ -46,35 +46,35 @@ def add_profile(domain):
     # similar to the classical wake deficit parameter 2\Pi/\kappa.
 
     Re_tau = domain.utau * domain.delta / domain.viscosity
-    Up_inf = domain.Ublk / domain.utau
+    upInf = domain.Ublk / domain.utau
     kappa = 0.4
     psi = 2.32
     # Solve for A such that Eq. 2.8 with spec'd value of \Pi is satisfied
-    A = Up_inf - 1 / kappa * np.log(Re_tau) - psi
+    A = upInf - 1 / kappa * np.log(reTau) - psi
 
     # Construct the profile layer by layer
     # Viscous sublayer y+=[0,5]
-    yplus_vsl = np.linspace(0, 5, 3)
-    uplus_vsl = yplus_vsl
-    us_vsl = yplus_vsl * domain.utau
-    ys_vsl = yplus_vsl * domain.viscosity / domain.utau
+    yplusVsl = np.linspace(0, 5, 3)
+    uplusVsl = yplusVsl
+    usVsl = yplusVsl * domain.utau
+    ysVsl = yplusVsl * domain.viscosity / domain.utau
 
     # Log-law region y+>30, y+<=3(Re_tau)^(1/2)
-    yplus_llr = np.linspace(30, 3 * np.sqrt(Re_tau), 100)
-    uplus_llr = 1.0 / kappa * np.log(yplus_llr) + A
-    us_llr = uplus_llr * domain.utau
-    ys_llr = yplus_llr * domain.viscosity / domain.utau
+    yplusLlr = np.linspace(30, 3 * np.sqrt(Re_tau), 100)
+    uplusLlr = 1.0 / kappa * np.log(yplusLlr) + A
+    usLlr = uplusLlr * domain.utau
+    ysLlr = yplusLlr * domain.viscosity / domain.utau
 
     # Buffer layer y+=[5,30], we use a BSpline with the intersection of
     # the lines y+=u+ (vsl) and the line from the log-layer to the wall
     # as a control point.
-    intersection = [(uplus_llr[0] - 1 / kappa) / (1 - 1 / (kappa * 30))]
+    intersection = [(uplusLlr[0] - 1 / kappa) / (1 - 1 / (kappa * 30))]
     intersection.append(intersection[0])
     cv = np.array(
         [
-            [yplus_vsl[-1], uplus_vsl[-1]],
+            [yplusVsl[-1], uplusVsl[-1]],
             [intersection[0], intersection[1]],
-            [yplus_llr[0], uplus_llr[0]],
+            [yplusLlr[0], uplusLlr[0]],
         ]
     )
     degree = 2
@@ -84,32 +84,32 @@ def add_profile(domain):
         dtype="int",
     )
 
-    yplus_bufl, uplus_bufl = np.array(
+    yplusBufl, uplusBufl = np.array(
         splev(np.linspace(0, (count - degree), 30), (kv, cv.T, degree))
     )
-    us_bufl = uplus_bufl * domain.utau
-    ys_bufl = yplus_bufl * domain.viscosity / domain.utau
+    usBufl = uplusBufl * domain.utau
+    ysBufl = yplusBufl * domain.viscosity / domain.utau
 
     # Outer region, this is where the wake-law comes into play. See Table 1 from the paper for these values.
     mu = 0.54 * domain.delta
     sigma = 0.19 * domain.delta
-    ys_or = np.linspace(ys_llr[-1], domain.delta, 100)
-    yplus_or = ys_or * domain.utau / domain.viscosity
+    ysOr = np.linspace(ysLlr[-1], domain.delta, 100)
+    yplusOr = ysOr * domain.utau / domain.viscosity
 
-    E = 0.5 * (1 + erf((ys_or - mu) / np.sqrt(2 * sigma ** 2)))
+    E = 0.5 * (1 + erf((ysOr - mu) / np.sqrt(2 * sigma ** 2)))
     # Make the blending a bit smoother
     s = 4
     E[0:s] = E[0:s] * np.array([i / s for i in range(s)])
     E[0] = 0
-    Up_log = 1.0 / kappa * np.log(yplus_or) + A
-    uplus_or = Up_inf - (Up_inf - Up_log) * (1 - E)
-    us_or = uplus_or * domain.utau
+    upLog = 1.0 / kappa * np.log(yplusOr) + A
+    uplusOr = upInf - (upInf - upLog) * (1 - E)
+    usOr = uplusOr * domain.utau
 
     # Put them all together
-    ys = np.concatenate((ys_vsl, ys_bufl, ys_llr, ys_or))
-    Us = np.concatenate((us_vsl, us_bufl, us_llr, us_or))
+    ys = np.concatenate((ysVsl, ysBufl, ysLlr, ysOr))
+    Us = np.concatenate((usVsl, usBufl, usLlr, usOr))
 
-    domain.Ubar_interp = interp1d(
+    domain.ubarInterp = interp1d(
         ys, Us, kind="linear", bounds_error=False, fill_value=(Us[0], Us[-1])
     )
 
@@ -133,9 +133,9 @@ if __name__ == "__main__":
         )
     )
 
-    add_profile(domain)
+    addProfile(domain)
 
-    Uplot = domain.Ubar_interp(yplot)
+    Uplot = domain.ubarInterp(yplot)
 
     fig, ax = plt.subplots(2, 1, figsize=(5, 10))
 

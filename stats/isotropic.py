@@ -7,7 +7,7 @@ ISOTROPIC TURBULENCE FLOW
 """
 
 
-def Rij_interp(y):
+def rijInterp(y):
     I = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
     try:
         rij = np.repeat(I[np.newaxis, :, :], y.shape[0], axis=0)
@@ -17,7 +17,7 @@ def Rij_interp(y):
     return rij
 
 
-def add_stats(domain):
+def addStats(domain):
     """Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
@@ -49,4 +49,4 @@ def add_stats(domain):
 
     """
 
-    domain.Rij_interp = Rij_interp
+    domain.rijInterp = rijInterp

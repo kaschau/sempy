@@ -12,7 +12,7 @@ function below
 """
 
 
-def add_sigmas(domain, scale_factor=1.0):
+def addSigmas(domain, scaleFactor=1.0):
     """Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
@@ -52,20 +52,20 @@ def add_sigmas(domain, scale_factor=1.0):
 
     """
 
-    def sigma_interp(y):
-        return np.ones((y.shape[0], 3, 3)) * scale_factor
+    def sigmaInterp(y):
+        return np.ones((y.shape[0], 3, 3)) * scaleFactor
 
-    domain.sigma_interp = sigma_interp
+    domain.sigmaInterp = sigmaInterp
 
-    domain.sigma_x_min = scale_factor
-    domain.sigma_x_max = scale_factor
-    domain.sigma_y_min = scale_factor
-    domain.sigma_y_max = scale_factor
-    domain.sigma_z_min = scale_factor
-    domain.sigma_z_max = scale_factor
+    domain.sigmaXMin = scaleFactor
+    domain.sigmaXMax = scaleFactor
+    domain.sigmaYMin = scaleFactor
+    domain.sigmaYMax = scaleFactor
+    domain.sigmaZMin = scaleFactor
+    domain.sigmaZMax = scaleFactor
 
-    domain.V_sigma_min = scale_factor ** 3
-    domain.V_sigma_max = scale_factor ** 3
+    domain.vSigmaMin = scaleFactor ** 3
+    domain.vSigmaMax = scaleFactor ** 3
 
 
 if __name__ == "__main__":
@@ -79,10 +79,10 @@ if __name__ == "__main__":
     domain.utau = 1.0
     domain.delta = 1.0
 
-    add_sigmas(domain)
+    addSigmas(domain)
 
     yplot = np.linspace(0, 2, 100)
-    sigmas = domain.sigma_interp(yplot)
+    sigmas = domain.sigmaInterp(yplot)
 
     sigma_plot = sigmas[:, 0, 0]
 

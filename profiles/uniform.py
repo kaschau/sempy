@@ -7,7 +7,7 @@ Constant, uniform mean flow
 """
 
 
-def add_profile(domain):
+def addProfile(domain):
     """Function that returns a callable object creted from the data above.
 
     Parameters:
@@ -25,4 +25,4 @@ def add_profile(domain):
             Interpolation functions with input y = *dimensionsal height above the bottom wall*
     """
 
-    domain.Ubar_interp = lambda y: np.ones(y.shape) * domain.Ublk
+    domain.ubarInterp = lambda y: np.ones(y.shape) * domain.Ublk

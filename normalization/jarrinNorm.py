@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def jarrin_norm(signal, domain):
+def jarrinNorm(signal, domain):
     """
     Original normalization from Jarrin's thesis
 
@@ -18,27 +18,27 @@ def jarrin_norm(signal, domain):
             Array of shape(N,3) of the fluctuation components normalized
     """
 
-    if domain.flow_type in ["channel", "free_shear"]:
+    if domain.flowType in ["channel", "free_shear"]:
         VB = (
-            (2 * domain.sigma_x_max)
-            * (domain.y_height + 2 * domain.sigma_y_max)
-            * (domain.z_width + 2 * domain.sigma_z_max)
+            (2 * domain.sigmaXMax)
+            * (domain.yHeight + 2 * domain.sigmaYMax)
+            * (domain.zWidth + 2 * domain.sigmaZMax)
         )
         Vdom = (
-            (domain.x_length + 2 * domain.sigma_x_max)
-            * (domain.y_height + 2 * domain.sigma_y_max)
-            * (domain.z_width + 2 * domain.sigma_z_max)
+            (domain.xLength + 2 * domain.sigmaXMax)
+            * (domain.yHeight + 2 * domain.sigmaYMax)
+            * (domain.zWidth + 2 * domain.sigmaZMax)
         )
-    elif domain.flow_type == "bl":
+    elif domain.flowType == "bl":
         VB = (
-            (2 * domain.sigma_x_max)
-            * (domain.delta + 2 * domain.sigma_y_max)
-            * (domain.z_width + 2 * domain.sigma_z_max)
+            (2 * domain.sigmaXMax)
+            * (domain.delta + 2 * domain.sigmaYMax)
+            * (domain.zWidth + 2 * domain.sigmaZMax)
         )
         Vdom = (
-            (domain.x_length + 2 * domain.sigma_x_max)
-            * (domain.delta + 2 * domain.sigma_y_max)
-            * (domain.z_width + 2 * domain.sigma_z_max)
+            (domain.xLength + 2 * domain.sigmaXMax)
+            * (domain.delta + 2 * domain.sigmaYMax)
+            * (domain.zWidth + 2 * domain.sigmaZMax)
         )
 
     # We compute the "Eddy Volume" and "Neddy" from the original SEM

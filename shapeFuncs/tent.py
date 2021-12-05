@@ -56,22 +56,22 @@ def tent(dists, sigmas):
 if __name__ == "__main__":
 
     nsig = 201
-    ux_length_scale = 1.0
-    uy_length_scale = 0.75
-    vx_length_scale = 0.5
-    vy_length_scale = 0.25
-    wx_length_scale = 0.25
-    wy_length_scale = 0.25
+    uxLengthScale = 1.0
+    uyLengthScale = 0.75
+    vxLengthScale = 0.5
+    vyLengthScale = 0.25
+    wxLengthScale = 0.25
+    wyLengthScale = 0.25
 
-    line = np.linspace(-ux_length_scale * 1.5, ux_length_scale * 1.5, nsig)
+    line = np.linspace(-uxLengthScale * 1.5, uxLengthScale * 1.5, nsig)
 
     dists = np.zeros((nsig, 3))
     dists[:, 0] = line
 
     sigmas = np.ones((nsig, 3, 3))
-    sigmas[:, 0, 0] = ux_length_scale
-    sigmas[:, 1, 0] = vx_length_scale
-    sigmas[:, 2, 0] = wx_length_scale
+    sigmas[:, 0, 0] = uxLengthScale
+    sigmas[:, 1, 0] = vxLengthScale
+    sigmas[:, 2, 0] = wxLengthScale
 
     sigs = tent(dists, sigmas)
 
@@ -95,9 +95,9 @@ if __name__ == "__main__":
     plt.legend(
         lo,
         (
-            r"$\sigma_{u}$=" + f"{ux_length_scale}",
-            r"$\sigma_{v}=$" + f"{vx_length_scale}",
-            r"$\sigma_{w}=$" + f"{wx_length_scale}",
+            r"$\sigma_{u}$=" + f"{uxLengthScale}",
+            r"$\sigma_{v}=$" + f"{vxLengthScale}",
+            r"$\sigma_{w}=$" + f"{wxLengthScale}",
         ),
     )
     plt.grid(linestyle="--")
@@ -116,12 +116,12 @@ if __name__ == "__main__":
         dists[:, 1] = Y.ravel()
 
         sigmas = np.ones((npts, 3, 3))
-        sigmas[:, 0, 0] = ux_length_scale
-        sigmas[:, 0, 1] = uy_length_scale
-        sigmas[:, 1, 0] = vx_length_scale
-        sigmas[:, 1, 1] = vy_length_scale
-        sigmas[:, 2, 0] = wx_length_scale
-        sigmas[:, 2, 1] = wy_length_scale
+        sigmas[:, 0, 0] = uxLengthScale
+        sigmas[:, 0, 1] = uyLengthScale
+        sigmas[:, 1, 0] = vxLengthScale
+        sigmas[:, 1, 1] = vyLengthScale
+        sigmas[:, 2, 0] = wxLengthScale
+        sigmas[:, 2, 1] = wyLengthScale
 
         levels = np.linspace(0, 2, 31)
         ticks = np.linspace(0, 2, 11)
@@ -138,9 +138,9 @@ if __name__ == "__main__":
         cb.set_label(r"$u^{*}$" + " Contribution")
         ax.set_title(
             r"$\sigma_{ux}=$"
-            + f"{ux_length_scale}, "
+            + f"{uxLengthScale}, "
             + r"$\sigma_{uy}=$"
-            + f"{uy_length_scale}"
+            + f"{uyLengthScale}"
         )
         ax.set_xlabel("x")
         ax.set_ylabel("y")
@@ -157,9 +157,9 @@ if __name__ == "__main__":
         cb.set_label(r"$v^{*}$" + " Contribution")
         ax.set_title(
             r"$\sigma_{vx}$="
-            + f"{vx_length_scale}, "
+            + f"{vxLengthScale}, "
             + r"$\sigma_{vy}=$"
-            + f"{vy_length_scale}"
+            + f"{vyLengthScale}"
         )
         ax.set_xlabel("x")
         ax.set_ylabel("y")
@@ -176,9 +176,9 @@ if __name__ == "__main__":
         cb.set_label(r"$w^{*}$" + " Contribution")
         ax.set_title(
             r"$\sigma_{wx}$="
-            + f"{wx_length_scale}, "
+            + f"{wxLengthScale}, "
             + r"$\sigma_{wy}=$"
-            + f"{wy_length_scale}"
+            + f"{wyLengthScale}"
         )
         ax.set_xlabel("x")
         ax.set_ylabel("y")

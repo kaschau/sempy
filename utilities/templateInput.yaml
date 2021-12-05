@@ -1,0 +1,82 @@
+---
+
+# Format for sem4raptor input file is just variable = value
+# commented lines are ignored, no need for quoting of strings
+# sem4raptor will leave string values as strings and convert
+# floats and ints accordingly. If you want something to be an
+# int, don't use a decimal
+
+# Also remember that sempy only deals with SI units. The sem4raptor
+# utility will convert your grid into dimensional units, as well as
+# convert your velocity fluctuations into nondimensional units when
+# it writs out, but all your inputs here MUST be in SI units.
+
+# Lastly, we need a file called patches.txt that will map the match number
+# to the block numbers. The file format is:
+#                 Patch #, Block #
+#                 Patch #, Block #
+#                 Patch #, Block #
+#                 Patch #, Block #
+
+########################################################################
+########################## BOX GEOMETRY ################################
+########################################################################
+
+domainType: channel        # What type of flow is this channel or bl?
+yHeight: 0.1               # [m]
+zWidth: 0.3                # [m]
+
+periodicX: true            # periodic in time?
+periodicY: false
+periodicZ: true
+
+flipdom: false             # Is your grid upside down?
+########################################################################
+########################### FLOW VALUES ################################
+########################################################################
+
+viscosity: 1.81e-5         # kinematic viscocity
+delta: 0.05                # channel half height or BL thickness
+utau: 0.21256278           # Friction velocity
+Ublk: 4.519722             # Channel centerline height or U_inf
+
+########################################################################
+############################ SEM VALUES ################################
+########################################################################
+
+totalTime: 0.5             # [s] time of generated signal,
+                           # used to determine length of box
+nframes: 200               # Number of desired frames over time interval
+interpolate: True          # Are you going to interpolate the signal or use it
+                           # as is?
+cEddy: 1.0                 # Eddy Density multiplier
+sigmasFrom: jarrin         # Target eddy length scales
+statsFrom: moser           # Target R_{ij} stats
+profileFrom: channel       # Method of generating \bar{U} profile
+populationMethod: PDF      # Method of placing eddys, 'PDF' places more
+                           # eddys where eddys are smaller and fewer
+                           # eddys where eddys are larger. Thus
+                           # reducing the total number of eddys in the
+                           # domain. Other option is 'random'
+normalization: exact       # Method of normalizing the signal. Options are
+                           # 'jarrin' or 'exact'. Jarrin uses orignal
+                           # SEM method of converging signal to second
+                           # order stats. Exact uses maths to strictly
+                           # enforce these statistics
+convect: uniform           # Method of "convecting" eddys. Options are "local"
+                           # and "uniform". Local convects eddys based on
+                           # their local velocity, uniform convects eddys
+                           # by Ubulk. (But recal that in sempy, we do not
+                           # convect eddys, but instead convect through
+                           # eddies in the mega box)
+shape: tent                # Shape function for an eddy.
+scaleFactor: 1.0           # Scale factor for modifying size of the eddys by a
+                           # consistent factor. Also use this to set the eddy
+                           # size when prescribing 'isotropic' for sigmasFrom
+
+########################################################################
+############################ RAPTOR VALUES #############################
+########################################################################
+
+gridPath: ./              # Path to your raptor grid
+inpPath: ./dtms.inp       # Path to your case dtms.inp

@@ -157,7 +157,7 @@ Lww[0:npts] = -0.3968 * ys[0:npts] * (ys[0:npts] - 2.0) + 0.0702
 Lww[npts::] = np.flip(Lww[0 : npts - 1])
 
 
-def add_sigmas(domain, scale_factor=1.0):
+def addSigmas(domain, scaleFactor=1.0):
     """Function that returns a 1d interpolation object creted from the data above.
 
         Parameters:
@@ -206,11 +206,11 @@ def add_sigmas(domain, scale_factor=1.0):
     sigmas[:, 2, 1] = Lww * domain.delta
     sigmas[:, 2, 2] = Lww * domain.delta
 
-    sigmas = sigmas * scale_factor
+    sigmas = sigmas * scaleFactor
 
     y = ys * domain.delta
 
-    domain.sigma_interp = interp1d(
+    domain.sigmaInterp = interp1d(
         y,
         sigmas,
         kind="slinear",
@@ -221,18 +221,18 @@ def add_sigmas(domain, scale_factor=1.0):
 
     # determine min,max sigmas
     # Here we assume that signal generation at smallest y value is at yplus=1
-    test_ys = np.linspace(domain.yp1, domain.y_height - domain.yp1, 200)
-    test_sigmas = domain.sigma_interp(test_ys)
+    testYs = np.linspace(domain.yp1, domain.y_height - domain.yp1, 200)
+    testSigmas = domain.sigmaInterp(testYs)
 
-    domain.sigma_x_min = np.min(test_sigmas[:, :, 0])
-    domain.sigma_x_max = np.max(test_sigmas[:, :, 0])
-    domain.sigma_y_min = np.min(test_sigmas[:, :, 1])
-    domain.sigma_y_max = np.max(test_sigmas[:, :, 1])
-    domain.sigma_z_min = np.min(test_sigmas[:, :, 2])
-    domain.sigma_z_max = np.max(test_sigmas[:, :, 2])
+    domain.sigmaXMin = np.min(testSigmas[:, :, 0])
+    domain.sigmaXMax = np.max(testSigmas[:, :, 0])
+    domain.sigmaYMin = np.min(testSigmas[:, :, 1])
+    domain.sigmaYMax = np.max(testSigmas[:, :, 1])
+    domain.sigmaZMin = np.min(testSigmas[:, :, 2])
+    domain.sigmaZMax = np.max(testSigmas[:, :, 2])
 
-    domain.V_sigma_min = np.min(np.product(test_sigmas, axis=2))
-    domain.V_sigma_max = np.max(np.product(test_sigmas, axis=2))
+    domain.vSigmaMin = np.min(np.product(testSigmas, axis=2))
+    domain.vSigmaMax = np.max(np.product(testSigmas, axis=2))
 
 
 if __name__ == "__main__":
@@ -242,22 +242,22 @@ if __name__ == "__main__":
     domain.viscosity = 1.0
     domain.utau = 1.0
     domain.delta = 1.0
-    domain.y_height = 2 * domain.delta
+    domain.yHeight = 2 * domain.delta
     domain.Ublk = 1.0
     domain.yp1 = 1e-8
-    add_sigmas(domain)
+    addSigmas(domain)
 
-    yplot = np.linspace(0, domain.y_height, 100)
-    sigmas = domain.sigma_interp(yplot)
+    yplot = np.linspace(0, domain.yHeight, 100)
+    sigmas = domain.sigmaInterp(yplot)
 
-    Tuu_plot = sigmas[:, 0, 0]
-    Luu_plot = sigmas[:, 0, 1]
+    tuuPlot = sigmas[:, 0, 0]
+    luuPlot = sigmas[:, 0, 1]
 
-    Tvv_plot = sigmas[:, 1, 0]
-    Lvv_plot = sigmas[:, 1, 1]
+    tvvPlot = sigmas[:, 1, 0]
+    lvvPlot = sigmas[:, 1, 1]
 
-    Tww_plot = sigmas[:, 2, 0]
-    Lww_plot = sigmas[:, 2, 1]
+    twwPlot = sigmas[:, 2, 0]
+    lwwPlot = sigmas[:, 2, 1]
 
     import matplotlib.pyplot as plt
     import matplotlib
@@ -274,17 +274,17 @@ if __name__ == "__main__":
     fig, ax1 = plt.subplots()
     ax1.set_xlabel(r"$y/ \delta$")
     ax1.set_ylabel(r"$T u_{\tau} / \delta $")
-    ax1.plot(yplot, Tuu_plot, label=r"$T_{uu}$")
-    ax1.plot(yplot, Tvv_plot, label=r"$T_{vv}$")
-    ax1.plot(yplot, Tww_plot, label=r"$T_{ww}$")
+    ax1.plot(yplot, tuuPlot, label=r"$T_{uu}$")
+    ax1.plot(yplot, tvvPlot, label=r"$T_{vv}$")
+    ax1.plot(yplot, twwPlot, label=r"$T_{ww}$")
     ax1.legend(loc="upper left")
     ax1.set_title("Interpolation Functions for T and L")
 
     ax2 = ax1.twinx()
     ax2.set_ylabel(r"$L/ \delta$")
-    ax2.plot(yplot, Luu_plot, label="$L_{uu}$", linestyle="--")
-    ax2.plot(yplot, Lvv_plot, label="$L_{vv}$", linestyle="--")
-    ax2.plot(yplot, Lww_plot, label="$L_{ww}$", linestyle="--")
+    ax2.plot(yplot, luuPlot, label="$L_{uu}$", linestyle="--")
+    ax2.plot(yplot, lvvPlot, label="$L_{vv}$", linestyle="--")
+    ax2.plot(yplot, lwwPlot, label="$L_{ww}$", linestyle="--")
     ax2.legend(loc="upper right")
 
     fig.tight_layout()

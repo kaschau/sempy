@@ -12,7 +12,7 @@ Linear estimates of time and length scales used to construct sigmas
 """
 
 
-def add_sigmas(domain, scale_factor=1.0):
+def addSigmas(domain, scaleFactor=1.0):
     """Function that returns a 1d interpolation object creted from the data above.
 
     Parameters:
@@ -52,7 +52,7 @@ def add_sigmas(domain, scale_factor=1.0):
     sigmas[0, :, :] = domain.yp1
     sigmas[1, :, :] = domain.delta
 
-    sigmas = sigmas * scale_factor
+    sigmas = sigmas * scaleFactor
 
     domain.sigma_interp = interp1d(
         y,
@@ -65,18 +65,18 @@ def add_sigmas(domain, scale_factor=1.0):
 
     # determine min,max sigmas
     # Here we assume that signal generation at smallest y value is at yplus=1
-    test_ys = np.linspace(domain.yp1, domain.y_height - domain.yp1, 200)
-    test_sigmas = domain.sigma_interp(test_ys)
+    testYs = np.linspace(domain.yp1, domain.yHeight - domain.yp1, 200)
+    testSigmas = domain.sigmaInterp(testYs)
 
-    domain.sigma_x_min = np.min(test_sigmas[:, :, 0])
-    domain.sigma_x_max = np.max(test_sigmas[:, :, 0])
-    domain.sigma_y_min = np.min(test_sigmas[:, :, 1])
-    domain.sigma_y_max = np.max(test_sigmas[:, :, 1])
-    domain.sigma_z_min = np.min(test_sigmas[:, :, 2])
-    domain.sigma_z_max = np.max(test_sigmas[:, :, 2])
+    domain.sigma_x_min = np.min(testSigmas[:, :, 0])
+    domain.sigma_x_max = np.max(testSigmas[:, :, 0])
+    domain.sigma_y_min = np.min(testSigmas[:, :, 1])
+    domain.sigma_y_max = np.max(testSigmas[:, :, 1])
+    domain.sigma_z_min = np.min(testSigmas[:, :, 2])
+    domain.sigma_z_max = np.max(testSigmas[:, :, 2])
 
-    domain.V_sigma_min = np.min(np.product(test_sigmas, axis=2))
-    domain.V_sigma_max = np.max(np.product(test_sigmas, axis=2))
+    domain.V_sigma_min = np.min(np.product(testSigmas, axis=2))
+    domain.V_sigma_max = np.max(np.product(testSigmas, axis=2))
 
 
 if __name__ == "__main__":
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     domain.utau = 1.0
     domain.delta = 1.0
     domain.yp1 = 1e-5
-    add_sigmas(domain)
+    addSigmas(domain)
 
     yplot = np.linspace(0, 1.2, 100)
     sigmas = domain.sigma_interp(yplot)

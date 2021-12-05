@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def exact_norm(signal):
+def exactNorm(signal):
     """
     Exact normalization, this normalization explicitely creates a signal of zero mean, unit variance.
     We no longer enforce zero covariance, a it was generating bad signals. See issue #8.
