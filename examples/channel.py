@@ -14,16 +14,16 @@ utau = Re_tau * viscosity / delta
 Ublk = 2.12630000e01 * utau
 tme = 10 * 2 * np.pi * delta / Ublk  # Based on FTT of DNS domain
 nframes = 200
-# Box geobm
-y_height = 2.0 * delta
-z_width = np.pi * delta
+# Box geom
+yHeight = 2.0 * delta
+zWidth = np.pi * delta
 
 # Eddy Density
-C_Eddy = 1.0
+cEddy = 1.0
 # eddy convection speed
 convect = "uniform"
 # population method
-pop_meth = "random"
+popMeth = "random"
 # normalization
 norm = "jarrin"
 # shape funcion
@@ -31,20 +31,20 @@ shape = "tent"
 
 # Initialize domain
 domain = sempy.geometries.box(
-    "channel", Ublk, tme, y_height, z_width, delta, utau, viscosity
+    "channel", Ublk, tme, yHeight, zWidth, delta, utau, viscosity
 )
 # Set flow properties from existing data
-domain.set_sem_data(sigmas_from="jarrin", stats_from="moser", profile_from="channel")
+domain.setSemData(sigmasFrom="jarrin", statsFrom="moser", profileFrom="channel")
 # Populate the domain
-domain.populate(C_Eddy, method=pop_meth)
+domain.populate(cEddy, method=popMeth)
 # Create the eps
-domain.generate_eps()
+domain.generateEps()
 # Compute sigmas
-domain.compute_sigmas()
+domain.computeSigmas()
 # Make it periodic
-domain.make_periodic(periodic_x=False, periodic_y=False, periodic_z=True)
+domain.makePeriodic(periodicX=False, periodicY=False, periodicZ=True)
 
-domain.print_info()
+print(domain)
 
 # Create y,z coordinate pairs for calculation
 ys = np.concatenate(
@@ -54,10 +54,10 @@ ys = np.concatenate(
         np.linspace(1.99 * domain.delta, 1.9999 * domain.delta, 5),
     )
 )
-zs = np.ones(ys.shape[0]) * z_width / 2.0
+zs = np.ones(ys.shape[0]) * zWidth / 2.0
 
 # Compute u'
-up, vp, wp = sempy.generate_primes(
+up, vp, wp = sempy.generatePrimes(
     ys, zs, domain, nframes, normalization=norm, convect=convect, shape=shape
 )
 
@@ -89,7 +89,7 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r"$y$")
 ax1.set_xlabel(r"$\bar{U}$")
 ax1.plot(Us, ys, label=r"$\bar{U}$ SEM", color="orange")
-ax1.scatter(domain.Ubar_interp(ys), ys, label=r"$\bar{U}$ Profile", color="k")
+ax1.scatter(domain.ubarInterp(ys), ys, label=r"$\bar{U}$ Profile", color="k")
 ax1.legend()
 plt.savefig("Ubar.png")
 plt.close()
@@ -99,7 +99,7 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r"$y$")
 ax1.set_xlabel(r"$R_{uu}$")
 ax1.plot(uus, ys, label=r"$R_{uu}$ SEM", color="orange")
-ax1.scatter(domain.Rij_interp(ys)[:, 0, 0], ys, label=r"$R_{uu}$ Moser", color="k")
+ax1.scatter(domain.rijInterp(ys)[:, 0, 0], ys, label=r"$R_{uu}$ Moser", color="k")
 ax1.legend()
 plt.savefig("Ruu.png")
 plt.close()
@@ -109,7 +109,7 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r"$y$")
 ax1.set_xlabel(r"$R_{vv}$")
 ax1.plot(vvs, ys, label=r"$R_{vv}$ SEM", color="orange")
-ax1.scatter(domain.Rij_interp(ys)[:, 1, 1], ys, label=r"$R_{vv}$ Moser", color="k")
+ax1.scatter(domain.rijInterp(ys)[:, 1, 1], ys, label=r"$R_{vv}$ Moser", color="k")
 ax1.legend()
 plt.savefig("Rvv.png")
 plt.close()
@@ -119,7 +119,7 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r"$y$")
 ax1.set_xlabel(r"$R_{ww}$")
 ax1.plot(wws, ys, label=r"$R_{ww}$ SEM", color="orange")
-ax1.scatter(domain.Rij_interp(ys)[:, 2, 2], ys, label=r"$R_{ww}$ Moser", color="k")
+ax1.scatter(domain.rijInterp(ys)[:, 2, 2], ys, label=r"$R_{ww}$ Moser", color="k")
 ax1.legend()
 plt.savefig("Rww.png")
 plt.close()
@@ -129,7 +129,7 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r"$y$")
 ax1.set_xlabel(r"$R_{uv}$")
 ax1.plot(uvs, ys, label=r"$R_{uv}$ SEM", color="orange")
-ax1.scatter(domain.Rij_interp(ys)[:, 0, 1], ys, label=r"$R_{uv}$ Moser", color="k")
+ax1.scatter(domain.rijInterp(ys)[:, 0, 1], ys, label=r"$R_{uv}$ Moser", color="k")
 ax1.legend()
 plt.savefig("Ruv.png")
 plt.close()
@@ -139,7 +139,7 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r"$y$")
 ax1.set_xlabel(r"$R_{uw}$")
 ax1.plot(uws, ys, label=r"$R_{uw}$ SEM", color="orange")
-ax1.scatter(domain.Rij_interp(ys)[:, 0, 2], ys, label=r"$R_{uw}$ Moser", color="k")
+ax1.scatter(domain.rijInterp(ys)[:, 0, 2], ys, label=r"$R_{uw}$ Moser", color="k")
 ax1.legend()
 plt.savefig("Ruw.png")
 plt.close()
@@ -149,7 +149,7 @@ fig, ax1 = plt.subplots()
 ax1.set_ylabel(r"$y$")
 ax1.set_xlabel(r"$R_{vw}$")
 ax1.plot(vws, ys, label=r"$R_{vw}$ SEM", color="orange")
-ax1.scatter(domain.Rij_interp(ys)[:, 1, 2], ys, label=r"$R_{vw}$ Moser", color="k")
+ax1.scatter(domain.rijInterp(ys)[:, 1, 2], ys, label=r"$R_{vw}$ Moser", color="k")
 ax1.legend()
 plt.savefig("Rvw.png")
 plt.close()
@@ -161,7 +161,7 @@ ax1.set_ylabel(r"$u^{\prime}$")
 ax1.grid(linestyle="--")
 ax1.set_title("Centerline Fluctiations")
 ax1.plot(
-    np.linspace(0, domain.x_length / domain.Ublk, nframes),
+    np.linspace(0, domain.xLength / domain.Ublk, nframes),
     up[:, int((up.shape[1]) / 2)],
     color="orange",
 )
@@ -169,7 +169,7 @@ ax1.plot(
 ax2.set_ylabel(r"$v^{\prime}$")
 ax2.grid(linestyle="--")
 ax2.plot(
-    np.linspace(0, domain.x_length / domain.Ublk, nframes),
+    np.linspace(0, domain.xLength / domain.Ublk, nframes),
     vp[:, int((vp.shape[1]) / 2)],
     color="blue",
 )
@@ -179,7 +179,7 @@ ax3.grid(linestyle="--")
 ax3.set_xlabel(r"$Time$")
 
 ax3.plot(
-    np.linspace(0, domain.x_length / domain.Ublk, nframes),
+    np.linspace(0, domain.xLength / domain.Ublk, nframes),
     wp[:, int((wp.shape[1]) / 2)],
     color="green",
 )

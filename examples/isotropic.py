@@ -13,11 +13,11 @@ viscosity = 1e-5
 utau = None
 nframes = 10000
 # Box geobm
-y_height = 2.0 * np.pi
-z_width = y_height
+yHeight = 2.0 * np.pi
+zWidth = yHeight
 
 # Eddy Density
-C_Eddy = 2.0
+cEddy = 2.0
 
 # eddy convection speed
 convect = "uniform"
@@ -26,38 +26,38 @@ convect = "uniform"
 normalization = "jarrin"
 
 # population method
-pop_meth = "random"
+popMeth = "random"
 
 # Initialize domain
 domain = sempy.geometries.box(
-    "freeshear", Ublk, tme, y_height, z_width, delta, utau, viscosity
+    "freeshear", Ublk, tme, yHeight, zWidth, delta, utau, viscosity
 )
 
 # Set flow properties from existing data
-domain.set_sem_data(
-    sigmas_from="uniform",
-    stats_from="isotropic",
-    profile_from="uniform",
-    scale_factor=0.5,
+domain.setSemData(
+    sigmasFrom="uniform",
+    statsFrom="isotropic",
+    profileFrom="uniform",
+    scaleFactor=0.5,
 )
 
 # Populate the domain
-domain.populate(C_Eddy, method=pop_meth)
+domain.populate(cEddy, method=popMeth)
 # Create the eps
-domain.generate_eps()
+domain.generateEps()
 # Compute sigmas
-domain.compute_sigmas()
+domain.computeSigmas()
 # Make it periodic
-domain.make_periodic(periodic_x=True, periodic_y=True, periodic_z=True)
+domain.makePeriodic(periodicX=True, periodicY=True, periodicZ=True)
 
-domain.print_info()
+print(domain)
 
 # Create y,z coordinate pairs for calculation
 ys = np.array([np.pi])
 zs = np.array([np.pi])
 
 # Compute u'
-up, vp, wp = sempy.generate_primes(
+up, vp, wp = sempy.generatePrimes(
     ys, zs, domain, nframes, normalization=normalization, convect=convect
 )
 
@@ -71,14 +71,14 @@ uws = np.mean(up[:, :] * wp[:, :], axis=0)
 vws = np.mean(vp[:, :] * wp[:, :], axis=0)
 
 # Compute Ubars
-Us = domain.Ubar_interp(ys) + np.mean(up[:, :], axis=0)
+Us = domain.ubarInterp(ys) + np.mean(up[:, :], axis=0)
 
 # Sample u prime
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r"$u \prime$")
 ax1.set_xlabel(r"t")
 ax1.set_title("Centerline Fluctiations")
-x = np.linspace(0, domain.x_length / domain.Ublk, nframes)
+x = np.linspace(0, domain.xLength / domain.Ublk, nframes)
 xind = np.where(x <= 8)
 ax1.plot(x[xind], 10 + up[:, int((up.shape[1]) / 2)][xind], color="orange")
 plt.savefig("uprime.png")
@@ -106,7 +106,7 @@ for i in range(len(u) - 2):
 fig, ax1 = plt.subplots()
 ax1.set_ylabel(r"$<u_i u_j>$")
 ax1.set_xlabel(r"t")
-x = np.linspace(0, domain.x_length / domain.Ublk, nframes)[2::]
+x = np.linspace(0, domain.xLength / domain.Ublk, nframes)[2::]
 ax1.plot(x, uu, color="orange", label="uu")
 ax1.plot(x, vv, color="red", label="vv")
 ax1.plot(x, ww, color="gold", label="ww")
