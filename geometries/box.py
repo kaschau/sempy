@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.integrate as integrate
 from sempy.domain import domain
-import sys
 
 
 class box(domain):
@@ -15,7 +14,7 @@ class box(domain):
 
     def populate(self, cEddy=1.0, method="random"):
 
-        if self.sigma_interp is None:
+        if self.sigmaInterp is None:
             raise ValueError(
                 "Please set your flow data before trying to populate your domain"
             )
@@ -123,4 +122,4 @@ class box(domain):
             & (self.eddyLocs[:, 2] + np.max(tempSigmas[:, :, 2], axis=1) > 0.0)
             & (self.eddyLocs[:, 2] - np.max(tempSigmas[:, :, 2], axis=1) < self.zWidth)
         )
-        self.eddy_locs = self.eddy_locs[keepEddys]
+        self.eddyLocs = self.eddyLocs[keepEddys]

@@ -111,8 +111,8 @@ def addProfile(domain):
     E[0:s] = E[0:s] * np.array([i / s for i in range(s)])
     E[0] = 0
     Up_log = 1.0 / kappa * np.log(yplusOr) + A
-    uplus_or = upInf - (upInf - Up_log) * (1 - E)
-    us_or = uplus_or * domain.utau
+    uplusOr = upInf - (upInf - Up_log) * (1 - E)
+    usOr = uplusOr * domain.utau
 
     # Put them all together
     ys = np.concatenate((ysVsl, ysBufl, ysLlr, ysOr))

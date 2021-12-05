@@ -25,7 +25,7 @@ convect = "uniform"
 # population method
 popMeth = "random"
 # normalization
-norm = "jarrin"
+norm = "exact"
 # shape funcion
 shape = "tent"
 
@@ -71,7 +71,7 @@ uws = np.mean(up[:, :] * wp[:, :], axis=0)
 vws = np.mean(vp[:, :] * wp[:, :], axis=0)
 
 # Compute Ubars
-Us = domain.Ubar_interp(ys) + np.mean(up[:, :], axis=0)
+Us = domain.ubarInterp(ys) + np.mean(up[:, :], axis=0)
 
 # Compare signal to moser
 # Make some plots

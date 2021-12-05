@@ -2,6 +2,37 @@ import numpy as np
 
 
 class domain:
+    __slots__ = [
+        "xLength",
+        "Ublk",
+        "delta",
+        "viscosity",
+        "yp1",
+        "flowType",
+        "yHeight",
+        "zWidth",
+        "sigmaInterp",
+        "sigmaXMin",
+        "sigmaXMax",
+        "sigmaYMin",
+        "sigmaYMax",
+        "sigmaZMin",
+        "sigmaZMax",
+        "vSigmaMin",
+        "vSigmaMax",
+        "rijInterp",
+        "ubarInterp",
+        "eddyLocs",
+        "eps",
+        "sigmas",
+        "profileFrom",
+        "sigmasFrom",
+        "statsFrom",
+        "eddyPopMethod",
+        "_neddy",
+        "radseed",
+    ]
+
     def __init__(self, Ublk, totalTime, delta, utau, viscosity):
 
         self.xLength = Ublk * totalTime
@@ -16,7 +47,7 @@ class domain:
 
         self.flowType = None
         self.yHeight = None
-        self.zHeight = None
+        self.zWidth = None
 
         self.sigmaInterp = None
         self.sigmaXMin = None
@@ -41,6 +72,7 @@ class domain:
         self.eddyPopMethod = None
 
         self._neddy = None
+        self.randseed = None
 
     @property
     def neddy(self):
@@ -184,27 +216,29 @@ class domain:
             self.sigmas = self.sigmaInterp(self.eddyLocs[:, 1])
 
     def __repr__(self):
-        print(f"\nFlow Type: {self.flowType}")
-        print(f"Domain Length = {self.xLength} [m] ({self.xLength/self.Ublk} [s])")
-        print(f"Domain Height = {self.yHeight} [m]")
-        print(f"Domain Width = {self.zWidth} [m]")
+        string = f"\nFlow Type: {self.flowType}\n"
+        string += f"Domain Length = {self.xLength} [m] ({self.xLength/self.Ublk} [s])\n"
+        string += f"Domain Height = {self.yHeight} [m]\n"
+        string += f"Domain Width = {self.zWidth} [m]\n"
 
-        print("Flow Parameters:")
-        print(f"    U_bulk = {self.Ublk} [m/s]")
-        print(f"    delta = {self.delta} [m]")
-        print(f"    u_tau = {self.utau} [m/s]")
-        print(f"    viscosity(nu) = {self.viscosity} [m^2/s]")
-        print(f"    Y+ one = {self.yp1} [m]")
+        string += "Flow Parameters:\n"
+        string += f"    U_bulk = {self.Ublk} [m/s]\n"
+        string += f"    delta = {self.delta} [m]\n"
+        string += f"    u_tau = {self.utau} [m/s]\n"
+        string += f"    viscosity(nu) = {self.viscosity} [m^2/s]\n"
+        string += f"    Y+ one = {self.yp1} [m]\n"
 
-        print(f"Sigmas from {self.sigmasFrom}")
-        print(f"Stats from {self.statsFrom}")
-        print(f"Profile from {self.profileFrom}")
+        string += f"Sigmas from {self.sigmasFrom}\n"
+        string += f"Stats from {self.statsFrom}\n"
+        string += f"Profile from {self.profileFrom}\n"
 
-        print("Sigmas (min,max) [m]:")
-        print(f"    x : {self.sigmaXMin},{self.sigmaXMax}")
-        print(f"    y : {self.sigmaYMin},{self.sigmaYMax}")
-        print(f"    z : {self.sigmaZMin},{self.sigmaZMax}")
-        print(f"  Vol : {self.vSigmaMin},{self.vSigmaMax}")
+        string += "Sigmas (min,max) [m]:\n"
+        string += f"    x : {self.sigmaXMin},{self.sigmaXMax}\n"
+        string += f"    y : {self.sigmaYMin},{self.sigmaYMax}\n"
+        string += f"    z : {self.sigmaZMin},{self.sigmaZMax}\n"
+        string += f"  Vol : {self.vSigmaMin},{self.vSigmaMax}\n"
 
-        print(f"Eddy population method : {self.eddyPopMethod}")
-        print(f"Number of Eddys: {self.neddy}")
+        string += f"Eddy population method : {self.eddyPopMethod}\n"
+        string += f"Number of Eddys: {self.neddy}\n"
+
+        return string
