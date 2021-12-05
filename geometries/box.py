@@ -5,135 +5,122 @@ import sys
 
 
 class box(domain):
-    def __init__(self, flow_type, Ublk, tme, y_height, z_width, delta, utau, viscosity):
+    def __init__(self, flowType, Ublk, tme, yHeight, zWidth, delta, utau, viscosity):
 
         super().__init__(Ublk, tme, delta, utau, viscosity)
-        self.y_height = y_height
-        self.z_width = z_width
-        self.flow_type = flow_type
+        self.yHeight = yHeight
+        self.zWidth = zWidth
+        self.flowType = flowType
         self.randseed = np.random.RandomState(10101)
 
-    def populate(self, C_Eddy=1.0, method="random"):
+    def populate(self, cEddy=1.0, method="random"):
 
         if self.sigma_interp is None:
             raise ValueError(
                 "Please set your flow data before trying to populate your domain"
             )
 
-        self.eddy_pop_method = method
+        self.eddyPopMethod = method
 
         # generate eddy volume
         if method == "random":
             # Set the extents of the eddy volume in x,y,z
             lows = [
-                0.0 - self.sigma_x_max,
-                0.0 - self.sigma_y_max,
-                0.0 - self.sigma_z_max,
+                0.0 - self.sigmaXMax,
+                0.0 - self.sigmaYMax,
+                0.0 - self.sigmaZMax,
             ]
-            if self.flow_type in ["channel", "freeshear"]:
+            if self.flowType in ["channel", "freeshear"]:
                 highs = [
-                    self.x_length + self.sigma_x_max,
-                    self.y_height + self.sigma_y_max,
-                    self.z_width + self.sigma_z_max,
+                    self.xLength + self.sigmaXMax,
+                    self.yHeight + self.sigmaYMax,
+                    self.zWidth + self.sigmaZMax,
                 ]
-            elif self.flow_type == "bl":
+            elif self.flowType == "bl":
                 highs = [
-                    self.x_length + self.sigma_x_max,
-                    self.delta + self.sigma_y_max,
-                    self.z_width + self.sigma_z_max,
+                    self.xLength + self.sigmaXMax,
+                    self.delta + self.sigmaYMax,
+                    self.zWidth + self.sigmaZMax,
                 ]
             # Compute number of eddys
             VB = np.product(np.array(highs) - np.array(lows))
-            neddy = int(C_Eddy * VB / self.V_sigma_min)
+            neddy = int(cEddy * VB / self.vSigmaMin)
             # Generate random eddy locations
-            self.eddy_locs = self.randseed.uniform(
-                low=lows, high=highs, size=(neddy, 3)
-            )
+            self.eddyLocs = self.randseed.uniform(low=lows, high=highs, size=(neddy, 3))
 
         elif method == "PDF":
             # Set the extents of the eddy volume in x,y,z
             lows = [
-                0.0 - self.sigma_x_max,
-                0.0 - np.max(self.sigma_interp(0.0)[:, 1]),
-                0.0 - self.sigma_z_max,
+                0.0 - self.sigmaXMax,
+                0.0 - np.max(self.sigmaInterp(0.0)[:, 1]),
+                0.0 - self.sigmaZMax,
             ]
-            if self.flow_type in ["channel", "freeshear"]:
+            if self.flowType in ["channel", "freeshear"]:
                 highs = [
-                    self.x_length + self.sigma_x_max,
-                    self.y_height + np.max(self.sigma_interp(self.y_height)[:, 1]),
-                    self.z_width + self.sigma_z_max,
+                    self.xLength + self.sigmaXMax,
+                    self.yHeight + np.max(self.sigmaInterp(self.yHeight)[:, 1]),
+                    self.zWidth + self.sigmaZMax,
                 ]
-            elif self.flow_type == "bl":
+            elif self.flowType == "bl":
                 highs = [
-                    self.x_length + self.sigma_x_max,
-                    self.delta + np.max(self.sigma_interp(self.delta)[:, 1]),
-                    self.z_width + self.sigma_z_max,
+                    self.xLength + self.sigmaXMax,
+                    self.delta + np.max(self.sigmaInterp(self.delta)[:, 1]),
+                    self.zWidth + self.sigmaZMax,
                 ]
             # Eddy heights as a function of y
-            test_ys = np.linspace(lows[1], highs[1], 200)
-            test_sigmas = self.sigma_interp(test_ys)
+            testYs = np.linspace(lows[1], highs[1], 200)
+            testSigmas = self.sigmaInterp(testYs)
             # Smallest eddy volume
-            V_eddy = np.min(np.product(test_sigmas, axis=1), axis=1)
+            vEddy = np.min(np.product(testSigmas, axis=1), axis=1)
             # Find the smallest eddy V and largest eddy V
-            V_eddy_min = V_eddy.min()
-            V_eddy_max = V_eddy.max()
+            vEddyMin = vEddy.min()
+            vEddyMax = vEddy.max()
             # This ratio sets how much more likely the small eddy placement is compared to the large eddy placement
-            V_ratio = V_eddy_max / V_eddy_min
+            vRatio = vEddyMax / vEddyMin
             # Flip and shift so largest eddy sits on zero
-            V_eddy_prime = -(V_eddy - V_eddy_min) + (V_eddy_max - V_eddy_min)
+            vEddyPrime = -(vEddy - vEddyMin) + (vEddyMax - vEddyMin)
 
             # Rescale so lowest point is equal to one
-            V_eddy_prime = (V_eddy_prime / V_eddy_max) * V_ratio + 1.0
-            V_eddy_norm = integrate.trapz(V_eddy_prime, test_ys)
+            vEddyPrime = (vEddyPrime / vEddyMax) * vRatio + 1.0
+            vEddyNorm = integrate.trapz(vEddyPrime, testYs)
             # Create a PDF of eddy placement in y by normalizing pdf integral
-            pdf = V_eddy_prime / V_eddy_norm
+            pdf = vEddyPrime / vEddyNorm
             # Compute average eddy volume
-            expected_Veddy = integrate.trapz(pdf * V_eddy, test_ys)
+            expectedVeddy = integrate.trapz(pdf * vEddy, testYs)
             # Compute neddy
             VB = np.product(np.array(highs) - np.array(lows))
-            neddy = int(C_Eddy * VB / expected_Veddy)
+            neddy = int(cEddy * VB / expectedVeddy)
             # Create bins for placing eddys in y
-            dy = np.abs(test_ys[1] - test_ys[0])
-            bin_centers = 0.5 * (test_ys[1::] + test_ys[0:-1])
-            bin_pdf = 0.5 * (pdf[1::] + pdf[0:-1]) * dy
+            dy = np.abs(testYs[1] - testYs[0])
+            binCenters = 0.5 * (testYs[1::] + testYs[0:-1])
+            binPdf = 0.5 * (pdf[1::] + pdf[0:-1]) * dy
             # place neddys in bins according to pdf
-            bin_loc = self.randseed.choice(
-                np.arange(bin_pdf.shape[0]), p=bin_pdf, size=neddy
+            binLoc = self.randseed.choice(
+                np.arange(binPdf.shape[0]), p=binPdf, size=neddy
             )
 
             # create y values for eddys
             # can only generate values at bin centers, so we add a random value to randomize y placement within the bin
-            eddy_ys = np.take(bin_centers, bin_loc) + self.randseed.uniform(
+            eddyYs = np.take(binCenters, binLoc) + self.randseed.uniform(
                 low=-dy / 2.0, high=dy / 2.0, size=neddy
             )
 
             # Generate random eddy locations for their x and z locations
-            self.eddy_locs = self.randseed.uniform(
-                low=lows, high=highs, size=(neddy, 3)
-            )
+            self.eddyLocs = self.randseed.uniform(low=lows, high=highs, size=(neddy, 3))
             # Replace ys with PDF ys
-            self.eddy_locs[:, 1] = eddy_ys
+            self.eddyLocs[:, 1] = eddyYs
 
         else:
             raise NameError(f"Unknown population method : {method}")
 
         # Now, we remove all eddies whose volume of influence lies completely outside the geometry.
-        temp_sigmas = self.sigma_interp(self.eddy_locs[:, 1])
-        keep_eddys = np.where(
-            (self.eddy_locs[:, 0] + np.max(temp_sigmas[:, :, 0], axis=1) > 0.0)
-            & (
-                self.eddy_locs[:, 0] - np.max(temp_sigmas[:, :, 0], axis=1)
-                < self.x_length
-            )
-            & (self.eddy_locs[:, 1] + np.max(temp_sigmas[:, :, 1], axis=1) > 0.0)
-            & (
-                self.eddy_locs[:, 1] - np.max(temp_sigmas[:, :, 1], axis=1)
-                < self.y_height
-            )
-            & (self.eddy_locs[:, 2] + np.max(temp_sigmas[:, :, 2], axis=1) > 0.0)
-            & (
-                self.eddy_locs[:, 2] - np.max(temp_sigmas[:, :, 2], axis=1)
-                < self.z_width
-            )
+        tempSigmas = self.sigmaInterp(self.eddyLocs[:, 1])
+        keepEddys = np.where(
+            (self.eddyLocs[:, 0] + np.max(tempSigmas[:, :, 0], axis=1) > 0.0)
+            & (self.eddyLocs[:, 0] - np.max(tempSigmas[:, :, 0], axis=1) < self.xLength)
+            & (self.eddyLocs[:, 1] + np.max(tempSigmas[:, :, 1], axis=1) > 0.0)
+            & (self.eddyLocs[:, 1] - np.max(tempSigmas[:, :, 1], axis=1) < self.yHeight)
+            & (self.eddyLocs[:, 2] + np.max(tempSigmas[:, :, 2], axis=1) > 0.0)
+            & (self.eddyLocs[:, 2] - np.max(tempSigmas[:, :, 2], axis=1) < self.zWidth)
         )
-        self.eddy_locs = self.eddy_locs[keep_eddys]
+        self.eddy_locs = self.eddy_locs[keepEddys]
