@@ -25,6 +25,7 @@ from scipy.io import FortranFile
 import os
 import sys
 import matplotlib as mpl
+import mpl.animation.FuncAnimation
 import matplotlib.pyplot as plt
 
 input_file = sys.argv[1]
@@ -217,7 +218,7 @@ cb = plt.colorbar(
 )
 
 
-anim = mpl.animation.FuncAnimation(
+anim = FuncAnimation(
     fig, animate, frames=seminp["nframes"] - 1, fargs=(TriU, "u"), repeat=False
 )
 try:
