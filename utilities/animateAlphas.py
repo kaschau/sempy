@@ -17,14 +17,15 @@ Example
 
 """
 
-import peregrinepy as pg
-import numpy as np
-from scipy.io import FortranFile
 import os
 import sys
+
 import matplotlib as mpl
-from mpl.animation import FuncAnimation
 import matplotlib.pyplot as plt
+import numpy as np
+import peregrinepy as pg
+import yaml
+from mpl.animation import FuncAnimation
 
 inputFile = sys.argv[1]
 
@@ -36,28 +37,8 @@ if not os.path.exists(outputDir):
 ###############################################################################
 # Read in SEM parameters
 ###############################################################################
-# The zeroth rank will read in the input file and give it to the other ranks
-seminp = dict()
 with open(inputFile, "r") as f:
-    for line in [
-        i
-        for i in f.readlines()
-        if not i.replace(" ", "").startswith("#") and i.strip() != ""
-    ]:
-        nocomment = line.strip().split("#")[0]
-        key, val = tuple(nocomment.replace(" ", "").split("="))
-        try:  # convert numbers to floats or ints
-            if "." in val:
-                seminp[key] = float(val)
-            else:
-                seminp[key] = int(val)
-        except ValueError:
-            if val in ["True", "true", "t", "T"]:
-                seminp[key] = True
-            elif val in ["False", "true", "f", "F"]:
-                seminp[key] = False
-            else:
-                seminp[key] = val
+    seminp = yaml.load(f, Loader=yaml.FullLoader)
 
 ###############################################################################
 # Read in patches.txt
@@ -89,50 +70,40 @@ pg.readers.readGrid(mb, seminp["gridPath"])
 if seminp["flipdom"]:
     for bn in blockNum:
         blk = mb[bn - 1]
-        blk.y = -blk.y
-        blk.z = -blk.z
+        blk.array["y"] = -blk.array["y"]
+        blk.array["z"] = -blk.array["z"]
 # Determinw the extents the grid needs to be shifted
 ymin = np.inf
 zmin = np.inf
 for bn in blockNum:
     blk = mb[bn - 1]
-    ymin = min(ymin, blk.y[:, :, 0].min())
-    zmin = min(zmin, blk.z[:, :, 0].min())
+    ymin = min(ymin, blk.array["y"][0, :, :].min())
+    zmin = min(zmin, blk.array["z"][0, :, :].min())
 # Now shift the grid to match the domain (0,0) starting point
 for bn in blockNum:
     blk = mb[bn - 1]
-    blk.y = blk.y - ymin
-    blk.z = blk.z - zmin
-# Compute the locations of face centers
-mb.computeMetrics(fdOrder=2, xcOnly=True)
+    blk.array["y"] = blk.array["y"] - ymin
+    blk.array["z"] = blk.array["z"] - zmin
+    # Compute the locations of face centers
+    mb.computeMetrics(fdOrder=2)
 
 ###############################################################################
 # Build the plotting surfaces
 ###############################################################################
 
-uy = np.array([])
-uz = np.array([])
-vy = np.array([])
-vz = np.array([])
-wy = np.array([])
-wz = np.array([])
+y = np.array([])
+z = np.array([])
 
 ny = []
 nz = []
 for bn in blockNum:
     blk = mb[bn - 1]
-    uy = np.concatenate((uy, blk.yu[:, :, 0].ravel()))
-    uz = np.concatenate((uz, blk.zu[:, :, 0].ravel()))
-    vy = np.concatenate((vy, blk.yv[:, :, 0].ravel()))
-    vz = np.concatenate((vz, blk.zv[:, :, 0].ravel()))
-    wy = np.concatenate((wy, blk.yw[:, :, 0].ravel()))
-    wz = np.concatenate((wz, blk.zw[:, :, 0].ravel()))
-    ny.append(blk.ny)
-    nz.append(blk.nz)
+    y = np.concatenate((y, blk.array["iyu"][0, :, :].ravel()))
+    z = np.concatenate((z, blk.array["izu"][0, :, :].ravel()))
+    ny.append(blk.nj)
+    nz.append(blk.nk)
 
-TriU = mpl.tri.Triangulation(uz, uy)
-TriV = mpl.tri.Triangulation(vz, vy)
-TriW = mpl.tri.Triangulation(wz, wy)
+tri = mpl.tri.Triangulation(z, y)
 
 ###############################################################################
 # Function to read in frames
@@ -200,8 +171,8 @@ ax.set_aspect("equal")
 alphas = getFrame(1, "u")
 levels = np.linspace(0, alphas.max(), 100)
 ticks = np.linspace(0, alphas.max(), 11)
-tcf = ax.tricontourf(TriU, np.zeros(alphas.shape), levels=levels)
-ratio = uy.max() / uz.max()
+tcf = ax.tricontourf(tri, np.zeros(alphas.shape), levels=levels)
+ratio = y.max() / z.max()
 cb = plt.colorbar(
     tcf,
     ticks=ticks,
@@ -212,7 +183,7 @@ cb = plt.colorbar(
 
 
 anim = FuncAnimation(
-    fig, animate, frames=seminp["nframes"] - 1, fargs=(TriU, "u"), repeat=False
+    fig, animate, frames=seminp["nframes"] - 1, fargs=(tri, "u"), repeat=False
 )
 try:
     anim.save("U.mp4", writer=mpl.animation.FFMpegWriter(fps=10))
@@ -236,8 +207,6 @@ alphas = getFrame(1, "v")
 symm = max(alphas.max(), abs(alphas.min()))
 levels = np.linspace(-symm, symm, 100)
 ticks = np.linspace(-symm, symm, 11)
-tcf = ax.tricontourf(TriV, alphas, levels=levels)
-ratio = vy.max() / vz.max()
 cb = plt.colorbar(
     tcf, ticks=ticks, fraction=0.046 * ratio, pad=0.05, label=r"$v^{\prime}$"
 )
@@ -247,7 +216,7 @@ anim = mpl.animation.FuncAnimation(
     animate,
     frames=seminp["nframes"] - 1,
     fargs=(
-        TriV,
+        tri,
         "v",
     ),
     repeat=False,
@@ -274,8 +243,6 @@ symm = max(alphas.max(), abs(alphas.min()))
 symm = float(f"{symm:.2e}")
 levels = np.linspace(-symm, symm, 100)
 ticks = np.linspace(-symm, symm, 11)
-tcf = ax.tricontourf(TriW, np.zeros(alphas.shape), levels=levels)
-ratio = wy.max() / wz.max()
 cb = plt.colorbar(
     tcf, ticks=ticks, fraction=0.046 * ratio, pad=0.05, label=r"$w^{\prime}$"
 )
@@ -285,7 +252,7 @@ anim = mpl.animation.FuncAnimation(
     animate,
     frames=seminp["nframes"] - 1,
     fargs=(
-        TriW,
+        tri,
         "w",
     ),
     repeat=False,
