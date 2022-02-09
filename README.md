@@ -16,7 +16,7 @@ With sempy, you generate an entire signal at a single (y,z) point on the inlet p
 
 ![All Eddys Line](./References/readme/all_eddy_line.png)
 
-One way we get performance savings is by filtering out all eddys that do not effect any points on this line. We can find this out using the eddy sigma values. All points whos sigmas do not extend across this line will not contribute to this point's fluctiation signal.
+One way we get performance savings is by filtering out all eddys that do not effect any points on this line. We can find this out using the eddy sigma values. All points in which sigmas do not extend across this line will not contribute to this point's fluctuation signal.
 
 ![Line Eddys](./References/readme/line_eddy.png)
 

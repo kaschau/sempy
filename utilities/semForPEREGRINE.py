@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 
 """This utility generates files full of cubic spline coefficients representing a turbulent signal
-that can be applied at the inlet of a RAPTOR simulation. Just call this utility with
+that can be applied at the inlet of a PEREGRINE simulation. Just call this utility with
 an input file. There must also be a file where this utility is run called : patches.txt
-This patches.txt maps the patch number to a RAPTOR block number. The format of the file is
+This patches.txt maps the patch number to a PEREGRINE block number. The format of the file is
    Patch #, Block #
 Where each line represents a patch<=>block pair.
 
 Example
 -------
-/path/to/sempy/utilities/sem4raptor.py <sem.inp>
+/path/to/sempy/utilities/semForPEREGRINE.py <sem.yaml>
 
 The output is a directory with the name of your input file, +'_alphas' full of your alpha coeffs.
 
@@ -18,7 +18,7 @@ You can also run this utility in parallel, just use mpiexec
 
 Example
 -------
-mpiexec -np <np> /path/to/sempy/utilities/sem4raptor.py <sem.inp>
+mpiexec -np <np> /path/to/sempy/utilities/semForPEREGRINE.py <sem.yaml>
 
 """
 
@@ -45,9 +45,9 @@ if rank == 0:
         pass
     else:
         os.makedirs(outputDir)
-############################################################################################
+###############################################################################
 # Read in SEM parameters
-############################################################################################
+###############################################################################
 # The zeroth rank will read in the input file and give it to the other ranks
 if rank == 0:
     with open(inputFile, "r") as f:
@@ -56,15 +56,9 @@ else:
     seminp = None
 seminp = comm.bcast(seminp, root=0)
 
-if seminp["nframes"] > 9999:
-    raise ValueError(
-        "Error: Currently, the interpolation procedure in RAPTOR is only setup for nframes < 9999"
-    )
-
-
-############################################################################################
+###############################################################################
 # Create the domain based on above inputs
-############################################################################################
+###############################################################################
 # Initialize domain
 domain = sempy.geometries.box(
     seminp["domainType"],
@@ -109,9 +103,9 @@ tempNeddy = comm.bcast(tempNeddy, root=0)
 if rank != 0:
     domain._neddy = tempNeddy
 
-############################################################################################
+###############################################################################
 # Read in patches.txt
-############################################################################################
+###############################################################################
 # Only the zeroth rank reads in patches.txt
 if rank == 0:
     patchNum = []
@@ -126,7 +120,8 @@ if rank == 0:
     # Now we assign patches to ranks
     if size > npatches:
         print(
-            "\n\nFYI, patches are assigned to processors, so using more processors than patches gives you no performace increase.\n\n"
+            "\n\nFYI, patches are assigned to processors, so using more\n",
+            "processors than patches gives you no performace increase.\n\n",
         )
         maxRanksPerBlock = 1
     else:
@@ -151,9 +146,9 @@ else:
     myPatchNums = comm.recv(source=0, tag=11)
 
 
-############################################################################################
+###############################################################################
 # PEREGRINE stuff (read in grid and make the patches)
-############################################################################################
+###############################################################################
 # Only rank ones reads in the grid
 if rank == 0:
     nblks = len(
@@ -167,7 +162,7 @@ if rank == 0:
         raise ValueError(f'Cant find any grid files in {seminp["gridPath"]}')
 
     mb = pg.multiBlock.grid(nblks)
-    pg.readers.read_raptor_grid(mb, seminp["gridPath"])
+    pg.readers.readGrid(mb, seminp["gridPath"])
     # Flip the grid if it is oriented upside down in the true grid
     if seminp["flipdom"]:
         for bn in blockNum:
@@ -189,7 +184,8 @@ if rank == 0:
         # Compute the locations of face centers
         blk.computeMetrics(fdOrder=2)
 
-# Progress bar gets messsy with all the blocks, so we only show progress with rank 0
+# Progress bar gets messsy with all the blocks,
+# so we only show progress with rank 0
 if rank == 0:
     progress = True
 else:
@@ -199,22 +195,21 @@ if progress:
     # Print out a summarry
     print(domain)
     print(
-        f'Generating signal that is {seminp["totalTime"]} [s] long, with {seminp["nframes"]} frames using {seminp["convect"]} convection speed.\n'
+        f'Generating signal that is {seminp["totalTime"]} [s] long,\n',
+        f'with {seminp["nframes"]} frames\n',
+        f'using {seminp["convect"]} convection speed.\n',
     )
     print(
-        "\n*******************************************************************************"
-    )
-    print(
-        "**************************** Generating Primes ********************************"
-    )
-    print(
-        "*******************************************************************************\n"
+        "***********************************\n",
+        "******* Generating Primes *********\n",
+        "***********************************\n",
     )
 
 for i, pn in enumerate(myPatchNums):
     if rank != 0 and pn is None:
         continue
-    # If we are the zeroth block, then we compute and send the patches to all the other blocks
+    # If we are the zeroth block, then we compute and
+    # send the patches to all the other blocks
     if rank == 0:
         for sendRank in [j + 1 for j in range(size - 1)]:
             sendPatchNum = allRankPatches[sendRank][i]
@@ -225,8 +220,10 @@ for i, pn in enumerate(myPatchNums):
             # Create the patch for this block
             yc = blk.array["iyc"][0, :, :]
             zc = blk.array["izc"][0, :, :]
-            # We want to filter out all eddys that are not possibly going to contribute to this set of ys and zs
-            # we are going to refer to the bounding box that encapsulates ALL y,z pairs ad the 'domain' or 'dom'
+            # We want to filter out all eddys that are not
+            # possibly going to contribute to this set of ys and zs
+            # we are going to refer to the bounding box that
+            # encapsulates ALL y,z pairs ad the 'domain' or 'dom'
             patchYmin = yc.min()
             patchYmax = yc.max()
             patchZmin = zc.min()
@@ -271,10 +268,7 @@ for i, pn in enumerate(myPatchNums):
 
     print(f"Rank {rank} is working on patch #{pn}")
     # Now everyone generates their primes like usual
-    if progress:
-        print(
-            "******************************* Generating u' *********************************"
-        )
+
     up, vp, wp = sempy.generate_primes(
         yc,
         zc,
@@ -287,8 +281,9 @@ for i, pn in enumerate(myPatchNums):
         progress=progress,
     )
 
-    # For a periodic spline boundary conditions, the end values must be within machine precision, these
-    # end values should already be close, but just in case we set them to identical.
+    # For a periodic spline boundary conditions, the end values must be within
+    # machine precision, these end values should already be close, but just in
+    # case we set them to identical.
     if seminp["periodicX"]:
         up[-1, :, :] = up[0, :, :]
         vp[-1, :, :] = vp[0, :, :]
@@ -311,6 +306,7 @@ for i, pn in enumerate(myPatchNums):
     for interval in range(seminp["nframes"] - 1):
         fileName = outputDir + "/alphas_{:06d}_{:04d}".format(pn, interval + 1)
         with open(fileName, "w") as f:
+            #  shape =      4      1     ny nz
             np.save(f, fu.c[:, interval, :, :])
             np.save(f, fv.c[:, interval, :, :])
             np.save(f, fw.c[:, interval, :, :])

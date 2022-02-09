@@ -9,7 +9,7 @@ value to, and return a [3x3] numpy array of the Reynolds Stress Tensor at that y
 The name of this function MUST be *add_stats()*
 
 These profiles are meant to be specific for a specific case, as in, no non-dimensionalization.
-It takes in a constructed domiain, with set flow properties (Ublk, utau, viscosity, 
+It takes in a constructed domiain, with set flow properties (Uo, utau, viscosity, 
 delta, etc.) and builds an interpolation routine for that specific flow feature.
 
 Also included here are profiles from DNS or experiment for comparison. The format for these files
