@@ -74,7 +74,8 @@ class box(domain):
             # Find the smallest eddy V and largest eddy V
             vEddyMin = vEddy.min()
             vEddyMax = vEddy.max()
-            # This ratio sets how much more likely the small eddy placement is compared to the large eddy placement
+            # This ratio sets how much more likely the small eddy placement
+            # is compared to the large eddy placement
             vRatio = vEddyMax / vEddyMin
             # Flip and shift so largest eddy sits on zero
             vEddyPrime = -(vEddy - vEddyMin) + (vEddyMax - vEddyMin)
@@ -99,7 +100,8 @@ class box(domain):
             )
 
             # create y values for eddys
-            # can only generate values at bin centers, so we add a random value to randomize y placement within the bin
+            # can only generate values at bin centers, so we add a random value
+            # to randomize y placement within the bin
             eddyYs = np.take(binCenters, binLoc) + self.randseed.uniform(
                 low=-dy / 2.0, high=dy / 2.0, size=neddy
             )
@@ -112,7 +114,8 @@ class box(domain):
         else:
             raise NameError(f"Unknown population method : {method}")
 
-        # Now, we remove all eddies whose volume of influence lies completely outside the geometry.
+        # Now, we remove all eddies whose volume of influence lie
+        # completely outside the geometry.
         tempSigmas = self.sigmaInterp(self.eddyLocs[:, 1])
         keepEddys = np.where(
             (self.eddyLocs[:, 0] + np.max(tempSigmas[:, :, 0], axis=1) > 0.0)

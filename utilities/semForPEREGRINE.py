@@ -22,13 +22,14 @@ mpiexec -np <np> /path/to/sempy/utilities/semForPEREGRINE.py <sem.yaml>
 
 """
 
-from mpi4py import MPI
-import sys
 import os
+import sys
+
+import numpy as np
 import peregrinepy as pg
 import sempy
-import numpy as np
 import yaml
+from mpi4py import MPI
 from scipy import interpolate as itrp
 
 inputFile = sys.argv[1]

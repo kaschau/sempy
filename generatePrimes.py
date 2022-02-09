@@ -1,9 +1,9 @@
-import sys
 import numpy as np
 from scipy import interpolate as itrp
-from .misc import progressBar
+
 from . import normalization as norm
 from . import shapeFuncs
+from .misc import progressBar
 
 
 def generatePrimes(
@@ -20,17 +20,22 @@ def generatePrimes(
     """
     Generate Primes Function
 
-    Routine to march down the length (time-line) of mega-box at specified (y,z) coordinate points, stopping along the way
-    to calculate the fluctuations at each time point. To improve performace, we first filter out all the eddy in domain
-    that cannot possibly contribute to the group of (y,z) points provided based on the eddy's sigmas in y and z.
+    Routine to march down the length (time-line) of mega-box at specified (y,z)
+    coordinate points, stopping along the way to calculate the fluctuations at
+    each time point. To improve performace, we first filter out all the eddy in
+    domain that cannot possibly contribute to the group of (y,z) points
+    provided based on the eddy's sigmas in y and z.
 
-    Further, for each (y,z) pair we want to compute a signal for, we filter out the eddys that cannot possible contribute
-    to the current (y,z) point's time line, again based on the eddy's sigmas in y and z.
+    Further, for each (y,z) pair we want to compute a signal for, we filter
+    out the eddys that cannot possible contribute to the current (y,z) point's
+    time line, again based on the eddy's sigmas in y and z.
 
-    Finally, we can filter out the eddys that do not contribute to an individual point as we march down the time line
-    based on the reduced set of eddy's sigmas in x.
+    Finally, we can filter out the eddys that do not contribute to an
+    individual point as we march down the time line based on the reduced set of
+    eddy's sigmas in x.
 
-    With this very reduced set of eddys that contribute to a point, we compute the fluctuation for that point.
+    With this very reduced set of eddys that contribute to a point, we compute
+    the fluctuation for that point.
 
 
     Parameters:
@@ -47,28 +52,32 @@ def generatePrimes(
             String corresponding to the method of normalizing the signal.
             Available options are:
                'jarrin' : Approximates an integral with Vbox/(neddy*V_eddy)
-               'exact'  : Produce exact statistics by bending the signal to your will
+               'exact'  : Produce exact statistics by bending the signal to
+                          your will
                'none'   : Return the raw sum of the eddys for each point
       interpolation : bool
-            T/F flag to determine whether your frame rate is high enough to approximate the
-            continuous signal, thus no significalt loss of statistics, or if you plan to interpolate
-            between frames. If True, a time signal is "pre-interpolated" and statistics are imposed
-            on that pre-interpolated signal, then just the frame values are returned. If False, nothing
-            is done
+            T/F flag to determine whether your frame rate is high enough to
+            approximate the continuous signal, thus no significalt loss of
+            statistics, or if you plan to interpolate between frames. If True,
+            a time signal is "pre-interpolated" and statistics are imposed
+            on that pre-interpolated signal, then just the frame values are
+            returned. If False, nothing is done
       convect : str
             String corresponding to the method of convection through the flow.
             Current options are:
                'uniform' : Convect through mega-volume at Uo everywhere
-               'local'   : Convect through mega-volume at local convective speed based on domain.Ubar_interp(y)
+               'local'   : Convect through mega-volume at local convective
+                           speed based on domain.Ubar_interp(y)
       progress : bool
             Whether to display progress bar
 
     Returns:
     --------
         up,vp,wp : numpy.arrrays
-            Fluctuation result arrays of shape ( (nframes, shape(y)) ). First axis is 'time', second axis is the
-            shape of the input ys and zs arrays.
-            So up[0] is the corresponding u fluctiations at all the y,z points for the first frame.
+            Fluctuation result arrays of shape ( (nframes, shape(y)) ).
+            First axis is 'time', second axis is the shape of the input ys and
+            zs arrays. So up[0] is the corresponding u fluctiations at all the
+            y,z points for the first frame.
     """
 
     # check if we have eddys or not
@@ -80,11 +89,14 @@ def generatePrimes(
     # Check that nframes is large enough with exact normalization
     if 3 < nframes < 10 and normalization == "exact":
         print(
-            "WARNING: You are using exact normalization with very few framses. Weird things may happen. Consider using jarrin normalization or increasing number of framses."
+            "WARNING: You are using exact normalization with very few framses.\n",
+            "Weird things may happen. Consider using jarrin normalization\n",
+            "or increasing number of framses.\n",
         )
     elif nframes <= 3 and normalization == "exact":
         raise RuntimeError(
-            "Need more frames to use exact normaliation, consider using jarrin or creating more frames."
+            "Need more frames to use exact normaliation,\n",
+            "consider using jarrin or creating more frames.\n",
         )
 
     # Check ys and zs are the same shape
@@ -103,7 +115,8 @@ def generatePrimes(
         or zs.max() > 1.0001 * domain.zWidth
     ):
         raise ValueError(
-            "Woah there, some of your points you are trying to calculate fluctuations for are completely outside your domain!"
+            "Woah there, some of your points you are trying to calculate\n",
+            "fluctuations for are completely outside your domain!",
         )
 
     # store the input array shape and then flatten the yz pairs
@@ -111,8 +124,9 @@ def generatePrimes(
     ys = ys.ravel()
     zs = zs.ravel()
 
-    # We want to filter out all eddys that are not possibly going to contribute to this set of ys and zs
-    # we are going to refer to the bounding box that encapsulates ALL y,z pairs of the current 'patch'
+    # We want to filter out all eddys that are not possibly going to
+    # contribute to this set of ys and zs we are going to refer to
+    # the bounding box that encapsulates ALL y,z pairs of the current 'patch'
     patchYmin = ys.min()
     patchYmax = ys.max()
     patchZmin = zs.min()
@@ -152,8 +166,8 @@ def generatePrimes(
         if progress:
             progressBar(i + 1, total, "Generating Primes")
 
-        # Find eddies that contribute on the current y,z line. This search is done on the reduced set of
-        # eddys filtered on the "patch"
+        # Find eddies that contribute on the current y,z line. This search
+        # is done on the reduced set of eddys filtered on the "patch"
         eddysOnLine = np.where(
             (np.abs(eddyLocsInPatch[:, 1] - y) < np.max(sigmasInPatch[:, :, 1], axis=1))
             & (
@@ -165,8 +179,10 @@ def generatePrimes(
         sigmasOnLine = sigmasInPatch[eddysOnLine]
         epsOnLine = epsInPatch[eddysOnLine]
 
-        # We want to know if an entire line has zero eddys, this will be annoying for BL in the free stream
-        # so we will only print out a warning for the BL cases if the value of y is below the BL thickness
+        # We want to know if an entire line has zero eddys, this will
+        # be annoying for BL in the free stream so we will only print
+        # out a warning for the BL cases if the value of y is below the
+        # BL thickness
         if len(eddyLocsOnLine) == 0:
             zeroOnline = True
             if domain.flowType != "bl" or y < domain.delta:
@@ -193,33 +209,37 @@ def generatePrimes(
             continue
 
         if convect == "local":
-            # We need each eddys individual Ubar for the offset calculated below
+            # We need each eddys individual Ubar for the offset
+            # calculated below
             localEddyUbar = domain.ubarInterp(eddyLocsOnLine[:, 1])
 
         # Travel down line at this y,z location
         for j, x in enumerate(xs):
-            zeroOnpoint = False
 
             if convect == "local":
-                # This may be tough to explain, but just draw it out for yourself and you'll
-                # figure it out:
+                # This may be tough to explain, but just draw it out for
+                # yourself and you'll figure it out:
 
                 # If we want each eddy to convect with its own local velocity
-                # instead of the Uo velocity, it is not enough to just traverse through the
-                # mega box at the profile Ubar for the current location's y height. This is
-                # because the eddys located slightly above/below the location we are
+                # instead of the Uo velocity, it is not enough to just traverse
+                # through the mega box at the profile Ubar for the current
+                # location's y height. This is because the eddys located
+                # slightly above/below the location we are
                 # traversing down (that contribute to fluctuations) are
-                # moving at different speeds than our current point of interest. So we need to
-                # calculate an offset to account for that fact that as we have traversed through the
-                # domain at the local convective speed, the faster eddys will approach
-                # us slightly more quickly, while the slower eddys
-                # will approach us more slowly. This x offset will account for that and is merely the difference
-                # in convection speeds between the current line we are traversing down, and the speeds of
-                # the individual eddys.
+                # moving at different speeds than our current point of
+                # interest. So we need to calculate an offset to account for
+                # that fact that as we have traversed through the
+                # domain at the local convective speed, the faster eddys will
+                # approach us slightly more quickly, while the slower eddys
+                # will approach us more slowly. This x offset will account for
+                # that and is merely the difference in convection speeds
+                # between the current line we are traversing down, and the
+                # speeds of the individual eddys.
                 xOffset = (localUbar - localEddyUbar) / localUbar * x
             else:
-                # If all the eddys convect at the same speed, then traversing through the mega box at Uo
-                # is identical so the eddys convecting by us at Uo, so there is no need to offset any
+                # If all the eddys convect at the same speed, then traversing
+                # through the mega box at Uo is identical so the eddys
+                # convecting by us at Uo, so there is no need to offset any
                 # eddy positions
                 xOffset = np.zeros(eddyLocsOnLine.shape[0])
 
@@ -247,8 +267,8 @@ def generatePrimes(
             # Collect sigmas from all contributing points
             sigmasOnPoint = sigmasOnLine[eddysOnPoint]
 
-            # Compute the fluctuation contributions of each eddy, for each component
-            # via a "shape function"
+            # Compute the fluctuation contributions of each eddy, for each
+            # component via a "shape function"
             if shape == "tent":
                 fx = shapeFuncs.tent(dists, sigmasOnPoint)
                 if shapeFuncs.tent.empty:
@@ -265,7 +285,8 @@ def generatePrimes(
             # multiply each eddys function/component by its sign
             primesNoNorm[j, :] = np.sum(epsOnLine[eddysOnPoint] * fx, axis=0)
 
-        # We will warn the user if we detect more that 10 empty points along this line.a
+        # We will warn the user if we detect more than
+        # 10 empty points along this line.
         if emptyPts > 10:
             print(
                 f"Warning, {emptyPts} points with zero fluctuations detected at y={y},z={z}\n"
@@ -276,12 +297,13 @@ def generatePrimes(
         # series at this (y.z) locaiton
         ################################################################
 
-        # If we are planning on interpolating the signal for a simulaiton, we need to
-        # approximate the interpolation here, then normalize the interpolated signal.
-        # Otherwise the stats of the interpolated signal in situ will under represent the
-        # desired statistics.
+        # If we are planning on interpolating the signal for a simulaiton,
+        # we need to approximate the interpolation here, then normalize the
+        # interpolated signal. Otherwise the stats of the interpolated signal
+        # in situ will under represent the desired statistics.
         if interpolate:
-            # Current we approximate with 10 points between frames. Could be experimented with
+            # Current we approximate with 10 points between frames.
+            # Could be experimented with
             ptsBtwFrames = 10
             tempN = [j for j in range(nframes)]
             primesInterp = itrp.CubicSpline(
