@@ -10,5 +10,5 @@ components. See Jarrin thesis if you have no idea what that means.
 The name of this function MUST be *add_sigmas()*
 
 These profiles are meant to be specific for a specific case, as in, no non-dimensionalization.
-It takes in a constructed domiain, with set flow properties (Ublk, utau, viscosity, 
+It takes in a constructed domiain, with set flow properties (Uo, utau, viscosity, 
 delta, etc.) and builds an interpolation routine for that specific flow feature.

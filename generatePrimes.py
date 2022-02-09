@@ -276,9 +276,9 @@ def generatePrimes(
         # series at this (y.z) locaiton
         ################################################################
 
-        # If we are planning on interpolating the signal for a raptor simulaiton, we need to
+        # If we are planning on interpolating the signal for a simulaiton, we need to
         # approximate the interpolation here, then normalize the interpolated signal.
-        # Otherwise the stats of the interpolated signal in raptor will under represent the
+        # Otherwise the stats of the interpolated signal in situ will under represent the
         # desired statistics.
         if interpolate:
             # Current we approximate with 10 points between frames. Could be experimented with

@@ -38,7 +38,7 @@ flipdom: false             # Is your grid upside down?
 viscosity: 1.81e-5         # kinematic viscocity
 delta: 0.05                # channel half height or BL thickness
 utau: 0.21256278           # Friction velocity
-Ublk: 4.519722             # Channel centerline height or U_inf
+Uo: 4.519722             # Channel centerline height or U_inf
 
 ########################################################################
 ############################ SEM VALUES ################################
@@ -75,8 +75,7 @@ scaleFactor: 1.0           # Scale factor for modifying size of the eddys by a
                            # size when prescribing 'isotropic' for sigmasFrom
 
 ########################################################################
-############################ RAPTOR VALUES #############################
+######################### PEREGRINE VALUES #############################
 ########################################################################
 
-gridPath: ./              # Path to your raptor grid
-inpPath: ./dtms.inp       # Path to your case dtms.inp
+gridPath: ./Grid           # Path to your grid

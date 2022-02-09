@@ -2,45 +2,43 @@
 # -*- coding: utf-8 -*-
 
 """
-This utility plots the results of sem4raptor by plotting the U,v,w
+This utility plots the results of semForPEREGRINE by plotting the u,v,w
 components at the values of the frames, and creates animation
 videos of the results.
 
-Uses identical input file that was used in sem4raptor. Expects the alphas to be located
-in ./<sem4raptor.inp>_alphas
+Uses identical input file that was used in semForPEREGRINE. Expects the alphas to be located
+in ./<semForPEREGRINE.inp>_alphas
 
-Creats three videos, U.mp4, v.mp4, and w.mp4
-
-Plots are all non dimensional raptor values.
+Creats three videos, u.mp4, v.mp4, and w.mp4
 
 Example
 -------
-/path/to/sempy/utilities/animate_alphas.py <sem.inp>
+/path/to/sempy/utilities/animateAlphas.py <sem.inp>
 
 """
 
-import raptorpy as rp
+import peregrinepy as pg
 import numpy as np
 from scipy.io import FortranFile
 import os
 import sys
 import matplotlib as mpl
-import mpl.animation.FuncAnimation
+from mpl.animation import FuncAnimation
 import matplotlib.pyplot as plt
 
-input_file = sys.argv[1]
+inputFile = sys.argv[1]
 
 # Use the input file name as the alpha directory
-output_dir = input_file.split(".")[0] + "_alphas"
-if not os.path.exists(output_dir):
-    raise IOError(f"Cannot find your alpha files in the usual place, {output_dir}.")
+outputDir = inputFile.split(".")[0] + "_alphas"
+if not os.path.exists(outputDir):
+    raise IOError(f"Cannot find your alpha files in the usual place, {outputDir}.")
 
-############################################################################################
+###############################################################################
 # Read in SEM parameters
-############################################################################################
+###############################################################################
 # The zeroth rank will read in the input file and give it to the other ranks
 seminp = dict()
-with open(input_file, "r") as f:
+with open(inputFile, "r") as f:
     for line in [
         i
         for i in f.readlines()
@@ -61,9 +59,9 @@ with open(input_file, "r") as f:
             else:
                 seminp[key] = val
 
-############################################################################################
+###############################################################################
 # Read in patches.txt
-############################################################################################
+###############################################################################
 # Only the zeroth rank reads in patches.txt
 patchNum = []
 blockNum = []
@@ -75,18 +73,18 @@ with open("patches.txt", "r") as f:
 
 npatches = len(patchNum)
 
-############################################################################################
-# RAPTOR stuff (read in grid and make the patches)
-############################################################################################
+###############################################################################
+# PEREGRINE stuff (read in grid and make the patches)
+###############################################################################
 # Only rank ones reads in the grid
-nblks = len([f for f in os.listdir(seminp["grid_path"]) if f.startswith("g.")])
+nblks = len([f for f in os.listdir(seminp["gridPath"]) if f.startswith("g.")])
 if nblks == 0:
-    nblks = len([f for f in os.listdir(seminp["grid_path"]) if f == "grid"])
+    nblks = len([f for f in os.listdir(seminp["gridPath"]) if f == "grid"])
 if nblks == 0:
-    raise ValueError(f'Cant find any grid files in {seminp["grid_path"]}')
+    raise ValueError(f'Cant find any grid files in {seminp["gridPath"]}')
 
-mb = rp.multiblock.grid(nblks)
-rp.readers.read_raptor_grid(mb, seminp["grid_path"])
+mb = pg.multiBlock.grid(nblks)
+pg.readers.readGrid(mb, seminp["gridPath"])
 # Flip the grid if it is oriented upside down in the true grid
 if seminp["flipdom"]:
     for bn in blockNum:
@@ -105,14 +103,12 @@ for bn in blockNum:
     blk = mb[bn - 1]
     blk.y = blk.y - ymin
     blk.z = blk.z - zmin
-    # Compute the locations of face centers
-    blk.compute_U_face_centers()
-    blk.compute_V_face_centers()
-    blk.compute_W_face_centers()
+# Compute the locations of face centers
+mb.computeMetrics(fdOrder=2, xcOnly=True)
 
-############################################################################################
+###############################################################################
 # Build the plotting surfaces
-############################################################################################
+###############################################################################
 
 uy = np.array([])
 uz = np.array([])
@@ -138,31 +134,28 @@ TriU = mpl.tri.Triangulation(uz, uy)
 TriV = mpl.tri.Triangulation(vz, vy)
 TriW = mpl.tri.Triangulation(wz, wy)
 
-############################################################################################
+###############################################################################
 # Function to read in frames
-############################################################################################
+###############################################################################
 
 
 def getFrame(frame, comp):
     alphas = np.array([])
     for i, pn in enumerate(patchNum):
-        file_name = output_dir + "/alphas_{:06d}_{:04d}".format(pn, frame)
-        with FortranFile(file_name, "r") as f90:
+        fileName = outputDir + "/alphas_{:06d}_{:04d}".format(pn, frame)
+        with open(fileName, "rb") as f:
+            # The coefficients are in "reverse" order, i.e. the last
+            # of the four coefficients is the constant value at the
+            # t-t[i] frame location. So we just plot that.
             if comp == "u":
-                a = f90.read_reals(dtype=np.float64).reshape(4, nz[i] - 1, ny[i] - 1)[
-                    -1, :, :
-                ]
+                a = np.load(f)[-1, :, :]
             elif comp == "v":
-                _ = f90.read_reals(dtype=np.float64)
-                a = f90.read_reals(dtype=np.float64).reshape(4, nz[i] - 1, ny[i])[
-                    -1, :, :
-                ]
+                _ = np.load(f)
+                a = np.load(f)[-1, :, :]
             elif comp == "w":
-                _ = f90.read_reals(dtype=np.float64)
-                _ = f90.read_reals(dtype=np.float64)
-                a = f90.read_reals(dtype=np.float64).reshape(4, nz[i], ny[i] - 1)[
-                    -1, :, :
-                ]
+                _ = np.load(f)
+                _ = np.load(f)
+                a = np.load(f)[-1, :, :]
             else:
                 raise ValueError(f"Unknown component {comp}")
 
@@ -171,9 +164,9 @@ def getFrame(frame, comp):
     return alphas
 
 
-############################################################################################
+###############################################################################
 # Make plots
-############################################################################################
+###############################################################################
 if mpl.checkdep_usetex(True):
     plt.rc("text", usetex=True)
 plt.rc("font", family="serif")
@@ -195,9 +188,9 @@ def animate(i, Tri, comp):
     return tcf
 
 
-############################################################################################
+###############################################################################
 # Film u
-############################################################################################
+###############################################################################
 print("Animating U")
 fig, ax = plt.subplots()
 ax.set_xlabel(r"$z/L_{ref}$")
@@ -228,9 +221,9 @@ except FileNotFoundError:
 
 plt.cla()
 
-############################################################################################
+###############################################################################
 # Film v
-############################################################################################
+###############################################################################
 plt.rcParams["image.cmap"] = "seismic"
 print("Animating v")
 
@@ -266,9 +259,9 @@ except FileNotFoundError:
 
 plt.cla()
 
-############################################################################################
+###############################################################################
 # Film w
-############################################################################################
+###############################################################################
 print("Animating w")
 
 fig, ax = plt.subplots()
