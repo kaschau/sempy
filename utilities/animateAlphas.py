@@ -28,6 +28,21 @@ import yaml
 from matplotlib.animation import FuncAnimation
 
 
+def getSlice(fn):
+    if fn == 1:
+        return np.s_[0, :, :]
+    elif fn == 2:
+        return np.s_[-1, :, :]
+    elif fn == 3:
+        return np.s_[:, 0, :]
+    elif fn == 4:
+        return np.s_[:, -1, :]
+    elif fn == 5:
+        return np.s_[:, :, 0]
+    elif fn == 6:
+        return np.s_[:, :, -1]
+
+
 inputFile = sys.argv[1]
 bcFam = inputFile.split(".")[0]
 # Use the input file name as the alpha directory
@@ -78,10 +93,12 @@ if seminp["flipdom"]:
 # Determinw the extents the grid needs to be shifted
 ymin = np.inf
 zmin = np.inf
-for bn in inletBlocks:
+for bn, fn in zip(inletBlocks, inletFaces):
     blk = mb.getBlock(bn)
-    ymin = min(ymin, blk.array["y"][0, :, :].min())
-    zmin = min(zmin, blk.array["z"][0, :, :].min())
+    face = blk.getFace(fn)
+    s1_ = getSlice(fn)
+    ymin = min(ymin, blk.array["y"][s1_].min())
+    zmin = min(zmin, blk.array["z"][s1_].min())
 # Now shift the grid to match the domain (0,0) starting point
 for bn in inletBlocks:
     blk = mb.getBlock(bn)
@@ -100,18 +117,7 @@ z = np.array([])
 for bn, fn in zip(inletBlocks, inletFaces):
     blk = mb.getBlock(bn)
     face = blk.getFace(fn)
-    if fn == 1:
-        s1_ = np.s_[0, :, :]
-    elif fn == 2:
-        s1_ = np.s_[-1, :, :]
-    elif fn == 3:
-        s1_ = np.s_[:, 0, :]
-    elif fn == 4:
-        s1_ = np.s_[:, -1, :]
-    elif fn == 5:
-        s1_ = np.s_[:, :, 0]
-    elif fn == 6:
-        s1_ = np.s_[:, :, -1]
+    s1_ = getSlice(fn)
     y = np.concatenate((y, blk.array["iyc"][s1_].ravel()))
     z = np.concatenate((z, blk.array["izc"][s1_].ravel()))
 

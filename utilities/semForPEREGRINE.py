@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""This utility generates files full of cubic spline coefficients representing a turbulent signal
-that can be applied at the inlet of a PEREGRINE simulation. Just call this utility with
-an input file. There must also be a file where this utility is run called : patches.txt
-This patches.txt maps the patch number to a PEREGRINE block number. The format of the file is
-   Patch #, Block #
-Where each line represents a patch<=>block pair.
+"""This utility generates files full of cubic spline coefficients representing
+a turbulent signal that can be applied at the inlet of a PEREGRINE simulation.
+Just call this utility with an input file.
+
+The inlet faces are found based on the bcFam setting in conn.yaml corrseponding
+to the name of the input file, i.e. an input file called synthTurb.yaml will
+look for bcFam tagged synthTurb in conn.yaml.
+
+To use in PEREGRINE, the number of frames must be multiples of 10, this is be
+we export ALL the frames to a single array, but to save GPU memory, we dont
+store all the frames on the GPU, just 10-1=9 intervals at a time.
 
 Example
 -------
 /path/to/sempy/utilities/semForPEREGRINE.py <sem.yaml>
 
-The output is a directory with the name of your input file, +'_alphas' full of your alpha coeffs.
+The output is a directory with the name of your input file, +'Alphas' full of
+your alpha coeffs. Each inlet face gets one file with all the frames.
 
 You can also run this utility in parallel, just use mpiexec
 
@@ -31,6 +37,22 @@ import sempy
 import yaml
 from mpi4py import MPI
 from scipy import interpolate as itrp
+
+
+def getSlice(fn):
+    if fn == 1:
+        return np.s_[0, :, :]
+    elif fn == 2:
+        return np.s_[-1, :, :]
+    elif fn == 3:
+        return np.s_[:, 0, :]
+    elif fn == 4:
+        return np.s_[:, -1, :]
+    elif fn == 5:
+        return np.s_[:, :, 0]
+    elif fn == 6:
+        return np.s_[:, :, -1]
+
 
 inputFile = sys.argv[1]
 bcFam = inputFile.split(".")[0]
@@ -142,18 +164,7 @@ if rank == 0:
     zmin = np.inf
     for bn, fn in zip(inletBlocks, inletFaces):
         blk = mb.getBlock(bn)
-        if fn == 1:
-            s1_ = np.s_[0, :, :]
-        elif fn == 2:
-            s1_ = np.s_[-1, :, :]
-        elif fn == 3:
-            s1_ = np.s_[:, 0, :]
-        elif fn == 4:
-            s1_ = np.s_[:, -1, :]
-        elif fn == 5:
-            s1_ = np.s_[:, :, 0]
-        elif fn == 6:
-            s1_ = np.s_[:, :, -1]
+        s1_ = getSlice(fn)
         ymin = min(ymin, blk.array["y"][s1_].min())
         zmin = min(zmin, blk.array["z"][s1_].min())
     # Now shift the grid to match the domain (0,0) starting point
@@ -192,11 +203,13 @@ if rank == 0:
             j += 1
     myFaceNums = allRankFaces[0]
     myBlockNums = allRankBlocks[0]
-    # Send the list of patch numbers to the respective ranks ranks
-    for i, rsp in enumerate(allRankFaces[1::]):
-        comm.send(rsp, dest=i + 1, tag=11)
+    # Send the list of block and face numbers to the respective ranks
+    for i, (rsb, rsf) in enumerate(zip(allRankBlocks[1::], allRankFaces[1::])):
+        comm.send(rsb, dest=i + 1, tag=11)
+        comm.send(rsf, dest=i + 1, tag=12)
 else:
-    myFaceNums = comm.recv(source=0, tag=11)
+    myBlockNums = comm.recv(source=0, tag=11)
+    myFaceNums = comm.recv(source=0, tag=12)
 # Progress bar gets messsy with all the blocks,
 # so we only show progress with rank 0
 if rank == 0:
@@ -213,7 +226,7 @@ if progress:
         f'using {seminp["convect"]} convection speed.\n',
     )
     print(
-        "***********************************\n",
+        " ***********************************\n",
         "******* Generating Primes *********\n",
         "***********************************\n",
     )
@@ -263,7 +276,7 @@ for i, (bn, fn) in enumerate(zip(myBlockNums, myFaceNums)):
 
             comm.send(yc, dest=sendRank, tag=12)
             comm.send(zc, dest=sendRank, tag=13)
-            comm.send(domain.eddy_locs[eddysInPatch], dest=sendRank, tag=18)
+            comm.send(domain.eddyLocs[eddysInPatch], dest=sendRank, tag=18)
             comm.send(domain.eps[eddysInPatch], dest=sendRank, tag=19)
             comm.send(domain.sigmas[eddysInPatch], dest=sendRank, tag=20)
 
@@ -275,7 +288,7 @@ for i, (bn, fn) in enumerate(zip(myBlockNums, myFaceNums)):
     else:
         yc = comm.recv(source=0, tag=12)
         zc = comm.recv(source=0, tag=13)
-        domain.eddy_locs = comm.recv(source=0, tag=18)
+        domain.eddyLocs = comm.recv(source=0, tag=18)
         domain.eps = comm.recv(source=0, tag=19)
         domain.sigmas = comm.recv(source=0, tag=20)
 
@@ -322,3 +335,6 @@ for i, (bn, fn) in enumerate(zip(myBlockNums, myFaceNums)):
         np.save(f, fu.c[:, :, :, :])
         np.save(f, fv.c[:, :, :, :])
         np.save(f, fw.c[:, :, :, :])
+
+# Finalize MPI
+MPI.Finalize()
