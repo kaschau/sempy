@@ -1,22 +1,8 @@
 ---
 
-# Format for sem4raptor input file is just variable = value
-# commented lines are ignored, no need for quoting of strings
-# sem4raptor will leave string values as strings and convert
-# floats and ints accordingly. If you want something to be an
-# int, don't use a decimal
+# Format for sem4PEREGRINE input file.
 
-# Also remember that sempy only deals with SI units. The sem4raptor
-# utility will convert your grid into dimensional units, as well as
-# convert your velocity fluctuations into nondimensional units when
-# it writs out, but all your inputs here MUST be in SI units.
-
-# Lastly, we need a file called patches.txt that will map the match number
-# to the block numbers. The file format is:
-#                 Patch #, Block #
-#                 Patch #, Block #
-#                 Patch #, Block #
-#                 Patch #, Block #
+# Also remember that sempy only deals with SI units.
 
 ########################################################################
 ########################## BOX GEOMETRY ################################
@@ -38,7 +24,7 @@ flipdom: false             # Is your grid upside down?
 viscosity: 1.81e-5         # kinematic viscocity
 delta: 0.05                # channel half height or BL thickness
 utau: 0.21256278           # Friction velocity
-Uo: 4.519722             # Channel centerline height or U_inf
+Uo: 4.519722               # Channel centerline height or U_inf
 
 ########################################################################
 ############################ SEM VALUES ################################
