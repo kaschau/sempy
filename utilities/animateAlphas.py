@@ -25,12 +25,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import peregrinepy as pg
 import yaml
-from mpl.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation
+
 
 inputFile = sys.argv[1]
-
+bcFam = inputFile.split(".")[0]
 # Use the input file name as the alpha directory
-outputDir = inputFile.split(".")[0] + "_alphas"
+outputDir = bcFam + "_alphas"
 if not os.path.exists(outputDir):
     raise IOError(f"Cannot find your alpha files in the usual place, {outputDir}.")
 
@@ -39,26 +40,18 @@ if not os.path.exists(outputDir):
 ###############################################################################
 with open(inputFile, "r") as f:
     seminp = yaml.load(f, Loader=yaml.FullLoader)
-
-###############################################################################
-# Read in patches.txt
-###############################################################################
-# Only the zeroth rank reads in patches.txt
-patchNum = []
-blockNum = []
-with open("patches.txt", "r") as f:
-    for line in [i for i in f.readlines() if not i.startswith("#")]:
-        li = line.strip().split(",")
-        patchNum.append(int(li[0]))
-        blockNum.append(int(li[1]))
-
-npatches = len(patchNum)
-
+nframes = seminp["nframes"]
 ###############################################################################
 # PEREGRINE stuff (read in grid and make the patches)
 ###############################################################################
 # Only rank ones reads in the grid
-nblks = len([f for f in os.listdir(seminp["gridPath"]) if f.startswith("g.")])
+nblks = len(
+    [
+        f
+        for f in os.listdir(seminp["gridPath"])
+        if f.startswith("gv.") and f.endswith(".h5")
+    ]
+)
 if nblks == 0:
     nblks = len([f for f in os.listdir(seminp["gridPath"]) if f == "grid"])
 if nblks == 0:
@@ -66,22 +59,32 @@ if nblks == 0:
 
 mb = pg.multiBlock.grid(nblks)
 pg.readers.readGrid(mb, seminp["gridPath"])
+pg.readers.readConnectivity(mb, seminp["connPath"])
+inletBlocks = []
+inletFaces = []
+for blk in mb:
+    for face in blk.faces:
+        if face.bcFam == bcFam:
+            inletBlocks.append(blk.nblki)
+            inletFaces.append(face.nface)
+print(f"\nFound {len(inletBlocks)} blocks for this inlet.")
+
 # Flip the grid if it is oriented upside down in the true grid
 if seminp["flipdom"]:
-    for bn in blockNum:
-        blk = mb[bn - 1]
+    for bn in inletBlocks:
+        blk = mb.getBlock(bn)
         blk.array["y"] = -blk.array["y"]
         blk.array["z"] = -blk.array["z"]
 # Determinw the extents the grid needs to be shifted
 ymin = np.inf
 zmin = np.inf
-for bn in blockNum:
-    blk = mb[bn - 1]
+for bn in inletBlocks:
+    blk = mb.getBlock(bn)
     ymin = min(ymin, blk.array["y"][0, :, :].min())
     zmin = min(zmin, blk.array["z"][0, :, :].min())
 # Now shift the grid to match the domain (0,0) starting point
-for bn in blockNum:
-    blk = mb[bn - 1]
+for bn in inletBlocks:
+    blk = mb.getBlock(bn)
     blk.array["y"] = blk.array["y"] - ymin
     blk.array["z"] = blk.array["z"] - zmin
     # Compute the locations of face centers
@@ -94,46 +97,25 @@ for bn in blockNum:
 y = np.array([])
 z = np.array([])
 
-ny = []
-nz = []
-for bn in blockNum:
-    blk = mb[bn - 1]
-    y = np.concatenate((y, blk.array["iyu"][0, :, :].ravel()))
-    z = np.concatenate((z, blk.array["izu"][0, :, :].ravel()))
-    ny.append(blk.nj)
-    nz.append(blk.nk)
+for bn, fn in zip(inletBlocks, inletFaces):
+    blk = mb.getBlock(bn)
+    face = blk.getFace(fn)
+    if fn == 1:
+        s1_ = np.s_[0, :, :]
+    elif fn == 2:
+        s1_ = np.s_[-1, :, :]
+    elif fn == 3:
+        s1_ = np.s_[:, 0, :]
+    elif fn == 4:
+        s1_ = np.s_[:, -1, :]
+    elif fn == 5:
+        s1_ = np.s_[:, :, 0]
+    elif fn == 6:
+        s1_ = np.s_[:, :, -1]
+    y = np.concatenate((y, blk.array["iyc"][s1_].ravel()))
+    z = np.concatenate((z, blk.array["izc"][s1_].ravel()))
 
 tri = mpl.tri.Triangulation(z, y)
-
-###############################################################################
-# Function to read in frames
-###############################################################################
-
-
-def getFrame(frame, comp):
-    alphas = np.array([])
-    for i, pn in enumerate(patchNum):
-        fileName = outputDir + "/alphas_{:06d}_{:04d}".format(pn, frame)
-        with open(fileName, "rb") as f:
-            # The coefficients are in "reverse" order, i.e. the last
-            # of the four coefficients is the constant value at the
-            # t-t[i] frame location. So we just plot that.
-            if comp == "u":
-                a = np.load(f)[-1, :, :]
-            elif comp == "v":
-                _ = np.load(f)
-                a = np.load(f)[-1, :, :]
-            elif comp == "w":
-                _ = np.load(f)
-                _ = np.load(f)
-                a = np.load(f)[-1, :, :]
-            else:
-                raise ValueError(f"Unknown component {comp}")
-
-            alphas = np.concatenate((alphas, a.ravel()))
-
-    return alphas
-
 
 ###############################################################################
 # Make plots
@@ -146,15 +128,33 @@ plt.rcParams["figure.autolayout"] = True
 plt.rcParams["font.size"] = 12
 plt.rcParams["image.cmap"] = "autumn"
 
-# animation function
+alphasU = np.array([]).reshape(nframes - 1, 0)
+alphasV = np.array([]).reshape(nframes - 1, 0)
+alphasW = np.array([]).reshape(nframes - 1, 0)
+for bn, fn in zip(inletBlocks, inletFaces):
+    fileName = outputDir + "/alphas_{}_{}.npy".format(bn, fn)
+    temp = np.array([])
+    with open(fileName, "rb") as f:
+        # The coefficients are in "reverse" order, i.e. the last
+        # of the four coefficients is the constant value at the
+        # t-t[i] frame location. So we just plot that.
+        au = np.load(f)[-1, :, :, :]
+        av = np.load(f)[-1, :, :, :]
+        aw = np.load(f)[-1, :, :, :]
+        shape = au.shape
+        au = au.ravel().reshape((nframes - 1, np.prod(au.shape[1::])))
+        av = av.ravel().reshape((nframes - 1, np.prod(av.shape[1::])))
+        aw = aw.ravel().reshape((nframes - 1, np.prod(aw.shape[1::])))
+        alphasU = np.hstack((alphasU, au))
+        alphasV = np.hstack((alphasV, av))
+        alphasW = np.hstack((alphasW, aw))
 
 
-def animate(i, Tri, comp):
+def animate(i, Tri, alphas, comp):
     global tcf
     for c in tcf.collections:
         c.remove()  # removes only the contours, leaves the rest intact
-    alphas = getFrame(i + 1, comp)
-    tcf = ax.tricontourf(Tri, alphas, levels=levels)
+    tcf = ax.tricontourf(Tri, alphas[i], levels=levels)
     ax.set_title(f"Frame {i+1}")
     return tcf
 
@@ -162,16 +162,16 @@ def animate(i, Tri, comp):
 ###############################################################################
 # Film u
 ###############################################################################
+plt.rcParams["image.cmap"] = "plasma"
 print("Animating U")
 fig, ax = plt.subplots()
-ax.set_xlabel(r"$z/L_{ref}$")
-ax.set_ylabel(r"$y/L_{ref}$")
+ax.set_xlabel(r"$z$")
+ax.set_ylabel(r"$y$")
 ax.set_aspect("equal")
 
-alphas = getFrame(1, "u")
-levels = np.linspace(0, alphas.max(), 100)
-ticks = np.linspace(0, alphas.max(), 11)
-tcf = ax.tricontourf(tri, np.zeros(alphas.shape), levels=levels)
+levels = np.linspace(0, alphasU.max(), 100)
+ticks = np.linspace(0, alphasU.max(), 11)
+tcf = ax.tricontourf(tri, np.zeros(alphasU[0].shape), levels=levels)
 ratio = y.max() / z.max()
 cb = plt.colorbar(
     tcf,
@@ -183,7 +183,11 @@ cb = plt.colorbar(
 
 
 anim = FuncAnimation(
-    fig, animate, frames=seminp["nframes"] - 1, fargs=(tri, "u"), repeat=False
+    fig,
+    animate,
+    frames=seminp["nframes"] - 1,
+    fargs=(tri, alphasU, "u"),
+    repeat=False,
 )
 try:
     anim.save("U.mp4", writer=mpl.animation.FFMpegWriter(fps=10))
@@ -199,26 +203,27 @@ plt.rcParams["image.cmap"] = "seismic"
 print("Animating v")
 
 fig, ax = plt.subplots()
-ax.set_xlabel(r"$z/L_{ref}$")
-ax.set_ylabel(r"$y/L_{ref}$")
+ax.set_xlabel(r"$z$")
+ax.set_ylabel(r"$y$")
 ax.set_aspect("equal")
 
-alphas = getFrame(1, "v")
-symm = max(alphas.max(), abs(alphas.min()))
+symm = max(alphasV.max(), abs(alphasV.min()))
 levels = np.linspace(-symm, symm, 100)
 ticks = np.linspace(-symm, symm, 11)
+tcf = ax.tricontourf(tri, np.zeros(alphasV[0].shape), levels=levels)
 cb = plt.colorbar(
-    tcf, ticks=ticks, fraction=0.046 * ratio, pad=0.05, label=r"$v^{\prime}$"
+    tcf,
+    ticks=ticks,
+    fraction=0.046 * ratio,
+    pad=0.05,
+    label=r"$v^{\prime}$",
 )
 
-anim = mpl.animation.FuncAnimation(
+anim = FuncAnimation(
     fig,
     animate,
     frames=seminp["nframes"] - 1,
-    fargs=(
-        tri,
-        "v",
-    ),
+    fargs=(tri, alphasV, "v"),
     repeat=False,
 )
 try:
@@ -234,17 +239,21 @@ plt.cla()
 print("Animating w")
 
 fig, ax = plt.subplots()
-ax.set_xlabel(r"$z/L_{ref}$")
-ax.set_ylabel(r"$y/L_{ref}$")
+ax.set_xlabel(r"$z$")
+ax.set_ylabel(r"$y$")
 ax.set_aspect("equal")
 
-alphas = getFrame(1, "w")
-symm = max(alphas.max(), abs(alphas.min()))
+symm = max(alphasW.max(), abs(alphasW.min()))
 symm = float(f"{symm:.2e}")
 levels = np.linspace(-symm, symm, 100)
 ticks = np.linspace(-symm, symm, 11)
+tcf = ax.tricontourf(tri, np.zeros(alphasW[0].shape), levels=levels)
 cb = plt.colorbar(
-    tcf, ticks=ticks, fraction=0.046 * ratio, pad=0.05, label=r"$w^{\prime}$"
+    tcf,
+    ticks=ticks,
+    fraction=0.046 * ratio,
+    pad=0.05,
+    label=r"$w^{\prime}$",
 )
 
 anim = mpl.animation.FuncAnimation(
@@ -253,6 +262,7 @@ anim = mpl.animation.FuncAnimation(
     frames=seminp["nframes"] - 1,
     fargs=(
         tri,
+        alphasW,
         "w",
     ),
     repeat=False,

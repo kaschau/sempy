@@ -33,14 +33,16 @@ from mpi4py import MPI
 from scipy import interpolate as itrp
 
 inputFile = sys.argv[1]
+bcFam = inputFile.split(".")[0]
 
 # Initialize the parallel information for each rank
+MPI.Init()
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
 # Use the input file name as the output directory
-outputDir = inputFile.split(".")[0] + "_alphas"
+outputDir = bcFam + "_alphas"
 if rank == 0:
     if os.path.exists(outputDir):
         pass
@@ -49,13 +51,8 @@ if rank == 0:
 ###############################################################################
 # Read in SEM parameters
 ###############################################################################
-# The zeroth rank will read in the input file and give it to the other ranks
-if rank == 0:
-    with open(inputFile, "r") as f:
-        seminp = yaml.load(f, Loader=yaml.FullLoader)
-else:
-    seminp = None
-seminp = comm.bcast(seminp, root=0)
+with open(inputFile, "r") as f:
+    seminp = yaml.load(f, Loader=yaml.FullLoader)
 
 ###############################################################################
 # Create the domain based on above inputs
@@ -105,49 +102,6 @@ if rank != 0:
     domain._neddy = tempNeddy
 
 ###############################################################################
-# Read in patches.txt
-###############################################################################
-# Only the zeroth rank reads in patches.txt
-if rank == 0:
-    patchNum = []
-    blockNum = []
-    with open("patches.txt", "r") as f:
-        for line in [i for i in f.readlines() if not i.startswith("#")]:
-            li = line.strip().split(",")
-            patchNum.append(int(li[0]))
-            blockNum.append(int(li[1]))
-
-    npatches = len(patchNum)
-    # Now we assign patches to ranks
-    if size > npatches:
-        print(
-            "\n\nFYI, patches are assigned to processors, so using more\n",
-            "processors than patches gives you no performace increase.\n\n",
-        )
-        maxRanksPerBlock = 1
-    else:
-        maxRanksPerBlock = int(npatches / size) + (1 if npatches % size > 0 else 0)
-    allRankPatches = [[None for j in range(maxRanksPerBlock)] for i in range(size)]
-    allRankBlocks = [[None for j in range(maxRanksPerBlock)] for i in range(size)]
-    i = 0
-    j = 0
-    for bn, pn in zip(blockNum, patchNum):
-        allRankPatches[i][j] = pn
-        allRankBlocks[i][j] = bn
-        i += 1
-        if i == size:
-            i = 0
-            j += 1
-    myPatchNums = allRankPatches[0]
-    myBlockNums = allRankBlocks[0]
-    # Send the list of patch numbers to the respective ranks ranks
-    for i, rsp in enumerate(allRankPatches[1::]):
-        comm.send(rsp, dest=i + 1, tag=11)
-else:
-    myPatchNums = comm.recv(source=0, tag=11)
-
-
-###############################################################################
 # PEREGRINE stuff (read in grid and make the patches)
 ###############################################################################
 # Only rank ones reads in the grid
@@ -164,27 +118,83 @@ if rank == 0:
 
     mb = pg.multiBlock.grid(nblks)
     pg.readers.readGrid(mb, seminp["gridPath"])
+    pg.readers.readConnectivity(mb, seminp["connPath"])
+    # Get the blocks and faces for this inlet
+    inletBlocks = []
+    inletFaces = []
+    for blk in mb:
+        for face in blk.faces:
+            if face.bcFam == bcFam:
+                inletBlocks.append(blk.nblki)
+                inletFaces.append(face.nface)
+    print(f"\nFound {len(inletBlocks)} blocks for this inlet.")
+
     # Flip the grid if it is oriented upside down in the true grid
     if seminp["flipdom"]:
-        for bn in blockNum:
-            blk = mb[bn - 1]
-            blk.y = -blk.y
-            blk.z = -blk.z
+        for bn in inletBlocks:
+            blk = mb.getBlock(bn)
+            blk.array["y"] = -blk.array["y"]
+            blk.array["z"] = -blk.array["z"]
     # Determine the extents the grid needs to be shifted
     ymin = np.inf
     zmin = np.inf
-    for bn in blockNum:
-        blk = mb[bn - 1]
-        ymin = min(ymin, blk.array["y"][0, :, :].min())
-        zmin = min(zmin, blk.array["z"][0, :, :].min())
+    for bn, fn in zip(inletBlocks, inletFaces):
+        blk = mb.getBlock(bn)
+        if fn == 1:
+            s1_ = np.s_[0, :, :]
+        elif fn == 2:
+            s1_ = np.s_[-1, :, :]
+        elif fn == 3:
+            s1_ = np.s_[:, 0, :]
+        elif fn == 4:
+            s1_ = np.s_[:, -1, :]
+        elif fn == 5:
+            s1_ = np.s_[:, :, 0]
+        elif fn == 6:
+            s1_ = np.s_[:, :, -1]
+        ymin = min(ymin, blk.array["y"][s1_].min())
+        zmin = min(zmin, blk.array["z"][s1_].min())
     # Now shift the grid to match the domain (0,0) starting point
-    for bn in blockNum:
-        blk = mb[bn - 1]
-        blk.y = blk.array["y"] - ymin
-        blk.z = blk.array["z"] - zmin
+    for bn in inletBlocks:
+        blk = mb.getBlock(bn)
+        blk.array["y"] = blk.array["y"] - ymin
+        blk.array["z"] = blk.array["z"] - zmin
         # Compute the locations of face centers
         blk.computeMetrics(fdOrder=2)
 
+###############################################################################
+# Assign faces to MPI ranks
+###############################################################################
+# Only the zeroth rank reads in patches.txt
+if rank == 0:
+    npatches = len(inletFaces)
+    # Now we assign patches to ranks
+    if size > npatches:
+        print(
+            "\n\nFYI, patches are assigned to processors, so using more\n",
+            "processors than patches gives you no performace increase.\n\n",
+        )
+        maxRanksPerBlock = 1
+    else:
+        maxRanksPerBlock = int(npatches / size) + (1 if npatches % size > 0 else 0)
+    allRankFaces = [[None for j in range(maxRanksPerBlock)] for i in range(size)]
+    allRankBlocks = [[None for j in range(maxRanksPerBlock)] for i in range(size)]
+    i = 0
+    j = 0
+    for bn, fn in zip(inletBlocks, inletFaces):
+        allRankFaces[i][j] = fn
+        allRankBlocks[i][j] = bn
+        i += 1
+        if i == size:
+            i = 0
+            j += 1
+    myFaceNums = allRankFaces[0]
+    myBlockNums = allRankBlocks[0]
+    # Send the list of patch numbers to the respective ranks ranks
+    for i, rsp in enumerate(allRankFaces[1::]):
+        comm.send(rsp, dest=i + 1, tag=11)
+else:
+    myFaceNums = comm.recv(source=0, tag=11)
 # Progress bar gets messsy with all the blocks,
 # so we only show progress with rank 0
 if rank == 0:
@@ -206,18 +216,18 @@ if progress:
         "***********************************\n",
     )
 
-for i, pn in enumerate(myPatchNums):
-    if rank != 0 and pn is None:
+for i, (bn, fn) in enumerate(zip(myBlockNums, myFaceNums)):
+    if rank != 0 and fn is None:
         continue
     # If we are the zeroth block, then we compute and
     # send the patches to all the other blocks
     if rank == 0:
         for sendRank in [j + 1 for j in range(size - 1)]:
-            sendPatchNum = allRankPatches[sendRank][i]
+            sendFaceNum = allRankFaces[sendRank][i]
             sendBlockNum = allRankBlocks[sendRank][i]
-            if sendPatchNum is None:
+            if sendFaceNum is None:
                 continue
-            blk = mb[sendBlockNum - 1]
+            blk = mb.getBlock(sendBlockNum)
             # Create the patch for this block
             yc = blk.array["iyc"][0, :, :]
             zc = blk.array["izc"][0, :, :]
@@ -256,7 +266,7 @@ for i, pn in enumerate(myPatchNums):
             comm.send(domain.sigmas[eddysInPatch], dest=sendRank, tag=20)
 
         # Let the zeroth block do some work too
-        blk = mb[myBlockNums[i] - 1]
+        blk = mb.getBlock(myBlockNums[i])
         yc = blk.array["iyc"][0, :, :]
         zc = blk.array["izc"][0, :, :]
     # Other blocks receive for their data
@@ -267,10 +277,10 @@ for i, pn in enumerate(myPatchNums):
         domain.eps = comm.recv(source=0, tag=19)
         domain.sigmas = comm.recv(source=0, tag=20)
 
-    print(f"Rank {rank} is working on patch #{pn}")
+    print(f"Rank {rank} is working on Block {bn}, Face {fn}")
     # Now everyone generates their primes like usual
 
-    up, vp, wp = sempy.generate_primes(
+    up, vp, wp = sempy.generatePrimes(
         yc,
         zc,
         domain,
@@ -304,10 +314,9 @@ for i, pn in enumerate(myPatchNums):
     fv = itrp.CubicSpline(t, vp, bc_type=bc, axis=0)
     fw = itrp.CubicSpline(t, wp, bc_type=bc, axis=0)
 
-    for interval in range(seminp["nframes"] - 1):
-        fileName = outputDir + "/alphas_{:06d}_{:04d}".format(pn, interval + 1)
-        with open(fileName, "w") as f:
-            #  shape =      4      1     ny nz
-            np.save(f, fu.c[:, interval, :, :])
-            np.save(f, fv.c[:, interval, :, :])
-            np.save(f, fw.c[:, interval, :, :])
+    fileName = outputDir + "/alphas_{}_{}.npy".format(bn, fn)
+    with open(fileName, "wb") as f:
+        #  shape =      4  nframes  ny nz
+        np.save(f, fu.c[:, :, :, :])
+        np.save(f, fv.c[:, :, :, :])
+        np.save(f, fw.c[:, :, :, :])
