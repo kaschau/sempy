@@ -6,10 +6,10 @@ This utility plots the results of semForPEREGRINE by plotting the u,v,w
 components at the values of the frames, and creates animation
 videos of the results.
 
-Uses identical input file that was used in semForPEREGRINE. Expects the alphas to be located
-in ./<semForPEREGRINE.inp>_alphas
+Uses identical input file that was used in semForPEREGRINE. Expects the alphas
+need to be located in ./<semForPEREGRINE.inp>_alphas
 
-Creats three videos, u.mp4, v.mp4, and w.mp4
+Creats three videos, U.mp4, v.mp4, and w.mp4
 
 Example
 -------
@@ -31,7 +31,7 @@ from matplotlib.animation import FuncAnimation
 inputFile = sys.argv[1]
 bcFam = inputFile.split(".")[0]
 # Use the input file name as the alpha directory
-outputDir = bcFam + "_alphas"
+outputDir = bcFam + "Alphas"
 if not os.path.exists(outputDir):
     raise IOError(f"Cannot find your alpha files in the usual place, {outputDir}.")
 
