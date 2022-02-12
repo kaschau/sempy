@@ -33,6 +33,7 @@ setup(
     description="Ensemble Synthetic Eddy Method",
     long_description=long_description,
     install_requires=install_requires,
+    scripts=["bin/animateAlphas", "bin/semForPEREGRINE"],
     python_requires=">=3.8",
     test_suite="tests",
     zip_safe=False,
