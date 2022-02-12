@@ -33,12 +33,6 @@ setup(
     description="Ensemble Synthetic Eddy Method",
     long_description=long_description,
     install_requires=install_requires,
-    # tell setuptools to look for any packages under 'src'
-    # packages=find_packages("sempy"),
-    # tell setuptools that all packages will be under the 'src' directory
-    # and nowhere else
-    # package_dir={"./"},
-    # Testing folder
     python_requires=">=3.8",
     test_suite="tests",
     zip_safe=False,
