@@ -6,10 +6,6 @@ The inlet faces are found based on the bcFam setting in conn.yaml corrseponding
 to the name of the input file, i.e. an input file called synthTurb.yaml will
 look for bcFam tagged synthTurb in conn.yaml.
 
-To use in PEREGRINE, the number of frames must be multiples of 10, this is be
-we export ALL the frames to a single array, but to save GPU memory, we dont
-store all the frames on the GPU, just 10-1=9 intervals at a time.
-
 Example
 -------
 /path/to/sempy/utilities/semForPEREGRINE.py <sem.yaml>
