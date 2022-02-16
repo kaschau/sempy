@@ -72,8 +72,6 @@ if rank == 0:
 ###############################################################################
 with open(inputFile, "r") as f:
     seminp = yaml.load(f, Loader=yaml.FullLoader)
-if seminp["nframes"] % 10 != 0:
-    raise ValueError("nframes must be a  multiple of 10 to use in PEREGRINE.")
 
 ###############################################################################
 # Create the domain based on above inputs
