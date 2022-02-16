@@ -2,7 +2,6 @@
 
 import os
 import re
-import shutil
 
 from setuptools import setup
 
@@ -15,8 +14,17 @@ if vsrch:
 
 if not os.path.exists("build"):
     os.makedirs("build")
-shutil.copyfile("bin/animateAlphas.py", "build/animateAlphas")
-shutil.copyfile("bin/animateAlphas.py", "build/semForPEREGRINE")
+else:
+    try:
+        os.unlink("build/animateAlphas")
+    except FileNotFoundError:
+        pass
+    try:
+        os.unlink("build/semForPEREGRINE")
+    except FileNotFoundError:
+        pass
+os.symlink("../bin/animateAlphas.py", "build/animateAlphas")
+os.symlink("../bin/semForPEREGRINE.py", "build/semForPEREGRINE")
 
 # Hard dependencies
 install_requires = [
