@@ -159,6 +159,7 @@ def animate(i, Tri, alphas, comp):
         c.remove()  # removes only the contours, leaves the rest intact
     tcf = ax.tricontourf(Tri, alphas[i], levels=levels)
     ax.set_title(f"Frame {i+1}")
+    ax.set_aspect("equal")
     return tcf
 
 
