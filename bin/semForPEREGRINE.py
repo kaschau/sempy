@@ -125,7 +125,7 @@ if rank == 0:
         [
             f
             for f in os.listdir(seminp["gridPath"])
-            if f.startswith("gv.") and f.endswith(".h5")
+            if f.startswith("g.") and f.endswith(".h5")
         ]
     )
     if nblks == 0:
