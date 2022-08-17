@@ -30,6 +30,7 @@ import sempy
 import yaml
 from mpi4py import MPI
 from scipy import interpolate as itrp
+from lxml import etree
 
 
 def getSlice(fn):
@@ -121,13 +122,8 @@ if rank != 0:
 ###############################################################################
 # Only rank ones reads in the grid
 if rank == 0:
-    nblks = len(
-        [
-            f
-            for f in os.listdir(seminp["gridPath"])
-            if f.startswith("g.") and f.endswith(".h5")
-        ]
-    )
+    tree = etree.parse(f"{seminp['gridPath']}/g.xmf")
+    nblks = len(tree.getroot().find("Domain").find("Grid"))
     if nblks == 0:
         raise ValueError(f'Cant find any grid files in {seminp["gridPath"]}')
 

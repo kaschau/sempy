@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import peregrinepy as pg
 import yaml
+from lxml import etree
 from matplotlib.animation import FuncAnimation
 
 
@@ -57,15 +58,8 @@ nframes = seminp["nframes"]
 # PEREGRINE stuff (read in grid and make the patches)
 ###############################################################################
 # Only rank ones reads in the grid
-nblks = len(
-    [
-        f
-        for f in os.listdir(seminp["gridPath"])
-        if f.startswith("g.") and f.endswith(".h5")
-    ]
-)
-if nblks == 0:
-    nblks = len([f for f in os.listdir(seminp["gridPath"]) if f == "grid"])
+tree = etree.parse(f"{seminp['gridPath']}/g.xmf")
+nblks = len(tree.getroot().find("Domain").find("Grid"))
 if nblks == 0:
     raise ValueError(f'Cant find any grid files in {seminp["gridPath"]}')
 
