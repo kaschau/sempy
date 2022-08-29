@@ -45,6 +45,7 @@ setup(
     author="Kyle Schau",
     author_email="ksachau89@gmail.com",
     description="Ensemble Synthetic Eddy Method",
+    package_dir={"": "./"},
     long_description=long_description,
     install_requires=install_requires,
     scripts=["build/animateAlphas", "build/semForPEREGRINE"],
