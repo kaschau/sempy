@@ -1,10 +1,24 @@
 **sempy**
 
+Cite sempy:
+
+``` bibtex
+@article{schau2022ensemble,
+  title={An ensemble Synthetic Eddy Method for accurate treatment of inhomogeneous turbulence},
+  author={Schau, Kyle A and Johnson, Chelsea and Muller, Julia and Oefelein, Joseph C},
+  journal={Computers \& Fluids},
+  volume={248},
+  pages={105671},
+  year={2022},
+  publisher={Pergamon}
+}
+```
+
 Python implementation of SEM with better stuffs too.
 
 The key to understanding how sempy works is to understand how SEM works. Read the Jarrin thesis [here](./References/Papers/Synthetic-Inflow-Boundary-Conditions-for-the-Numerical-Simulation-of-Turbulence_2008.pdf).
 
-There is one key distinctions in how sempy and most SEM implementations work. Instead of creating a small box around our inlet surface and convecting eddys past the inlet plane, sempy creates a mega box and convects the inlet (or just individual points) thorugh the mega box. This leads to a lot of advantages in performance as well as experimentation.
+There is one key distinctions in how sempy and most SEM implementations work. Instead of creating a small box around our inlet surface and convecting eddys past the inlet plane, sempy creates a mega box and convects the inlet (or just individual points) through the mega box. This leads to a lot of advantages in performance as well as experimentation.
 
 Here is an example of how we [generate fluctuations](./generate_primes.py) in sempy.
 
