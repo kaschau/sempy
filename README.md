@@ -20,7 +20,7 @@ The key to understanding how sempy works is to understand how SEM works. Read th
 
 There is one key distinctions in how sempy and most SEM implementations work. Instead of creating a small box around our inlet surface and convecting eddys past the inlet plane, sempy creates a mega box and convects the inlet (or just individual points) through the mega box. This leads to a lot of advantages in performance as well as experimentation.
 
-Here is an example of how we [generate fluctuations](./generate_primes.py) in sempy.
+Here is an example of how we [generate fluctuations](./generatePrimes.py) in sempy.
 
 We begin by populating a mega box with eddys. This mega box is wide and tall enough to encompass our inlet plane, and long enough to traverse through it for as long as we want our signal to be.
 
