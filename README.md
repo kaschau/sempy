@@ -18,7 +18,7 @@ Python implementation of SEM with better stuffs too.
 
 The key to understanding how sempy works is to understand how SEM works. Read the Jarrin thesis [here](./References/Papers/Synthetic-Inflow-Boundary-Conditions-for-the-Numerical-Simulation-of-Turbulence_2008.pdf).
 
-There is one key distinctions in how sempy and most SEM implementations work. Instead of creating a small box around our inlet surface and convecting eddys past the inlet plane, sempy creates a mega box and convects the inlet (or just individual points) through the mega box. This leads to a lot of advantages in performance as well as experimentation.
+There is one key distinctions in how sempy and most SEM implementations work. Instead of creating a small box around our inlet surface and convecting eddys past the inlet plane, sempy creates a mega box and convects the inlet (or just individual points) through the mega box. This leads to a lot of advantages in terms of performance, accuracy, and experimentation. For one, it makes the signal generation a preprocessing step for analysis and verification before run time, not after. Second, with the entire signal known, we can manipulate it to produce more accurate results, see publicaiton. 
 
 Here is an example of how we [generate fluctuations](./sempy/generatePrimes.py) in sempy.
 
@@ -37,3 +37,5 @@ One way we get performance savings is by filtering out all eddys that do not eff
 With this reduced set, we can much more quickly perform the SEM calculations. Next, we start at time = zero. We can further filter out eddys too far into the future to effect this time. We compute the sum of the contributing eddys for this point in time, then march forward to the next point in time. We repeat this until a signal of the desired length is computed. We then move onto the next point of interest.
 
 ![Point Eddys](./References/readme/points.gif)
+
+As each point on the inlet plane is uneffected by the other points on the inlet plane, and the synthetic eddys are static, groups of inlet points can be processed in parallel. We store the discrete inlet signal as cubic polynial coefficient allowing reconstruction of the signal at arbitrary time steps at run time.
