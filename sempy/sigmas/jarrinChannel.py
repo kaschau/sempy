@@ -236,7 +236,6 @@ def addSigmas(domain, scaleFactor=1.0):
 
 
 if __name__ == "__main__":
-
     # Create dummy channel
     domain = type("channel", (), {})
     domain.viscosity = 1.0
@@ -260,9 +259,9 @@ if __name__ == "__main__":
     lwwPlot = sigmas[:, 2, 1]
 
     import matplotlib.pyplot as plt
-    import matplotlib
+    import shutil
 
-    if matplotlib.checkdep_usetex(True):
+    if shutil.which("latex"):
         plt.rc("text", usetex=True)
     plt.rc("font", family="serif")
     plt.rcParams["figure.figsize"] = (6, 4.5)

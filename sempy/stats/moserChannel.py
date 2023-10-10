@@ -111,17 +111,17 @@ def addStats(domain):
 
     stats = np.empty((y.shape[0], 3, 3))
 
-    stats[:, 0, 0] = Ruu * domain.utau ** 2
-    stats[:, 0, 1] = Ruv * domain.utau ** 2
-    stats[:, 0, 2] = Ruw * domain.utau ** 2
+    stats[:, 0, 0] = Ruu * domain.utau**2
+    stats[:, 0, 1] = Ruv * domain.utau**2
+    stats[:, 0, 2] = Ruw * domain.utau**2
 
     stats[:, 1, 0] = stats[:, 0, 1]
-    stats[:, 1, 1] = Rvv * domain.utau ** 2
-    stats[:, 1, 2] = Rvw * domain.utau ** 2
+    stats[:, 1, 1] = Rvv * domain.utau**2
+    stats[:, 1, 2] = Rvw * domain.utau**2
 
     stats[:, 2, 0] = stats[:, 0, 2]
     stats[:, 2, 1] = stats[:, 1, 2]
-    stats[:, 2, 2] = Rww * domain.utau ** 2
+    stats[:, 2, 2] = Rww * domain.utau**2
 
     domain.rijInterp = interp1d(
         y,
@@ -134,7 +134,6 @@ def addStats(domain):
 
 
 if __name__ == "__main__":
-
     # Create dummy channel
     domain = type("channel", (), {})
     reTau = 587.19
@@ -154,18 +153,18 @@ if __name__ == "__main__":
 
     Rij = domain.rijInterp(yplot)
 
-    Ruu_plot = Rij[:, 0, 0] / domain.utau ** 2
-    Rvv_plot = Rij[:, 1, 1] / domain.utau ** 2
-    Rww_plot = Rij[:, 2, 2] / domain.utau ** 2
+    Ruu_plot = Rij[:, 0, 0] / domain.utau**2
+    Rvv_plot = Rij[:, 1, 1] / domain.utau**2
+    Rww_plot = Rij[:, 2, 2] / domain.utau**2
 
-    Ruv_plot = Rij[:, 0, 1] / domain.utau ** 2
-    Ruw_plot = Rij[:, 0, 2] / domain.utau ** 2
-    Rvw_plot = Rij[:, 1, 2] / domain.utau ** 2
+    Ruv_plot = Rij[:, 0, 1] / domain.utau**2
+    Ruw_plot = Rij[:, 0, 2] / domain.utau**2
+    Rvw_plot = Rij[:, 1, 2] / domain.utau**2
 
     import matplotlib.pyplot as plt
-    import matplotlib
+    import shutil
 
-    if matplotlib.checkdep_usetex(True):
+    if shutil.which("latex"):
         plt.rc("text", usetex=True)
     plt.rc("font", family="serif")
     plt.rcParams["figure.figsize"] = (6, 4.5)

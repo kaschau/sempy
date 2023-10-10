@@ -1,20 +1,22 @@
+#!/usr/bin/env python
 """
 This utility plots the results of semForPEREGRINE by plotting the u,v,w
 components at the values of the frames, and creates animation
 videos of the results.
 
 Uses identical input file that was used in semForPEREGRINE. Expects the alphas
-need to be located in ./<semForPEREGRINE.inp>_alphas
+need to be located in ./<semForPEREGRINEinput>_alphas
 
 Creats three videos, U.mp4, v.mp4, and w.mp4
 
 Example
 -------
-/path/to/sempy/utilities/animateAlphas.py <sem.inp>
+/path/to/sempy/utilities/animateAlphas.py <sem.yaml>
 
 """
 
 import os
+import shutil
 import sys
 
 import matplotlib as mpl
@@ -117,7 +119,7 @@ tri = mpl.tri.Triangulation(z, y)
 ###############################################################################
 # Make plots
 ###############################################################################
-if mpl.checkdep_usetex(True):
+if shutil.which("latex"):
     plt.rc("text", usetex=True)
 plt.rc("font", family="serif")
 plt.rcParams["figure.dpi"] = 200

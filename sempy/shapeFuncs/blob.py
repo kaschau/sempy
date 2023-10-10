@@ -63,7 +63,6 @@ def blob(dists, sigmas):
 
 
 if __name__ == "__main__":
-
     nsig = 201
     uxLengthScale = 1.0
     uyLengthScale = 0.75
@@ -85,9 +84,9 @@ if __name__ == "__main__":
     sigs = blob(dists, sigmas)
 
     import matplotlib.pyplot as plt
-    import matplotlib
+    import shutil
 
-    if matplotlib.checkdep_usetex(True):
+    if shutil.which("latex"):
         plt.rc("text", usetex=True)
     plt.rc("font", family="serif")
     plt.rcParams["figure.figsize"] = (6, 4.5)
