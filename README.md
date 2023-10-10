@@ -38,4 +38,6 @@ With this reduced set, we can much more quickly perform the SEM calculations. Ne
 
 ![Point Eddys](./References/readme/points.gif)
 
-As each point on the inlet plane is uneffected by the other points on the inlet plane, and the synthetic eddys are static, groups of inlet points can be processed in parallel. We store the discrete inlet signal as cubic polynial coefficient allowing reconstruction of the signal at arbitrary time steps at run time.
+As each point on the inlet plane is unaffected by the other points on the inlet plane, and the synthetic eddys are static, we processes groups of inlet points in parallel. We store the discrete inlet signal as cubic polynomial coefficient allowing reconstruction of the signal at arbitrary time steps at run time.
+
+![Animation](./References/readme/U.gif)
