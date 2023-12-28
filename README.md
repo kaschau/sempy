@@ -1,6 +1,16 @@
-**sempy**
+# sempy: Synthetic Eddy Method in Python
 
-Cite sempy:
+<p align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" width="800" srcset="https://github.com/kaschau/sempy/blob/main/docs/images/sempySplash.jpg">
+      <source media="(prefers-color-scheme: light)" width="800" srcset="https://github.com/kaschau/sempy/blob/main/docs/images/sempySplash.jpg">
+      <img alt="peregrine logo" width="800" src="https://github.com/kaschau/sempy/blob/main/docs/images/sempySplash.jpg">
+    </picture>
+</p>
+
+## Attribution
+
+Use the following BibTex citation to cite sempy in scientific discourse.
 
 ``` bibtex
 @article{schau2022ensemble,
@@ -14,11 +24,13 @@ Cite sempy:
 }
 ```
 
-Python implementation of SEM with better stuffs too.
+## About
+
+Python implementation of the Ensemble Synthetic Eddy Method.
 
 The key to understanding how sempy works is to understand how SEM works. Read the Jarrin thesis [here](./References/Papers/Synthetic-Inflow-Boundary-Conditions-for-the-Numerical-Simulation-of-Turbulence_2008.pdf).
 
-There is one key distinctions in how sempy and most SEM implementations work. Instead of creating a small box around our inlet surface and convecting eddys past the inlet plane, sempy creates a mega box and convects the inlet (or just individual points) through the mega box. This leads to a lot of advantages in terms of performance, accuracy, and experimentation. For one, it makes the signal generation a preprocessing step for analysis and verification before run time, not after. Second, with the entire signal known, we can manipulate it to produce more accurate results, see publicaiton. 
+There is one key distinctions in how sempy and most SEM implementations work. Instead of creating a small box around our inlet surface and convecting eddys past the inlet plane, sempy creates a mega box and convects the inlet (or just individual points) through the mega box. This leads to a lot of advantages in terms of performance, accuracy, and experimentation. For one, it makes the signal generation a pre-processing step for analysis and verification before run time, not after. Second, with the entire signal known, we can manipulate it to produce more accurate results, see publication. 
 
 Here is an example of how we [generate fluctuations](./sempy/generatePrimes.py) in sempy.
 
@@ -38,7 +50,7 @@ With this reduced set, we can much more quickly perform the SEM calculations. Ne
 
 ![Point Eddys](./References/readme/points.gif)
 
-As each point on the inlet plane is unaffected by the other points on the inlet plane, and the synthetic eddys are static, we processes groups of inlet points in parallel. We store the discrete inlet signal as cubic polynomial coefficient allowing reconstruction of the signal at arbitrary time steps at run time.
+As each point on the inlet plane is independent of the other points on the inlet plane, and the synthetic eddys are static, we processes groups of inlet points in parallel. We store the discrete inlet signal as cubic polynomial coefficient allowing reconstruction of the signal at arbitrary time steps at run time.
 
 You then can view the inlet fluctuations superimposed onto a predefined profile.
 ![Animation](./References/readme/U.gif)
