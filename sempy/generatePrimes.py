@@ -161,7 +161,6 @@ def generatePrimes(
 
     # Loop over each location in current patch
     for i, (y, z) in enumerate(zip(ys, zs)):
-
         zeroOnline = False
         if progress:
             progressBar(i + 1, total, "Generating Primes")
@@ -215,7 +214,6 @@ def generatePrimes(
 
         # Travel down line at this y,z location
         for j, x in enumerate(xs):
-
             if convect == "local":
                 # This may be tough to explain, but just draw it out for
                 # yourself and you'll figure it out:
@@ -280,7 +278,7 @@ def generatePrimes(
 
             # We have to do this here for jarrin even though its ugly AF
             if normalization == "jarrin":
-                fx = 1.0 / np.sqrt(np.product(sigmasOnPoint, axis=2)) * fx
+                fx = 1.0 / np.sqrt(np.prod(sigmasOnPoint, axis=2)) * fx
 
             # multiply each eddys function/component by its sign
             primesNoNorm[j, :] = np.sum(epsOnLine[eddysOnPoint] * fx, axis=0)

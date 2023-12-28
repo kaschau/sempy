@@ -34,7 +34,6 @@ class domain:
     ]
 
     def __init__(self, Uo, totalTime, delta, utau, viscosity):
-
         self.xLength = Uo * totalTime
         self.Uo = Uo
         self.delta = delta
@@ -88,7 +87,6 @@ class domain:
         profileFrom="channel",
         scaleFactor=1.0,
     ):
-
         self.profileFrom = profileFrom
         self.sigmasFrom = sigmasFrom
         self.statsFrom = statsFrom

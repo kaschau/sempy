@@ -18,9 +18,9 @@ For outer region modeling and wake-law treatment we use
 See References/Papers/Revisiting-the-law-of-the-wake-in-wall-turbulence_2016.pdf
 
 There seems to be a pretty strong effect on the log->outer region when different values of
-\kappa and A (log-law constants) are used. When the kappa and A values reported for a
+kappa and A (log-law constants) are used. When the kappa and A values reported for a
 channel in the paper above (see Sec 3.1) are used the outer region matches Moser ReTau=590
-data very well, but the log layer is off. When the classical values of \kappa=0.41 and A=5.2
+data very well, but the log layer is off. When the classical values of kappa=0.41 and A=5.2
 are used, both the log layer and outer region match Moser well. Need to test against other
 profiles. Above paper reports that outer modeling is fairly insensitive to these log-law
 constants.

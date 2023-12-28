@@ -96,7 +96,7 @@ def addProfile(domain):
     ysOr = np.linspace(ysLlr[-1], domain.delta, 100)
     yplusOr = ysOr * domain.utau / domain.viscosity
 
-    E = 0.5 * (1 + erf((ysOr - mu) / np.sqrt(2 * sigma ** 2)))
+    E = 0.5 * (1 + erf((ysOr - mu) / np.sqrt(2 * sigma**2)))
     # Make the blending a bit smoother
     s = 4
     E[0:s] = E[0:s] * np.array([i / s for i in range(s)])
@@ -115,7 +115,6 @@ def addProfile(domain):
 
 
 if __name__ == "__main__":
-
     import matplotlib.pyplot as plt
 
     # Create dummy channel

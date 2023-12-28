@@ -83,17 +83,17 @@ def addStats(domain):
 
     stats = np.empty((ys.shape[0], 3, 3))
 
-    stats[:, 0, 0] = Ruu * domain.utau ** 2
-    stats[:, 0, 1] = Ruv * domain.utau ** 2
-    stats[:, 0, 2] = Ruw * domain.utau ** 2
+    stats[:, 0, 0] = Ruu * domain.utau**2
+    stats[:, 0, 1] = Ruv * domain.utau**2
+    stats[:, 0, 2] = Ruw * domain.utau**2
 
     stats[:, 1, 0] = stats[:, 0, 1]
-    stats[:, 1, 1] = Rvv * domain.utau ** 2
-    stats[:, 1, 2] = Rvw * domain.utau ** 2
+    stats[:, 1, 1] = Rvv * domain.utau**2
+    stats[:, 1, 2] = Rvw * domain.utau**2
 
     stats[:, 2, 0] = stats[:, 0, 2]
     stats[:, 2, 1] = stats[:, 1, 2]
-    stats[:, 2, 2] = Rww * domain.utau ** 2
+    stats[:, 2, 2] = Rww * domain.utau**2
 
     y = ys * domain.delta
 
@@ -108,7 +108,6 @@ def addStats(domain):
 
 
 if __name__ == "__main__":
-
     import matplotlib.pyplot as plt
 
     yplot = np.linspace(0, 2, 100)

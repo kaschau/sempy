@@ -49,7 +49,7 @@ def exactNorm(signal):
     ################################################################
 
     # Set variance of each signal to 1
-    norm_factor = np.sqrt(np.mean(signal ** 2, axis=0))
+    norm_factor = np.sqrt(np.mean(signal**2, axis=0))
     signal = signal / norm_factor
 
     return signal

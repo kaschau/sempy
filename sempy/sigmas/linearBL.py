@@ -35,7 +35,7 @@ def addSigmas(domain, scaleFactor=1.0):
 
                  sigma_interp(y) = len(y) x 3 x 3
 
-            Where the last two axes are an array of \sigma_{ij} with the ordering
+            Where the last two axes are an array of sigma_{ij} with the ordering
 
                     [ [ sigma_ux   sigma_uy   sigma_uz ],
                       [ sigma_vx   sigma_vy   sigma_vz ],
@@ -75,12 +75,11 @@ def addSigmas(domain, scaleFactor=1.0):
     domain.sigmaZMin = np.min(testSigmas[:, :, 2])
     domain.sigmaZMax = np.max(testSigmas[:, :, 2])
 
-    domain.vSigmaMin = np.min(np.product(testSigmas, axis=2))
-    domain.vSigmaMax = np.max(np.product(testSigmas, axis=2))
+    domain.vSigmaMin = np.min(np.prod(testSigmas, axis=2))
+    domain.vSigmaMax = np.max(np.prod(testSigmas, axis=2))
 
 
 if __name__ == "__main__":
-
     import matplotlib.pyplot as plt
 
     # Create dummy channel

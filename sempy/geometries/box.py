@@ -5,7 +5,6 @@ from sempy.domain import domain
 
 class box(domain):
     def __init__(self, flowType, Uo, tme, yHeight, zWidth, delta, utau, viscosity):
-
         super().__init__(Uo, tme, delta, utau, viscosity)
         self.yHeight = yHeight
         self.zWidth = zWidth
@@ -13,7 +12,6 @@ class box(domain):
         self.randseed = np.random.RandomState(10101)
 
     def populate(self, cEddy=1.0, method="random"):
-
         if self.sigmaInterp is None:
             raise ValueError(
                 "Please set your flow data before trying to populate your domain"
@@ -42,7 +40,7 @@ class box(domain):
                     self.zWidth + self.sigmaZMax,
                 ]
             # Compute number of eddys
-            VB = np.product(np.array(highs) - np.array(lows))
+            VB = np.prod(np.array(highs) - np.array(lows))
             neddy = int(cEddy * VB / self.vSigmaMin)
             # Generate random eddy locations
             self.eddyLocs = self.randseed.uniform(low=lows, high=highs, size=(neddy, 3))
@@ -70,7 +68,7 @@ class box(domain):
             testYs = np.linspace(lows[1], highs[1], 200)
             testSigmas = self.sigmaInterp(testYs)
             # Smallest eddy volume
-            vEddy = np.min(np.product(testSigmas, axis=1), axis=1)
+            vEddy = np.min(np.prod(testSigmas, axis=1), axis=1)
             # Find the smallest eddy V and largest eddy V
             vEddyMin = vEddy.min()
             vEddyMax = vEddy.max()
@@ -88,7 +86,7 @@ class box(domain):
             # Compute average eddy volume
             expectedVeddy = integrate.trapz(pdf * vEddy, testYs)
             # Compute neddy
-            VB = np.product(np.array(highs) - np.array(lows))
+            VB = np.prod(np.array(highs) - np.array(lows))
             neddy = int(cEddy * VB / expectedVeddy)
             # Create bins for placing eddys in y
             dy = np.abs(testYs[1] - testYs[0])

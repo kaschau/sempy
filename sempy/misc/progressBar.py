@@ -7,7 +7,7 @@ def progressBar(current, total, note=""):
     length = 41
     completed = int(round(length * current / float(total)))
 
-    dude = u"\U0001F40C"
+    dude = "\U0001F40C"
 
     percentage = 100.0 * current / float(total)
     bar = "{}{}{}".format("_" * completed, dude, "_" * (length - completed + len(dude)))
