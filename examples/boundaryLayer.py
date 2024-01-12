@@ -20,7 +20,7 @@ cEddy = 1.0
 domain = sempy.geometries.box("bl", Uo, tme, yHeight, zWidth, delta, utau, viscosity)
 
 # Set flow properties from existing data
-domain.setSemData(sigmasFrom="linear_bl", statsFrom="spalart", profileFrom="bl")
+domain.setSemData(sigmasFrom="linearBL", statsFrom="spalart", profileFrom="bl")
 
 # Populate the domain
 domain.populate(cEddy, "PDF")
@@ -52,7 +52,7 @@ uws = np.mean(up[:, :] * wp[:, :], axis=0)
 vws = np.mean(vp[:, :] * wp[:, :], axis=0)
 
 # Compute Ubars
-Us = domain.Ubar_interp(ys) + np.mean(up[:, :], axis=0)
+Us = domain.ubarInterp(ys) + np.mean(up[:, :], axis=0)
 
 # Compare signal to moser
 # Ubar

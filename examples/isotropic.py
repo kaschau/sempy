@@ -30,7 +30,7 @@ popMeth = "random"
 
 # Initialize domain
 domain = sempy.geometries.box(
-    "freeshear", Uo, tme, yHeight, zWidth, delta, utau, viscosity
+    "freeShear", Uo, tme, yHeight, zWidth, delta, utau, viscosity
 )
 
 # Set flow properties from existing data

@@ -27,7 +27,7 @@ class box(domain):
                 0.0 - self.sigmaYMax,
                 0.0 - self.sigmaZMax,
             ]
-            if self.flowType in ["channel", "freeshear"]:
+            if self.flowType in ["channel", "freeShear"]:
                 highs = [
                     self.xLength + self.sigmaXMax,
                     self.yHeight + self.sigmaYMax,
@@ -52,7 +52,7 @@ class box(domain):
                 0.0 - np.max(self.sigmaInterp(0.0)[:, 1]),
                 0.0 - self.sigmaZMax,
             ]
-            if self.flowType in ["channel", "freeshear"]:
+            if self.flowType in ["channel", "freeShear"]:
                 highs = [
                     self.xLength + self.sigmaXMax,
                     self.yHeight + np.max(self.sigmaInterp(self.yHeight)[:, 1]),

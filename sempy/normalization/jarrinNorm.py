@@ -18,7 +18,7 @@ def jarrinNorm(signal, domain):
             Array of shape(N,3) of the fluctuation components normalized
     """
 
-    if domain.flowType in ["channel", "free_shear"]:
+    if domain.flowType in ["channel", "freeShear"]:
         VB = (
             (2 * domain.sigmaXMax)
             * (domain.yHeight + 2 * domain.sigmaYMax)
@@ -40,6 +40,8 @@ def jarrinNorm(signal, domain):
             * (domain.delta + 2 * domain.sigmaYMax)
             * (domain.zWidth + 2 * domain.sigmaZMax)
         )
+    else:
+        raise ValueError(f"What domain flow type, {domain.flowType}?")
 
     # We compute the "Eddy Volume" and "Neddy" from the original SEM
     Neddy = domain.neddy * VB / Vdom
