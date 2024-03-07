@@ -80,11 +80,11 @@ class box(domain):
 
             # Rescale so lowest point is equal to one
             vEddyPrime = (vEddyPrime / vEddyMax) * vRatio + 1.0
-            vEddyNorm = integrate.trapz(vEddyPrime, testYs)
+            vEddyNorm = integrate.trapezoid(vEddyPrime, testYs)
             # Create a PDF of eddy placement in y by normalizing pdf integral
             pdf = vEddyPrime / vEddyNorm
             # Compute average eddy volume
-            expectedVeddy = integrate.trapz(pdf * vEddy, testYs)
+            expectedVeddy = integrate.trapezoid(pdf * vEddy, testYs)
             # Compute neddy
             VB = np.prod(np.array(highs) - np.array(lows))
             neddy = int(cEddy * VB / expectedVeddy)
