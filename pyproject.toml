@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sempy"
+description = "Ensemble Synthetic Eddy Method"
+readme = "README.md"
+license = "BSD-3-Clause"
+authors = [{ name = "Kyle A. Schau", email = "ksachau89@gmail.com" }]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy >= 1.20",
+    "scipy >= 1.8",
+    "numba >= 0.57",
+    "pyyaml >= 6.0",
+]
+dynamic = ["version"]
+
+[project.urls]
+Repository = "https://github.com/kaschau/sempy"
+
+[project.optional-dependencies]
+# Only needed by the semForPEREGRINE command
+mpi = ["mpi4py >= 3.0"]
+# Plotting in examples/ and module __main__ demos
+examples = ["matplotlib"]
+
+# These commands additionally require peregrinepy and lxml at runtime
+[project.scripts]
+semForPEREGRINE = "sempy.cli.semForPEREGRINE:main"
+animateAlphas = "sempy.cli.animateAlphas:main"
+
+[tool.setuptools.packages.find]
+include = ["sempy*"]
+
+[tool.setuptools.package-data]
+"sempy.profiles" = ["*.csv"]
+"sempy.stats" = ["*.csv"]
+
+[tool.setuptools.dynamic]
+version = { attr = "sempy._version.__version__" }

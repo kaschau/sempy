@@ -4,12 +4,14 @@ from sempy.domain import domain
 
 
 class box(domain):
-    def __init__(self, flowType, Uo, tme, yHeight, zWidth, delta, utau, viscosity):
+    def __init__(
+        self, flowType, Uo, tme, yHeight, zWidth, delta, utau, viscosity, seed=10101
+    ):
         super().__init__(Uo, tme, delta, utau, viscosity)
         self.yHeight = yHeight
         self.zWidth = zWidth
         self.flowType = flowType
-        self.randseed = np.random.RandomState(10101)
+        self.randseed = np.random.default_rng(seed)
 
     def populate(self, cEddy=1.0, method="random"):
         if self.sigmaInterp is None:
@@ -39,6 +41,8 @@ class box(domain):
                     self.delta + self.sigmaYMax,
                     self.zWidth + self.sigmaZMax,
                 ]
+            else:
+                raise NameError(f"Unknown flow type : {self.flowType}")
             # Compute number of eddys
             VB = np.prod(np.array(highs) - np.array(lows))
             neddy = int(cEddy * VB / self.vSigmaMin)
@@ -64,6 +68,8 @@ class box(domain):
                     self.delta + np.max(self.sigmaInterp(self.delta)[:, 1]),
                     self.zWidth + self.sigmaZMax,
                 ]
+            else:
+                raise NameError(f"Unknown flow type : {self.flowType}")
             # Eddy heights as a function of y
             testYs = np.linspace(lows[1], highs[1], 200)
             testSigmas = self.sigmaInterp(testYs)

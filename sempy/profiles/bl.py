@@ -1,5 +1,6 @@
 import numpy as np
-from scipy.interpolate import interp1d, splev
+from scipy.interpolate import BSpline
+from sempy.misc import clampedLinearInterp
 from scipy.special import erf
 
 """
@@ -84,9 +85,10 @@ def addProfile(domain):
         dtype="int",
     )
 
-    yplusBufl, uplusBufl = np.array(
-        splev(np.linspace(0, (count - degree), 30), (kv, cv.T, degree))
+    bufl = BSpline(kv.astype("float64"), cv, degree)(
+        np.linspace(0, (count - degree), 30)
     )
+    yplusBufl, uplusBufl = bufl[:, 0], bufl[:, 1]
     usBufl = uplusBufl * domain.utau
     ysBufl = yplusBufl * domain.viscosity / domain.utau
 
@@ -109,9 +111,7 @@ def addProfile(domain):
     ys = np.concatenate((ysVsl, ysBufl, ysLlr, ysOr))
     Us = np.concatenate((usVsl, usBufl, usLlr, usOr))
 
-    domain.ubarInterp = interp1d(
-        ys, Us, kind="linear", bounds_error=False, fill_value=(Us[0], Us[-1])
-    )
+    domain.ubarInterp = clampedLinearInterp(ys, Us)
 
 
 if __name__ == "__main__":

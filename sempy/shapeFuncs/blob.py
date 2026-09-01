@@ -83,6 +83,7 @@ if __name__ == "__main__":
 
     sigs = blob(dists, sigmas)
 
+    import matplotlib.tri
     import matplotlib.pyplot as plt
     import shutil
 

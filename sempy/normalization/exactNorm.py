@@ -48,8 +48,10 @@ def exactNorm(signal):
     # RIP
     ################################################################
 
-    # Set variance of each signal to 1
+    # Set variance of each signal to 1, guarding against dead (all zero)
+    # signal components so we return zeros instead of NaNs
     norm_factor = np.sqrt(np.mean(signal**2, axis=0))
+    norm_factor = np.where(norm_factor == 0.0, 1.0, norm_factor)
     signal = signal / norm_factor
 
     return signal

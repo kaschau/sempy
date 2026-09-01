@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from scipy.interpolate import interp1d
+from sempy.misc import clampedLinearInterp
 
 """
 
@@ -210,14 +210,7 @@ def addSigmas(domain, scaleFactor=1.0):
 
     y = ys * domain.delta
 
-    domain.sigmaInterp = interp1d(
-        y,
-        sigmas,
-        kind="slinear",
-        axis=0,
-        bounds_error=False,
-        fill_value=(sigmas[0, :, :], sigmas[-1, :, :]),
-    )
+    domain.sigmaInterp = clampedLinearInterp(y, sigmas)
 
     # determine min,max sigmas
     # Here we assume that signal generation at smallest y value is at yplus=1

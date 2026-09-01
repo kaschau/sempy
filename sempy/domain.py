@@ -6,6 +6,7 @@ class domain:
         "xLength",
         "Uo",
         "delta",
+        "utau",
         "viscosity",
         "yp1",
         "flowType",
@@ -30,7 +31,7 @@ class domain:
         "statsFrom",
         "eddyPopMethod",
         "_neddy",
-        "radseed",
+        "randseed",
     ]
 
     def __init__(self, Uo, totalTime, delta, utau, viscosity):
@@ -138,7 +139,7 @@ class domain:
         )
 
     def makePeriodic(self, periodicX=False, periodicY=False, periodicZ=False):
-        if True in [periodicX, periodicY, periodicZ]:
+        if any([periodicX, periodicY, periodicZ]):
             print(
                 "Making domain periodic in {}".format("x" if periodicX else "")
                 + " {}".format("y" if periodicY else "")

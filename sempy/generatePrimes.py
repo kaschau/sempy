@@ -83,8 +83,16 @@ def generatePrimes(
     # check if we have eddys or not
     if domain.eddyLocs is None:
         raise RuntimeError(
-            "Please populate your domain before trying to generate fluctiations"
+            "Please populate your domain before trying to generate fluctuations"
         )
+
+    # Validate keyword options up front
+    if convect not in ("uniform", "local"):
+        raise NameError(f"Error: Unknown convection method : {convect}")
+    if shape not in ("tent", "blob"):
+        raise NameError(f"Error: Unknown shape function : {shape}")
+    if normalization not in ("exact", "jarrin", "none"):
+        raise NameError(f"Error: Unknown normalization : {normalization}")
 
     # Check that nframes is large enough with exact normalization
     if 3 < nframes < 10 and normalization == "exact":
@@ -142,6 +150,11 @@ def generatePrimes(
     sigmasInPatch = domain.sigmas[eddysInPatch]
     epsInPatch = domain.eps[eddysInPatch]
 
+    # Each eddy's largest y and z sigma is reused for every (y,z) point,
+    # so compute them once here rather than inside the loop below
+    maxSigmaYInPatch = np.max(sigmasInPatch[:, :, 1], axis=1)
+    maxSigmaZInPatch = np.max(sigmasInPatch[:, :, 2], axis=1)
+
     ######################################################################
     # We now have a reduced set of eddys that overlap the current patch
     ######################################################################
@@ -168,15 +181,14 @@ def generatePrimes(
         # Find eddies that contribute on the current y,z line. This search
         # is done on the reduced set of eddys filtered on the "patch"
         eddysOnLine = np.where(
-            (np.abs(eddyLocsInPatch[:, 1] - y) < np.max(sigmasInPatch[:, :, 1], axis=1))
-            & (
-                np.abs(eddyLocsInPatch[:, 2] - z)
-                < np.max(sigmasInPatch[:, :, 2], axis=1)
-            )
+            (np.abs(eddyLocsInPatch[:, 1] - y) < maxSigmaYInPatch)
+            & (np.abs(eddyLocsInPatch[:, 2] - z) < maxSigmaZInPatch)
         )
         eddyLocsOnLine = eddyLocsInPatch[eddysOnLine]
         sigmasOnLine = sigmasInPatch[eddysOnLine]
         epsOnLine = epsInPatch[eddysOnLine]
+        # Largest x sigma of each eddy on the line, reused for every frame
+        maxSigmaXOnLine = np.max(sigmasOnLine[:, :, 0], axis=1)
 
         # We want to know if an entire line has zero eddys, this will
         # be annoying for BL in the free stream so we will only print
@@ -246,7 +258,7 @@ def generatePrimes(
             #########################
             # Find all non zero eddies for at current time "x"
             xDist = np.abs((eddyLocsOnLine[:, 0] + xOffset) - x)
-            eddysOnPoint = np.where(xDist < np.max(sigmasOnLine[:, :, 0], axis=1))
+            eddysOnPoint = np.where(xDist < maxSigmaXOnLine)
             xOffset = xOffset[eddysOnPoint]
             if len(eddysOnPoint[0]) == 0:
                 emptyPts += 1
@@ -257,10 +269,11 @@ def generatePrimes(
             ###################################################################
 
             # Compute distances to all contributing eddys
+            eddyLocsOnPoint = eddyLocsOnLine[eddysOnPoint]
             dists = np.empty((len(eddysOnPoint[0]), 3))
-            dists[:, 0] = eddyLocsOnLine[eddysOnPoint][:, 0] + xOffset - x
-            dists[:, 1] = eddyLocsOnLine[eddysOnPoint][:, 1] - y
-            dists[:, 2] = eddyLocsOnLine[eddysOnPoint][:, 2] - z
+            dists[:, 0] = eddyLocsOnPoint[:, 0] + xOffset - x
+            dists[:, 1] = eddyLocsOnPoint[:, 1] - y
+            dists[:, 2] = eddyLocsOnPoint[:, 2] - z
 
             # Collect sigmas from all contributing points
             sigmasOnPoint = sigmasOnLine[eddysOnPoint]
@@ -269,12 +282,11 @@ def generatePrimes(
             # component via a "shape function"
             if shape == "tent":
                 fx = shapeFuncs.tent(dists, sigmasOnPoint)
-                if shapeFuncs.tent.empty:
-                    emptyPts += 1
             elif shape == "blob":
                 fx = shapeFuncs.blob(dists, sigmasOnPoint)
-            else:
-                raise NameError(f"Error: Unknown shape function : {shape}")
+            # See if this point ended up with zero contributions anyway
+            if np.any(np.sum(fx, axis=0) == 0.0):
+                emptyPts += 1
 
             # We have to do this here for jarrin even though its ugly AF
             if normalization == "jarrin":
@@ -303,9 +315,8 @@ def generatePrimes(
             # Current we approximate with 10 points between frames.
             # Could be experimented with
             ptsBtwFrames = 10
-            tempN = [j for j in range(nframes)]
             primesInterp = itrp.CubicSpline(
-                tempN, primesNoNorm, bc_type="not-a-knot", axis=0
+                np.arange(nframes), primesNoNorm, bc_type="not-a-knot", axis=0
             )
             intrpN = np.linspace(0, nframes - 1, (nframes - 1) * (ptsBtwFrames + 1) + 1)
             primesNoNorm = primesInterp(intrpN)

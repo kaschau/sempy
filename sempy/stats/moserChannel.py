@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.interpolate import interp1d
+from sempy.misc import clampedLinearInterp
 from pathlib import Path
 
 """
@@ -123,14 +123,7 @@ def addStats(domain):
     stats[:, 2, 1] = stats[:, 1, 2]
     stats[:, 2, 2] = Rww * domain.utau**2
 
-    domain.rijInterp = interp1d(
-        y,
-        stats,
-        kind="linear",
-        axis=0,
-        bounds_error=False,
-        fill_value=(stats[0, :, :], stats[-1, :, :]),
-    )
+    domain.rijInterp = clampedLinearInterp(y, stats)
 
 
 if __name__ == "__main__":
