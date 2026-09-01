@@ -152,17 +152,64 @@ def generatePrimes(
 
     # Each eddy's largest y and z sigma is reused for every (y,z) point,
     # so compute them once here rather than inside the loop below
+    maxSigmaXInPatch = np.max(sigmasInPatch[:, :, 0], axis=1)
     maxSigmaYInPatch = np.max(sigmasInPatch[:, :, 1], axis=1)
     maxSigmaZInPatch = np.max(sigmasInPatch[:, :, 2], axis=1)
+
+    # Sort the patch's eddys by y location so that each (y,z) point below
+    # only needs to examine the window of eddys that can possibly reach it
+    # (found by binary search) instead of every eddy in the patch
+    srt = np.argsort(eddyLocsInPatch[:, 1])
+    eddyLocsInPatch = eddyLocsInPatch[srt]
+    sigmasInPatch = sigmasInPatch[srt]
+    epsInPatch = epsInPatch[srt]
+    maxSigmaXInPatch = maxSigmaXInPatch[srt]
+    maxSigmaYInPatch = maxSigmaYInPatch[srt]
+    maxSigmaZInPatch = maxSigmaZInPatch[srt]
+    eddyYsInPatch = eddyLocsInPatch[:, 1]
+    # No eddy in the patch reaches further in y than this
+    if eddyYsInPatch.shape[0] > 0:
+        sigmaYBound = np.max(maxSigmaYInPatch)
+    else:
+        sigmaYBound = 0.0
+
+    # Which frames an eddy contributes to depends only on the eddy itself,
+    # not on the (y,z) point: frame j occurs at time t_j = j*dt no matter
+    # the convection method, and eddy e crosses a probe during
+    #
+    #     t in ( (x_e - maxSigmaX_e)/ubar_e , (x_e + maxSigmaX_e)/ubar_e )
+    #
+    # (with ubar_e = Uo everywhere for uniform convection). Since frame
+    # times are sorted, each eddy touches a contiguous run of frames found
+    # once here with a binary search, rather than testing every eddy
+    # against every frame for every point.
+    if convect == "local":
+        ubarInPatch = domain.ubarInterp(eddyYsInPatch)
+    else:
+        ubarInPatch = np.full(eddyYsInPatch.shape[0], domain.Uo)
+    frameTimes = np.linspace(0, domain.xLength / domain.Uo, nframes)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        tLo = (eddyLocsInPatch[:, 0] - maxSigmaXInPatch) / ubarInPatch
+        tHi = (eddyLocsInPatch[:, 0] + maxSigmaXInPatch) / ubarInPatch
+    # An eddy with zero ubar (at the wall, where the profile clamps to
+    # zero) never convects past us, so it is considered at every frame;
+    # its shape function still zeroes out any frame it cannot reach
+    degenerate = ubarInPatch <= 0.0
+    if np.any(degenerate):
+        tLo[degenerate] = -np.inf
+        tHi[degenerate] = np.inf
+    jLoInPatch = np.searchsorted(frameTimes, tLo, "right")
+    jHiInPatch = np.searchsorted(frameTimes, tHi, "left")
 
     ######################################################################
     # We now have a reduced set of eddys that overlap the current patch
     ######################################################################
 
-    # Storage for fluctuations
-    up = np.empty((nframes, len(ys)))
-    vp = np.empty((nframes, len(ys)))
-    wp = np.empty((nframes, len(ys)))
+    # Storage for fluctuations (zeros, not empty, so that lines with no
+    # eddys on them return zero fluctuations instead of garbage memory)
+    up = np.zeros((nframes, len(ys)))
+    vp = np.zeros((nframes, len(ys)))
+    wp = np.zeros((nframes, len(ys)))
 
     # just counter for progress display
     total = len(ys)
@@ -179,22 +226,27 @@ def generatePrimes(
             progressBar(i + 1, total, "Generating Primes")
 
         # Find eddies that contribute on the current y,z line. This search
-        # is done on the reduced set of eddys filtered on the "patch"
+        # is done on a conservative y window of the eddys filtered on the
+        # "patch" (the exact test is unchanged)
+        yLo = np.searchsorted(eddyYsInPatch, y - sigmaYBound, side="left")
+        yHi = np.searchsorted(eddyYsInPatch, y + sigmaYBound, side="right")
         eddysOnLine = np.where(
-            (np.abs(eddyLocsInPatch[:, 1] - y) < maxSigmaYInPatch)
-            & (np.abs(eddyLocsInPatch[:, 2] - z) < maxSigmaZInPatch)
+            (np.abs(eddyYsInPatch[yLo:yHi] - y) < maxSigmaYInPatch[yLo:yHi])
+            & (np.abs(eddyLocsInPatch[yLo:yHi, 2] - z) < maxSigmaZInPatch[yLo:yHi])
         )
-        eddyLocsOnLine = eddyLocsInPatch[eddysOnLine]
-        sigmasOnLine = sigmasInPatch[eddysOnLine]
-        epsOnLine = epsInPatch[eddysOnLine]
-        # Largest x sigma of each eddy on the line, reused for every frame
-        maxSigmaXOnLine = np.max(sigmasOnLine[:, :, 0], axis=1)
+        # Absolute patch indices of the eddys on this line; the heavy
+        # per-pair data (sigmas, eps) is gathered straight from the patch
+        # arrays further below instead of being copied out per line
+        lineIdx = yLo + eddysOnLine[0]
+        eddyXsOnLine = eddyLocsInPatch[lineIdx, 0]
+        eddyYsOnLine = eddyLocsInPatch[lineIdx, 1]
+        eddyZsOnLine = eddyLocsInPatch[lineIdx, 2]
 
         # We want to know if an entire line has zero eddys, this will
         # be annoying for BL in the free stream so we will only print
         # out a warning for the BL cases if the value of y is below the
         # BL thickness
-        if len(eddyLocsOnLine) == 0:
+        if len(lineIdx) == 0:
             zeroOnline = True
             if domain.flowType != "bl" or y < domain.delta:
                 print(f"Warning, no eddys detected on entire time line at y={y},z={z}")
@@ -221,62 +273,75 @@ def generatePrimes(
 
         if convect == "local":
             # We need each eddys individual Ubar for the offset
-            # calculated below
-            localEddyUbar = domain.ubarInterp(eddyLocsOnLine[:, 1])
+            # calculated below.
 
-        # Travel down line at this y,z location
-        for j, x in enumerate(xs):
-            if convect == "local":
-                # This may be tough to explain, but just draw it out for
-                # yourself and you'll figure it out:
+            # This may be tough to explain, but just draw it out for
+            # yourself and you'll figure it out:
 
-                # If we want each eddy to convect with its own local velocity
-                # instead of the Uo velocity, it is not enough to just traverse
-                # through the mega box at the profile Ubar for the current
-                # location's y height. This is because the eddys located
-                # slightly above/below the location we are
-                # traversing down (that contribute to fluctuations) are
-                # moving at different speeds than our current point of
-                # interest. So we need to calculate an offset to account for
-                # that fact that as we have traversed through the
-                # domain at the local convective speed, the faster eddys will
-                # approach us slightly more quickly, while the slower eddys
-                # will approach us more slowly. This x offset will account for
-                # that and is merely the difference in convection speeds
-                # between the current line we are traversing down, and the
-                # speeds of the individual eddys.
-                xOffset = (localUbar - localEddyUbar) / localUbar * x
-            else:
-                # If all the eddys convect at the same speed, then traversing
-                # through the mega box at Uo is identical so the eddys
-                # convecting by us at Uo, so there is no need to offset any
-                # eddy positions
-                xOffset = np.zeros(eddyLocsOnLine.shape[0])
+            # If we want each eddy to convect with its own local velocity
+            # instead of the Uo velocity, it is not enough to just traverse
+            # through the mega box at the profile Ubar for the current
+            # location's y height. This is because the eddys located
+            # slightly above/below the location we are
+            # traversing down (that contribute to fluctuations) are
+            # moving at different speeds than our current point of
+            # interest. So we need to calculate an offset to account for
+            # that fact that as we have traversed through the
+            # domain at the local convective speed, the faster eddys will
+            # approach us slightly more quickly, while the slower eddys
+            # will approach us more slowly. This x offset accounts for
+            # that and is merely the difference in convection speeds
+            # between the current line we are traversing down, and the
+            # speeds of the individual eddys.
+            localEddyUbar = ubarInPatch[lineIdx]
 
-            #########################
-            # Compute the fluctuations
-            #########################
-            # Find all non zero eddies for at current time "x"
-            xDist = np.abs((eddyLocsOnLine[:, 0] + xOffset) - x)
-            eddysOnPoint = np.where(xDist < maxSigmaXOnLine)
-            xOffset = xOffset[eddysOnPoint]
-            if len(eddysOnPoint[0]) == 0:
-                emptyPts += 1
+        # Rather than travel down the line one frame at a time testing
+        # every eddy, look up each eddy's precomputed contiguous run of
+        # contributing frames, then evaluate all (eddy, frame)
+        # contribution pairs at once and accumulate them into their
+        # frames with bincount.
+        jLo = jLoInPatch[lineIdx]
+        jHi = jHiInPatch[lineIdx]
+        pairCounts = jHi - jLo
+        cumCounts = np.cumsum(pairCounts)
+        totalPairs = int(cumCounts[-1])
+
+        # Track the total shape function contribution per frame to detect
+        # empty points below
+        fxTotal = np.zeros((xs.shape[0], 3))
+
+        # Process the (eddy, frame) pairs in chunks to cap peak memory
+        maxPairsPerChunk = 5_000_000
+        nOnLine = eddyXsOnLine.shape[0]
+        avgPairs = max(1.0, totalPairs / nOnLine)
+        eddyStep = max(1, int(maxPairsPerChunk / avgPairs))
+        for s in range(0, nOnLine, eddyStep):
+            e = min(s + eddyStep, nOnLine)
+            counts = pairCounts[s:e]
+            chunkPairs = int(np.sum(counts))
+            if chunkPairs == 0:
                 continue
 
-            ###################################################################
-            # We now have a reduced set of eddys that overlap the current point
-            ###################################################################
+            # Expand each eddy's contiguous run of frame indices
+            eddyIdx = np.repeat(np.arange(s, e), counts)
+            runStarts = np.cumsum(counts) - counts
+            frameIdx = np.repeat(jLo[s:e] - runStarts, counts) + np.arange(chunkPairs)
+            x = xs[frameIdx]
 
-            # Compute distances to all contributing eddys
-            eddyLocsOnPoint = eddyLocsOnLine[eddysOnPoint]
-            dists = np.empty((len(eddysOnPoint[0]), 3))
-            dists[:, 0] = eddyLocsOnPoint[:, 0] + xOffset - x
-            dists[:, 1] = eddyLocsOnPoint[:, 1] - y
-            dists[:, 2] = eddyLocsOnPoint[:, 2] - z
+            if convect == "local":
+                xOffset = (localUbar - localEddyUbar[eddyIdx]) / localUbar * x
+            else:
+                xOffset = np.zeros(chunkPairs)
 
-            # Collect sigmas from all contributing points
-            sigmasOnPoint = sigmasOnLine[eddysOnPoint]
+            # Compute distances of every contributing (eddy, frame) pair
+            dists = np.empty((chunkPairs, 3))
+            dists[:, 0] = eddyXsOnLine[eddyIdx] + xOffset - x
+            dists[:, 1] = eddyYsOnLine[eddyIdx] - y
+            dists[:, 2] = eddyZsOnLine[eddyIdx] - z
+
+            # Collect sigmas of all contributing pairs
+            pairIdx = lineIdx[eddyIdx]
+            sigmasOnPoint = sigmasInPatch[pairIdx]
 
             # Compute the fluctuation contributions of each eddy, for each
             # component via a "shape function"
@@ -284,16 +349,27 @@ def generatePrimes(
                 fx = shapeFuncs.tent(dists, sigmasOnPoint)
             elif shape == "blob":
                 fx = shapeFuncs.blob(dists, sigmasOnPoint)
-            # See if this point ended up with zero contributions anyway
-            if np.any(np.sum(fx, axis=0) == 0.0):
-                emptyPts += 1
 
             # We have to do this here for jarrin even though its ugly AF
             if normalization == "jarrin":
-                fx = 1.0 / np.sqrt(np.prod(sigmasOnPoint, axis=2)) * fx
+                contrib = 1.0 / np.sqrt(np.prod(sigmasOnPoint, axis=2)) * fx
+            else:
+                contrib = fx
 
-            # multiply each eddys function/component by its sign
-            primesNoNorm[j, :] = np.sum(epsOnLine[eddysOnPoint] * fx, axis=0)
+            # multiply each eddys function/component by its sign and
+            # accumulate everything into its frame
+            contrib = epsInPatch[pairIdx] * contrib
+            for comp in range(3):
+                primesNoNorm[:, comp] += np.bincount(
+                    frameIdx, weights=contrib[:, comp], minlength=xs.shape[0]
+                )
+                fxTotal[:, comp] += np.bincount(
+                    frameIdx, weights=fx[:, comp], minlength=xs.shape[0]
+                )
+
+        # Frames with no eddys, or where the shape functions summed to
+        # zero contribution in some component, count as empty points
+        emptyPts = int(np.sum(np.any(fxTotal == 0.0, axis=1)))
 
         # We will warn the user if we detect more than
         # 10 empty points along this line.
